@@ -3726,9 +3726,12 @@ export function chooseAiAction(state           )                     {
   if (skillDecision) {
     const player = findPlayer(state, skillDecision.playerId);
     if (player.control !== 'ai') return undefined;
-    const livingOthers = state.players.filter((candidate) => candidate.hp > 0 && candidate.id !== player.id);
-    const preferredTarget = livingOthers.find((candidate) => candidate.teamId !== player.teamId)
-      ?? livingOthers[0];
+    const preferredTarget = aiHostilePlayers(state, player)
+      .find((candidate) => !isIceArmorBlocked(player, candidate));
+    // Judgment is mandatory and permits self-targeting even when all enemies
+    // are protected. Optional hostile skills may instead be declined.
+    const judgmentTarget = preferredTarget ?? [player, ...state.players]
+      .find((candidate) => isAlive(candidate) && !isIceArmorBlocked(player, candidate));
 
     if (skillDecision.kind === 'taurusGuard' || skillDecision.kind === 'taurusThickSkin') {
       const cost = player.hand[0];
@@ -3763,24 +3766,26 @@ export function chooseAiAction(state           )                     {
     }
 
     if (skillDecision.kind === 'libraJudgment') {
-      return preferredTarget
+      return judgmentTarget
         ? {
             type: 'resolveSkillDecision',
             playerId: player.id,
             activate: true,
-            targetId: preferredTarget.id,
+            targetId: judgmentTarget.id,
           }
         : { type: 'resolveSkillDecision', playerId: player.id, activate: false };
     }
 
     if (skillDecision.kind === 'libraPerfectJudgment') {
-      return preferredTarget
+      const ownCard = judgmentTarget?.id === player.id ? player.hand[0] : undefined;
+      return judgmentTarget
         ? {
             type: 'resolveSkillDecision',
             playerId: player.id,
             activate: true,
-            targetId: preferredTarget.id,
-            option: 'damage',
+            targetId: judgmentTarget.id,
+            option: ownCard ? 'steal' : 'damage',
+            ...(ownCard ? {selectedCardId: ownCard.id} : {}),
           }
         : { type: 'resolveSkillDecision', playerId: player.id, activate: false };
     }
