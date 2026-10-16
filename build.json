@@ -1,7 +1,7 @@
 {
-  "version": "web-af3a1f00add5ff65",
+  "version": "web-7b00432755ef4529",
   "basePath": "/zodiac-war-playtest/",
   "rules": "shared standalone engine",
   "play": "device-local hotseat and AI",
-  "createdAt": "2026-10-16T20:01:37.980Z"
+  "createdAt": "2026-10-16T20:07:20.330Z"
 }

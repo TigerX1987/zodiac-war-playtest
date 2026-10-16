@@ -283,7 +283,8 @@ window.TabletopV10 = {
     const name = state.mode === 'infection' ? '月蚀' : currentMode() === 'standard' ? '标准' : '测试';
     return '<header class="v10-header"><button class="v10-report-button" onclick="TabletopV10.logOpen=true;render()">' + this.icon('report') + '战报</button>' +
       '<div class="v10-title"><strong><span class="v10-title-full">十二星座·四象战争</span><span class="v10-title-short">十二星座</span></strong>' +
-      '<span>' + name + ' · ' + state.players.length + ' 人局</span><span>第 ' + state.round + ' 轮</span></div>' +
+      '<span>' + name + ' · ' + state.players.length + ' 人局</span><span>第 ' + state.round + ' 轮</span>' +
+      '<span class="v10-deck-count" aria-label="牌堆剩余 ' + state.deck.length + ' 张，本局共 ' + state.totalCards + ' 张">牌堆 <b>' + state.deck.length + '/' + state.totalCards + '</b></span></div>' +
       '<nav class="v10-nav" aria-label="对局操作"><button id="v10-exit-menu" aria-expanded="' + this.exitMenuOpen + '" onclick="TabletopV10.toggleMenu()">' +
       this.icon('exit') + '退出' + this.icon('down', '', 'v10-chevron') + '</button>' +
       '<button aria-label="设置" onclick="TabletopV10.settingsOpen=!TabletopV10.settingsOpen;TabletopV10.exitMenuOpen=false;render()">' +

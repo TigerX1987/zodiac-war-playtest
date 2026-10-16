@@ -41,6 +41,8 @@ body.tabletopV10.matchOpen #board .v10-arena {
 .tabletopV10 .v10-title { display: flex; align-items: center; gap: 22px; flex: 1 1 auto; min-width: 0; white-space: nowrap; }
 .tabletopV10 .v10-title strong { font-family: SimSun, "Noto Serif SC", serif; font-size: clamp(17px, 1.6vw, 25px); color: #f0d597; }
 .tabletopV10 .v10-title > span { color: #d9c699; font-size: 15px; }
+.tabletopV10 .v10-deck-count { flex: 0 0 auto; }
+.tabletopV10 .v10-deck-count b { color: var(--v10-ink); font-weight: 600; font-variant-numeric: tabular-nums; }
 .tabletopV10 .v10-title-short { display: none; }
 .tabletopV10 .v10-nav { display: flex; gap: 8px; position: relative; flex: 0 0 auto; }
 .tabletopV10 .v10-chevron { width: 14px; height: 14px; }
