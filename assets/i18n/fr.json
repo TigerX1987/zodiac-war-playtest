@@ -882,5 +882,18 @@
   "张，本局共": " cartes, total ",
   "本地试玩 · 当前席位": "Partie locale · Vous jouez ",
   "你所在的": "Votre ",
-  "将认输，整局立即结束并进入结算。": " se rend. La partie se termine immédiatement."
+  "将认输，整局立即结束并进入结算。": " se rend. La partie se termine immédiatement.",
+  "${p0} 因双生摸 ${p1} 张风牌": "${p0} pioche ${p1} cartes Air grâce à Double naissance.",
+  "不能发动其他星座的技能": "Vous ne pouvez pas utiliser le talent d’un autre signe.",
+  "濒死或已出局角色不能发动主动技能": "Un personnage mourant ou éliminé ne peut pas utiliser de talent actif.",
+  "技能只能选择存活角色": "Ce talent nécessite une cible en vie.",
+  "该技能需要恰好 1 张费用牌": "Ce talent coûte exactement 1 carte.",
+  "毒刺最多支付 1 张费用牌": "Dard accepte au maximum 1 carte de coût.",
+  "濒死或已出局的巨蟹不能发动蟹护": "Cancer ne peut pas utiliser Garde du crabe en étant mourant ou éliminé.",
+  "阵亡判定后不能通过蟹护急救": "Garde du crabe ne peut pas secourir un personnage éliminé.",
+  "狮威禁止普通急救，请使用太阳": "L’aura du Lion bloque les secours ordinaires. Utilisez le Soleil.",
+  "蟹护需要恰好 1 张水牌": "Garde du crabe nécessite exactement 1 carte Eau.",
+  "烈焰披风：每回合首次受到伤害后，伤害来源获得灼烧。": "Cape de flammes : après vos premiers dégâts du tour, infligez Brûlure à la source.",
+  "${p0} 的烈焰披风令 ${p1} 获得灼烧": "La Cape de flammes de ${p0} inflige Brûlure à ${p1}.",
+  "先选择 1 张任意手牌作为费用，再点击一名可回复生命的受伤角色；可以选择自己。": "Choisissez 1 carte en main comme coût, puis un personnage blessé pouvant récupérer des PV. Vous pouvez vous choisir."
 }

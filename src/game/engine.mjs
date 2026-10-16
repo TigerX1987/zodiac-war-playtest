@@ -1,10 +1,10 @@
-import { createBaseDeck, createInfectionDeck, effectiveRitualCard, ELEMENT_LABELS, statusForElement } from '../content/cards.mjs?v=web-6e8d17843f312001';
+import { createBaseDeck, createInfectionDeck, effectiveRitualCard, ELEMENT_LABELS, statusForElement } from '../content/cards.mjs?v=web-8e7b16a5f17a9f66';
 import {
   CHARACTERS,
   DEFAULT_CHARACTER_PAIR,
   DEFAULT_DEMO_CHARACTERS,
   zodiacSeatIndices,
-} from '../content/characters.mjs?v=web-6e8d17843f312001';
+} from '../content/characters.mjs?v=web-8e7b16a5f17a9f66';
              
          
        
@@ -22,7 +22,7 @@ import {
               
             
                      
-import { shuffleWithSeed } from './random.mjs?v=web-6e8d17843f312001';
+import { randomFloat, shuffleWithSeed } from './random.mjs?v=web-8e7b16a5f17a9f66';
 
 const STATUS_LABELS                           = {
   burn: '灼烧',
@@ -559,6 +559,10 @@ function removeOneRoundStatuses(state           , player             ) {
   }
 }
 
+function isLeoHealingBlocked(state           , player             ) {
+  return Boolean(player.statuses.burn && state.players.some(candidate => isAlive(candidate) && candidate.characterId === 'leo'));
+}
+
 function heal(
   state           ,
   player             ,
@@ -574,8 +578,7 @@ function heal(
     log(state, messageTemplate`${player.name} 受到月蚀感染影响，不能通过普通恢复回复生命`, player.id, 'infection');
     return;
   }
-  const leoAuraActive = state.players.some((candidate) => candidate.hp > 0 && candidate.characterId === 'leo');
-  if (!options.bypassLeoAura && leoAuraActive && player.statuses.burn) {
+  if (!options.bypassLeoAura && isLeoHealingBlocked(state, player)) {
     log(state, messageTemplate`${player.name} is burning and cannot recover because Leo aura is active`, player.id, 'heal');
     return;
   }
@@ -606,8 +609,9 @@ function rescueHeal(
   source              ,
   options                                                         = {},
 ) {
+  const before = player.hp;
   heal(state, player, amount, source, options);
-  if (player.hp <= 0) player.hp = Math.min(player.maxHp, 1);
+  if (player.hp > before && player.hp <= 0) player.hp = Math.min(player.maxHp, 1);
 }
 
 function triggerSkillMetric(state           , key        ) {
@@ -696,7 +700,7 @@ function eligibleRescuers(state           , target             , willTransform  
     .filter((candidate) => {
       const hasSun = candidate.hand.some((card) => card.kind === 'sun');
       if (hasSun) return true;
-      if (willTransform) return false;
+      if (willTransform || isLeoHealingBlocked(state, target)) return false;
       return (
         candidate.characterId === 'cancer' &&
         candidate.id !== target.id &&
@@ -995,6 +999,15 @@ function queueSkillDecision(state           , decision                      ) {
   state.pendingSkillDecisions.push(decision);
 }
 
+function offerVirgoDiscipline(state           , source             , targets               , isAoe = false) {
+  if ((!isAoe && targets.length < 2) || !isAlive(source)) return;
+  for (const target of new Set(targets)) {
+    if (target.id !== source.id && target.characterId === 'virgo' && isAlive(target)) {
+      queueSkillDecision(state, { kind: 'virgoDiscipline', playerId: target.id, sourceId: source.id });
+    }
+  }
+}
+
 function offerTaurusGuardSetup(state           ) {
   const player = findPlayer(state, state.activePlayerId);
   if (state.phase !== 'draw' || player.characterId !== 'taurus' || !isAlive(player) ||
@@ -1078,8 +1091,8 @@ function resolveSkillDecision(
     const target = findPlayer(state, decision.targetId );
     if (action.activate && target.hp > 0 && !target.eliminated) {
       const alreadyFrozen = Boolean(target.statuses.frozen);
-      if (target.hand.length === 0) markFreeScorpioStingTarget(player, target);
       addStatus(state, target, 'frozen', 1);
+      if (target.statuses.frozen && target.hand.length === 0) markFreeScorpioStingTarget(player, target);
       log(state, messageTemplate`${player.name} 发动蝎毒，令 ${target.name} 冰冻`, player.id, 'skill');
       if (alreadyFrozen) {
         triggerSkillMetric(state, 'scorpio.spoils');
@@ -1248,11 +1261,12 @@ function applyDamage(
                       
                       
                          
+                     
     = {},
 ) {
   if (amount <= 0 && !options.status) return;
   const sacredDamage = Boolean(options.sacredDamage);
-  const ignoresArmor = Boolean(options.trueDamage || options.sacredDamage);
+  const ignoresArmor = Boolean(options.trueDamage || options.sacredDamage || options.hpCost);
 
   if (
     amount > 0 &&
@@ -1265,7 +1279,7 @@ function applyDamage(
     log(state, messageTemplate`${target.name} 的净域免疫了卡牌伤害`, target.id, 'skill');
   }
 
-  if (target.statuses.shield && (amount > 0 || options.status)) {
+  if (!options.hpCost && target.statuses.shield && (amount > 0 || options.status)) {
     delete target.statuses.shield;
     log(state, messageTemplate`${target.name} 的圣盾免疫了本次伤害或状态`, target.id, 'shield');
     return;
@@ -1295,20 +1309,20 @@ function applyDamage(
     state.metrics.damageTaken[target.id] = (state.metrics.damageTaken[target.id] ?? 0) + damage;
     if (source) {
       state.metrics.damageBySource[source.id] = (state.metrics.damageBySource[source.id] ?? 0) + damage;
-      if (source.id !== target.id && !sacredDamage) gainCapricornRage(state, source, 1, '造成实际伤害');
+      if (source.id !== target.id) gainCapricornRage(state, source, 1, sacredDamage ? '造成神圣伤害' : '造成实际伤害');
     }
     if (source && source.id !== target.id && !sacredDamage) gainCapricornRage(state, target, 1, '承受实际伤害');
-    log(state, messageTemplate`${target.name} 受到 ${damage} 点${options.trueDamage ? '真实' : ''}伤害`, target.id, 'damage');
-    if (target.characterId === 'aries' && !sacredDamage) {
+    log(state, messageTemplate`${target.name} 受到 ${damage} 点${sacredDamage ? '神圣' : options.trueDamage ? '真实' : ''}伤害`, target.id, 'damage');
+    if (target.characterId === 'aries' && !sacredDamage && state.activePlayerId !== target.id) {
       target.flags.ariesBloodRageReady = true;
       triggerSkillMetric(state, 'aries.bloodRageReady');
     }
     if (target.characterId === 'gemini' && !sacredDamage) {
-      drawCards(state, target, 1, (card) => card.element === 'air');
+      drawCards(state, target, damage, (card) => card.element === 'air');
       triggerSkillMetric(state, 'gemini.windForm');
-      log(state, messageTemplate`${target.name} 因双生摸 1 张风牌`, target.id, 'skill');
+      log(state, messageTemplate`${target.name} 因双生摸 ${damage} 张风牌`, target.id, 'skill');
     }
-    if (target.characterId === 'sagittarius' && target.equipment.armor) {
+    if (target.characterId === 'sagittarius' && target.equipment.armor && !sacredDamage) {
       drawCards(state, target, 1);
       triggerSkillMetric(state, 'sagittarius.sharpshot');
       log(state, messageTemplate`${target.name} 的神射因装备防具并承受实际伤害，摸 1 张牌`, target.id, 'skill');
@@ -1342,6 +1356,8 @@ function applyDamage(
     }
     if (
       target.characterId === 'virgo' &&
+      options.cardDamage &&
+      !sacredDamage &&
       !target.flags.usedVirgoDomainThisTurn &&
       target.hp > 0
     ) {
@@ -1361,7 +1377,7 @@ function applyDamage(
     }
   }
 
-  if (target.characterId === 'taurus' && isAlive(target) && (armorBefore > target.armor || damage > 0)) {
+  if (!sacredDamage && target.characterId === 'taurus' && isAlive(target) && (armorBefore > target.armor || damage > 0)) {
     drawCards(state, target, 1);
     triggerSkillMetric(state, 'taurus.thickSkin');
     log(state, messageTemplate`${target.name} 因厚皮受伤后摸 1 张牌`, target.id, 'skill');
@@ -1388,23 +1404,26 @@ function triggerArmorAfterDamage(state           , target             , source  
   if (armor.element === 'fire' && !target.flags.firstAttackDamageApplied) {
     target.flags.firstAttackDamageApplied = true;
     addStatus(state, source, 'burn', 1);
-    log(state, messageTemplate`${target.name} 的火焰披风令 ${source.name} 获得灼烧`, target.id, 'equipment');
+    log(state, messageTemplate`${target.name} 的烈焰披风令 ${source.name} 获得灼烧`, target.id, 'equipment');
   }
   if (armor.element === 'water') {
     if (!source.flags.iceArmorBlockedTargetIds.includes(target.id)) source.flags.iceArmorBlockedTargetIds.push(target.id);
     log(state, messageTemplate`${target.name} 的寒冰护甲限制 ${source.name} 本回合继续输出`, target.id, 'equipment');
   }
-  if (armor.element === 'air' && !target.flags.firstAttackDamageApplied && source.hand.length > 0) {
+  if (armor.element === 'air' && !target.flags.firstAttackDamageApplied) {
     target.flags.firstAttackDamageApplied = true;
-    state.discard.push(source.hand.shift() );
-    log(state, messageTemplate`${target.name} 的飓风斗篷令 ${source.name} 弃 1 张牌`, target.id, 'equipment');
+    if (source.hand.length > 0) {
+      state.discard.push(source.hand.shift() );
+      log(state, messageTemplate`${target.name} 的飓风斗篷令 ${source.name} 弃 1 张牌`, target.id, 'equipment');
+    }
   }
 }
 
 function standardRescuers(state           , target             ) {
+  const ordinaryAllowed = !isLeoHealingBlocked(state, target);
   return state.players.filter(candidate => !candidate.eliminated && (
-    candidate.hand.some(card => card.kind === 'sun' || card.kind === 'energy') ||
-    (candidate.characterId === 'cancer' && candidate.id !== target.id && candidate.hp > 0 &&
+    candidate.hand.some(card => card.kind === 'sun' || (ordinaryAllowed && card.kind === 'energy')) ||
+    (ordinaryAllowed && candidate.characterId === 'cancer' && candidate.id !== target.id && candidate.hp > 0 &&
       state.activePlayerId !== candidate.id && !candidate.flags.usedCancerRescueThisRound &&
       candidate.hand.some(card => card.element === 'water'))
   )).sort((left, right) => {
@@ -1511,10 +1530,21 @@ function elementForFormalUse(player             , card      , chosenElement     
   return undefined;
 }
 
+function recordAirUse(state           , player             , count = 1) {
+  if (count <= 0) return;
+  player.flags.airCardsUsed += count;
+  if (player.characterId === 'gemini' && player.flags.airCardsUsed >= 3 && !player.flags.usedGeminiExtraTurnThisRound) {
+    player.flags.usedGeminiExtraTurnThisRound = true;
+    player.flags.grantedExtraTurn = true;
+    triggerSkillMetric(state, 'gemini.extraTurn');
+    log(state, messageTemplate`${player.name} 的连星准备额外回合`, player.id, 'skill');
+  }
+}
+
 function recordCardElement(state           , player             , card      , chosenElement              ) {
   const element = elementForFormalUse(player, card, chosenElement);
   if (!element) return;
-  if (element === 'air') player.flags.airCardsUsed += 1;
+  if (element === 'air') recordAirUse(state, player);
 
   if (!player.flags.usedCardElements.includes(element)) {
     player.flags.usedCardElements.push(element);
@@ -1540,18 +1570,6 @@ function recordCardElement(state           , player             , card      , ch
     player.flags.usedLibraPerfectJudgmentThisTurn = true;
     queueSkillDecision(state, { kind: 'libraPerfectJudgment', playerId: player.id });
     log(state, messageTemplate`${player.name} 的完美审判触发，等待选择效果和目标`, player.id, 'skill');
-  }
-
-  if (
-    player.characterId === 'gemini' &&
-    element === 'air' &&
-    player.flags.airCardsUsed >= 3 &&
-    !player.flags.usedGeminiExtraTurnThisRound
-  ) {
-    player.flags.usedGeminiExtraTurnThisRound = true;
-    player.flags.grantedExtraTurn = true;
-    triggerSkillMetric(state, 'gemini.extraTurn');
-    log(state, messageTemplate`${player.name} 的连星准备额外回合`, player.id, 'skill');
   }
 
 }
@@ -1864,20 +1882,8 @@ function clearPendingOrNextTarget(state           ) {
   if (pending.remainingTargetIds.length === 0) {
     state.pendingAttack = undefined;
     state.phase = 'main';
-    if (pending.card.kind === 'aoe' || pending.targetIds.length > 1) {
-      const source = findPlayer(state, pending.sourceId);
-      for (const targetId of pending.targetIds) {
-        const virgo = findPlayer(state, targetId);
-        if (virgo.characterId !== 'virgo' || !isAlive(virgo) || !isAlive(source)) {
-          continue;
-        }
-        queueSkillDecision(state, {
-          kind: 'virgoDiscipline',
-          playerId: virgo.id,
-          sourceId: source.id,
-        });
-      }
-    }
+    offerVirgoDiscipline(state, findPlayer(state, pending.sourceId),
+      pending.targetIds.map(id => findPlayer(state, id)), pending.card.kind === 'aoe');
   } else {
     pending.scorpioPoisonStep = false;
     pending.currentTargetId = pending.remainingTargetIds[0];
@@ -2204,6 +2210,7 @@ function playEnergyRescue(state           , player             , card      , tar
   const target = targetId ? findPlayer(state, targetId) : player;
   requireStandardDyingRescuer(player, '星能急救');
   requireStandardDyingRescueTarget(state, target, '星能急救');
+  if (isLeoHealingBlocked(state, target)) throw new Error('狮威禁止普通急救，请使用太阳');
   state.discard.push(card);
   rescueHeal(state, target, 1, player);
   log(state, messageTemplate`${player.name} 使用星能急救 ${target.name}`, player.id, 'card');
@@ -2366,6 +2373,7 @@ function playMoon(state           , player             , card      , targetId   
 
 function handleCancerRescue(state           , action                                       , player             ) {
   if (player.characterId !== 'cancer') throw new Error('Only Cancer can use Crab Guard');
+  if (!isAlive(player)) throw new Error('濒死或已出局的巨蟹不能发动蟹护');
   const infectionPending = state.infection?.pendingDying;
   if (
     isInfectionMode(state) &&
@@ -2381,6 +2389,9 @@ function handleCancerRescue(state           , action                            
   if (player.flags.usedCancerRescueThisRound) throw new Error('蟹护每轮限一次');
   const target = action.targetId ? findPlayer(state, action.targetId) : undefined;
   if (!target || target.id === player.id || target.hp > 0) throw new Error('蟹护只能急救其他濒死角色');
+  if (target.eliminated) throw new Error('阵亡判定后不能通过蟹护急救');
+  if (isLeoHealingBlocked(state, target)) throw new Error('狮威禁止普通急救，请使用太阳');
+  if (action.cardIds?.length !== 1) throw new Error('蟹护需要恰好 1 张水牌');
   const cardId = action.cardIds?.[0];
   if (!cardId) throw new Error('蟹护需要弃 1 张水牌');
   const card = takeCard(player, cardId);
@@ -2668,10 +2679,13 @@ function resolveScorpioStingEffect(state           , player             , target
 
 function handleSkill(state           , action                                       ) {
   const player = findPlayer(state, action.playerId);
+  if (action.skillId.includes('.') && action.skillId.split('.')[0] in CHARACTERS &&
+      action.skillId.split('.')[0] !== player.characterId) throw new Error('不能发动其他星座的技能');
   if (action.skillId === 'cancer.rescue') {
     handleCancerRescue(state, action, player);
     return;
   }
+  if (!isAlive(player)) throw new Error('濒死或已出局角色不能发动主动技能');
   if (player.id !== state.activePlayerId) throw new Error('Only active player can use active skills');
   if (action.skillId !== 'scorpio.peek' && isSilencedInOwnActionTurn(state, player)) throw new Error(`${player.name} is silenced`);
   if (action.skillId === 'scorpio.peek' || action.skillId === 'taurus.guard') {
@@ -2698,6 +2712,10 @@ function handleSkill(state           , action                                   
     return;
   }
   const target = action.targetId ? findPlayer(state, action.targetId) : opponentOf(state, player.id);
+  if (action.targetId && !isAlive(target)) throw new Error(action.skillId === 'cancer.heal' ? '疗潮不能治疗濒死角色' : '技能只能选择存活角色');
+  if (['aries.ram', 'leo.roar', 'leo.order', 'cancer.heal', 'taurus.armor', 'virgo.purify', 'capricorn.charge'].includes(action.skillId) &&
+      action.cardIds?.length !== 1) throw new Error('该技能需要恰好 1 张费用牌');
+  if (action.skillId === 'scorpio.spoils' && (action.cardIds?.length ?? 0) > 1) throw new Error('毒刺最多支付 1 张费用牌');
 
   if (action.skillId === 'weapon.waterCodex') {
     if (player.equipment.weapon?.element !== 'water') throw new Error('需要装备潮汐法典');
@@ -2792,11 +2810,13 @@ function handleSkill(state           , action                                   
     if (leoTargets.some((candidate) => candidate.hp <= 0 || candidate.id === player.id)) {
       throw new Error('Leo roar targets living other roles');
     }
+    for (const candidate of leoTargets) assertNotIceArmorBlocked(player, candidate);
     state.discard.push(fireCost);
     player.flags.usedLeoRoar = true;
     for (const candidate of leoTargets) {
       if (!candidate.statuses.burn) addStatus(state, candidate, 'burn', 1);
     }
+    offerVirgoDiscipline(state, player, leoTargets);
     triggerSkillMetric(state, action.skillId);
     log(state, messageTemplate`${player.name} uses Leo roar on ${leoTargets.map((candidate) => candidate.name).join(', ')}`, player.id, 'skill');
     return;
@@ -2872,8 +2892,10 @@ function handleSkill(state           , action                                   
     const hasStealableTarget = target.hand.length > 0 || equippedTargets.length > 0;
     if (!hasStealableTarget) {
       assertNotIceArmorBlocked(player, target);
-      for (const cardId of costIds) state.discard.push(takeCard(player, cardId));
-      if (costIds.length === 1) applyDamage(state, player, player, 1, { trueDamage: true });
+      const costs = costIds.map(id => takeCard(player, id));
+      state.discard.push(...costs);
+      recordAirUse(state, player, costs.filter(card => card.element === 'air').length);
+      if (costIds.length === 1) applyDamage(state, player, player, 1, { hpCost: true });
       if (state.phase === 'gameOver') return;
       applyDamage(state, target, player, 2, { status: 'blind' });
       player.flags.usedGeminiSteal = true;
@@ -2915,8 +2937,10 @@ function handleSkill(state           , action                                   
       delete target.equipment.armor;
       triggerEquipmentLeftOwner(state, target, stolen);
     }
-    for (const cardId of costIds) state.discard.push(takeCard(player, cardId));
-    if (costIds.length === 1) applyDamage(state, player, player, 1, { trueDamage: true });
+    const costs = costIds.map(id => takeCard(player, id));
+    state.discard.push(...costs);
+    recordAirUse(state, player, costs.filter(card => card.element === 'air').length);
+    if (costIds.length === 1) applyDamage(state, player, player, 1, { hpCost: true });
     if (state.phase === 'gameOver') return;
     if (stolen) {
       player.hand.push(stolen);
@@ -2969,6 +2993,7 @@ function handleSkill(state           , action                                   
       transferCardBetweenPlayers(state, richer, poorer, cardId),
     );
     player.flags.usedLibraHarmony = true;
+    offerVirgoDiscipline(state, player, targets);
     triggerSkillMetric(state, action.skillId);
     log(
       state,
@@ -2993,11 +3018,12 @@ function handleSkill(state           , action                                   
     for (const id of costIds) state.discard.push(takeCard(player, id));
     player.flags.usedAquariusMassHeal = true;
     // 神酿献祭 1 点生命走正常受伤流程，使水瓶的被动「倾杯」被触发（受伤→摸 2 牌），实现与 2 技能的联动。
-    applyDamage(state, player, player, 1, { skillKey: 'aquarius.massHeal' });
+    applyDamage(state, player, player, 1, { skillKey: 'aquarius.massHeal', hpCost: true });
     log(state, messageTemplate`${player.name} 发动神酿，献祭 1 点生命`, player.id, 'skill');
     for (const candidate of state.players) {
       if (candidate.hp > 0 && candidate.hp < candidate.maxHp) heal(state, candidate, 1, player);
     }
+    offerVirgoDiscipline(state, player, state.players.filter(isAlive));
     triggerSkillMetric(state, action.skillId);
     log(state, messageTemplate`${player.name} 发动神酿，所有角色回复 1 点生命`, player.id, 'skill');
     return;
@@ -3050,6 +3076,7 @@ function handleSkill(state           , action                                   
       ? 1
       : 0;
     player.flags.usedPiscesBalance = true;
+    offerVirgoDiscipline(state, player, targets);
     triggerSkillMetric(state, action.skillId);
     log(
       state,
@@ -3075,13 +3102,14 @@ function handleSkill(state           , action                                   
     if (!costs.some((card) => card.element === 'fire')) {
       throw new Error('寻器费用中必须包含 1 张火属性牌');
     }
-    const equipmentIndex = state.deck.findIndex(
-      (card) => card.kind === 'weapon' || card.kind === 'armor',
-    );
-    if (equipmentIndex < 0) {
+    const equipmentIndices = state.deck.flatMap((card, index) => card.kind === 'weapon' || card.kind === 'armor' ? [index] : []);
+    if (equipmentIndices.length === 0) {
       log(state, messageTemplate`${player.name} 发动寻器但牌库中没有装备，资源返还`, player.id, 'skill');
       return;
     }
+    const random = randomFloat(state.seed);
+    state.seed = random.seed;
+    const equipmentIndex = equipmentIndices[Math.floor(random.value * equipmentIndices.length)];
     for (const id of costIds) state.discard.push(takeCard(player, id));
     const equipment = state.deck.splice(equipmentIndex, 1)[0];
     player.hand.push(equipment);
@@ -3158,6 +3186,7 @@ function handleSkill(state           , action                                   
     if (player.characterId !== 'scorpio') throw new Error('只有天蝎可以发动蝎毒');
     if (player.flags.usedScorpioPoison) throw new Error('蝎毒每回合限一次');
     if (!action.targetId || target.id === player.id || target.hp <= 0 || target.eliminated) throw new Error('蝎毒需要指定一名其他存活角色');
+    assertNotIceArmorBlocked(player, target);
     const ids = action.cardIds ?? [];
     const cost = ids.length === 1 ? player.hand.find(card => card.id === ids[0] && card.element === 'water') : undefined;
     if (!cost) throw new Error('蝎毒需要弃置 1 张水属性手牌');
@@ -3173,6 +3202,7 @@ function handleSkill(state           , action                                   
     if (player.characterId !== 'scorpio') throw new Error('Only Scorpio can use sting');
     if (player.flags.usedScorpioSting) throw new Error('Scorpio sting can only be used once per turn');
     if (!target.statuses.frozen) throw new Error('Scorpio sting requires a frozen target');
+    assertNotIceArmorBlocked(player, target);
     const stingCostId = action.cardIds?.[0];
     const freeSting = player.flags.scorpioFreeStingTargetIds.includes(target.id);
     if (!stingCostId && !freeSting) throw new Error('Scorpio sting costs one hand card');
@@ -3207,9 +3237,8 @@ function handleSkill(state           , action                                   
     if (spent <= 0) throw new Error('山崩至少需要 1 点怒气');
     player.rage = 0;
     player.flags.usedCapricornChargeThisRound = true;
-    addStatus(state, target, 'silence', 1);
     if (spent >= 5) {
-      applyDamage(state, target, player, 2, { sacredDamage: true });
+      applyDamage(state, target, player, 2, { sacredDamage: true, status:'silence' });
       state.discard.push(...player.hand.splice(0), ...target.hand.splice(0));
       if (player.equipment.weapon) {
         state.discard.push(player.equipment.weapon);
@@ -3230,8 +3259,10 @@ function handleSkill(state           , action                                   
       player.equipment = {};
       target.equipment = {};
     } else if (spent >= 3) {
-      applyDamage(state, target, player, 1, { sacredDamage: true });
+      applyDamage(state, target, player, 1, { sacredDamage: true, status:'silence' });
       state.discard.push(...player.hand.splice(0));
+    } else {
+      addStatus(state, target, 'silence', 1);
     }
     triggerSkillMetric(state, action.skillId);
     log(state, messageTemplate`${player.name} 消耗 ${spent} 怒发动山崩`, player.id, 'skill');
@@ -3671,7 +3702,7 @@ function lowestHpEnemy(state           , player             , predicate         
 
 function mostDamagedAlly(state           , player             ) {
   return alliesOf(state, player.id)
-    .filter((ally) => ally.hp < ally.maxHp)
+    .filter((ally) => ally.hp < ally.maxHp && !isLeoHealingBlocked(state, ally) && !(isInfectionMode(state) && (ally.infected || isInfectedFaction(ally))))
     .sort((a, b) => (b.maxHp - b.hp) - (a.maxHp - a.hp))[0];
 }
 
@@ -3724,6 +3755,7 @@ function chooseAiCancerRescueAction(state           )                     {
       cancer.control !== 'ai' ||
       cancer.characterId !== 'cancer' ||
       pending.willTransform ||
+      isLeoHealingBlocked(state, findPlayer(state, pending.targetId)) ||
       cancer.flags.usedCancerRescueThisRound
     ) {
       return undefined;
@@ -3742,13 +3774,13 @@ function chooseAiCancerRescueAction(state           )                     {
   for (const cancer of state.players) {
     if (cancer.control !== 'ai') continue;
     if (cancer.characterId !== 'cancer') continue;
-    if (cancer.hp <= 0) continue;
+    if (!isAlive(cancer)) continue;
     if (cancer.flags.usedCancerRescueThisRound) continue;
     if (state.activePlayerId === cancer.id) continue;
     const water = cancer.hand.find((card) => card.element === 'water');
     if (!water) continue;
     const dyingAlly = state.players
-      .find((ally) => sameFaction(state, ally, cancer) && ally.id !== cancer.id && ally.hp <= 0);
+      .find((ally) => sameFaction(state, ally, cancer) && ally.id !== cancer.id && ally.hp <= 0 && !ally.eliminated && !isLeoHealingBlocked(state, ally));
     if (!dyingAlly) continue;
     return {
       type: 'useSkill',
@@ -3768,24 +3800,24 @@ function chooseAiStandardRescueAction(state           )                     {
     if (player.control !== 'ai') return undefined;
     const target = findPlayer(state, pending.targetId);
     if (player.teamId !== target.teamId) return {type:'skipRescue',playerId:player.id};
-    const card = player.hand.find(card => card.kind === 'sun' || card.kind === 'energy');
+    const card = player.hand.find(card => card.kind === 'sun' || (card.kind === 'energy' && !isLeoHealingBlocked(state, target)));
     if (card) return {type:'playCard',playerId:player.id,cardId:card.id,targetId:target.id,mode:'rescue'};
     const water = player.hand.find(card => card.element === 'water');
-    if (player.characterId === 'cancer' && water) return {type:'useSkill',playerId:player.id,skillId:'cancer.rescue',targetId:target.id,cardIds:[water.id]};
+    if (player.characterId === 'cancer' && water && !isLeoHealingBlocked(state, target)) return {type:'useSkill',playerId:player.id,skillId:'cancer.rescue',targetId:target.id,cardIds:[water.id]};
     return {type:'skipRescue',playerId:player.id};
   }
   if (isInfectionMode(state) || state.phase !== 'gameOver' || state.winnerTeamId || state.winnerId) return undefined;
   const defeatedTeams = defeatedTeamIds(state);
   for (const player of state.players) {
     if (player.control !== 'ai' || player.eliminated || !defeatedTeams.includes(player.teamId)) continue;
-    const rescueCard = player.hand.find((card) => card.kind === 'sun' || card.kind === 'energy');
-    if (!rescueCard) continue;
     const target = state.players.find((candidate) =>
       candidate.id === player.id && candidate.hp <= 0 && !candidate.eliminated
     ) ?? state.players.find((candidate) =>
       candidate.teamId === player.teamId && candidate.hp <= 0 && !candidate.eliminated
     );
     if (!target) continue;
+    const rescueCard = player.hand.find(card => card.kind === 'sun' || (card.kind === 'energy' && !isLeoHealingBlocked(state, target)));
+    if (!rescueCard) continue;
     return {
       type: 'playCard',
       playerId: player.id,
@@ -3793,6 +3825,85 @@ function chooseAiStandardRescueAction(state           )                     {
       targetId: target.id,
       mode: 'rescue',
     };
+  }
+  return undefined;
+}
+
+function chooseAiAdditionalSkill(state           , player             )                     {
+  const enemies = aiHostilePlayers(state, player).filter(target => !isIceArmorBlocked(player, target));
+  const enemy = enemies.sort((a, b) => a.hp - b.hp)[0];
+  const allies = state.players.filter(target => isAlive(target) && sameFaction(state, player, target));
+  const costs = player.hand.filter(card => card.kind !== 'sun' && card.kind !== 'moon');
+  const use = (skillId        , extra                                                 = {})         => ({
+    type: 'useSkill', playerId: player.id, skillId, ...extra,
+  });
+
+  if (player.equipment.weapon?.element === 'air' && !player.flags.usedWindCompass && player.flags.usedCardElements.length >= 2) {
+    const element = state.deck.find(card => card.element === CHARACTERS[player.characterId].element)?.element
+      ?? state.deck.find(card => card.element)?.element;
+    if (element) return use('weapon.airCompass', { option: element });
+  }
+  if (player.characterId === 'virgo' && !player.flags.usedVirgoPurify) {
+    const earth = costs.find(card => card.element === 'earth');
+    const target = allies.find(target => target.infected || NORMAL_ABNORMAL_STATUSES.some(status => target.statuses[status]));
+    if (earth && target) return use('virgo.purify', { targetId: target.id, cardIds: [earth.id], ...(target.infected ? { option: 'infection' } : {}) });
+  }
+  if (player.characterId === 'gemini' && !player.flags.usedGeminiSteal && enemy && (costs.length >= 2 || (costs.length && player.hp > 1))) {
+    const selected = enemy.equipment.weapon ?? enemy.equipment.armor ?? enemy.hand[0];
+    return use('gemini.steal', { targetId: enemy.id, cardIds: costs.slice(0, 2).map(card => card.id), ...(selected ? { selectedCardId: selected.id } : {}) });
+  }
+  if (player.characterId === 'scorpio' && !player.flags.usedScorpioSting) {
+    const target = enemies.find(target => target.statuses.frozen && (costs.length || player.flags.scorpioFreeStingTargetIds.includes(target.id)));
+    if (target) return use('scorpio.spoils', { targetId: target.id, cardIds: player.flags.scorpioFreeStingTargetIds.includes(target.id) ? [] : [costs[0].id] });
+  }
+  if (player.characterId === 'aries' && !player.flags.usedAriesRam && !player.flags.usedAriesBurnSoul && enemy) {
+    const cost = costs.find(card => card.element !== 'fire' && (card.kind === 'normalAttack' || card.kind === 'statusAttack'));
+    if (cost) {
+      const action = use('aries.ram', { targetId: enemy.id, cardIds: [cost.id] });
+      const paid = withDistanceCost(action, state, player, enemy, skillNeedsDistanceCost(state, player, enemy, 'aries.ram'), [cost.id]);
+      if (paid) return paid;
+    }
+  }
+  if (player.characterId === 'libra' && !player.flags.usedLibraHarmony) {
+    const air = costs.filter(card => card.element === 'air');
+    for (const rich of enemies) {
+      for (const poor of allies.filter(target => target.id !== player.id)) {
+        const count = Math.floor((rich.hand.length - poor.hand.length) / 2);
+        if (count > 0 && air.length >= count) return use('libra.harmony', {
+          targetIds: [rich.id, poor.id], cardIds: air.slice(0, count).map(card => card.id),
+          selectedCardIds: rich.hand.slice(0, count).map(card => card.id),
+        });
+      }
+    }
+  }
+  if (player.characterId === 'pisces' && !player.flags.usedPiscesBalance) {
+    const water = costs.filter(card => card.element === 'water');
+    for (const target of enemies) {
+      const ally = allies.find(ally => target.hp > ally.hp && target.hp - ally.hp <= water.length);
+      if (ally) return use('pisces.balance', { targetIds: [ally.id, target.id], cardIds: water.slice(0, target.hp - ally.hp).map(card => card.id) });
+    }
+  }
+  if (player.characterId === 'sagittarius' && !player.flags.usedSagittariusSeek && (!player.equipment.weapon || !player.equipment.armor)) {
+    const fire = costs.find(card => card.element === 'fire');
+    const other = costs.find(card => card.id !== fire?.id);
+    if (fire && other && state.deck.some(card => card.kind === 'weapon' || card.kind === 'armor')) {
+      return use('sagittarius.seekEquipment', { cardIds: [fire.id, other.id] });
+    }
+  }
+  if (player.characterId === 'leo' && !player.flags.usedLeoOrder && enemy && costs.length) {
+    return use('leo.order', { targetId: enemy.id, cardIds: [costs[0].id] });
+  }
+  if (player.equipment.weapon?.element === 'water' && !player.flags.usedWeaponConvert && costs.length >= 2) {
+    const attack = costs.find(card => isAttackCard(card) && canUseHandCard(player, card) &&
+      (card.kind === 'aoe' || canUseBasicAttack(player)));
+    const armor = costs.find(card => card.kind === 'armor' && player.armor < player.maxArmor);
+    const weapon = costs.find(card => card.kind === 'weapon');
+    const first = enemy ? attack ?? armor ?? weapon : armor ?? weapon;
+    const second = first && (costs.find(card => card.id !== first.id && isAttackCard(card) && attack)
+      ?? costs.find(card => card.id !== first.id));
+    if (first && second && (attack || (!isAttackCard(first) && !isAttackCard(second)))) {
+      return use('weapon.waterCodex', { cardIds: [first.id, second.id] });
+    }
   }
   return undefined;
 }
@@ -3848,8 +3959,12 @@ export function chooseAiAction(state           )                     {
       };
     }
 
-    if (skillDecision.kind === 'virgoDomain' || skillDecision.kind === 'virgoDiscipline') {
+    if (skillDecision.kind === 'virgoDomain') {
       return { type: 'resolveSkillDecision', playerId: player.id, activate: true };
+    }
+    if (skillDecision.kind === 'virgoDiscipline') {
+      const source = state.players.find(candidate => candidate.id === skillDecision.sourceId);
+      return { type: 'resolveSkillDecision', playerId: player.id, activate: Boolean(source && isAlive(source) && !sameFaction(state, player, source)) };
     }
 
     if (skillDecision.kind === 'aquariusWindCut') {
@@ -4098,7 +4213,7 @@ export function chooseAiAction(state           )                     {
   if (canUseActiveSkill && player.characterId === 'leo' && !player.flags.usedLeoRoar) {
     const fire = firstCost(player, (card) => card.element === 'fire');
     const roarTargets = aiHostilePlayers(state, player)
-      .filter((candidate) => !candidate.statuses.burn)
+      .filter((candidate) => !candidate.statuses.burn && !isIceArmorBlocked(player, candidate))
       .slice(0, 3);
     if (fire && roarTargets.length > 0) {
       return {
@@ -4119,6 +4234,11 @@ export function chooseAiAction(state           )                     {
       const withCost = withDistanceCost(action, state, player, outputEnemy, skillNeedsDistanceCost(state, player, outputEnemy, 'capricorn.charge'), [earth.id]);
       if (withCost) return withCost;
     }
+  }
+
+  if (canUseActiveSkill) {
+    const additionalSkill = chooseAiAdditionalSkill(state, player);
+    if (additionalSkill) return additionalSkill;
   }
 
   const equipment = player.hand.find((card) => card.kind === 'weapon' || card.kind === 'armor');
@@ -4204,6 +4324,10 @@ export function chooseAiAction(state           )                     {
     }
   }
 
+  if (canUseActiveSkill && player.characterId === 'pisces' && !player.flags.usedPiscesObserveTide) {
+    const cards = player.hand.filter(card => card.kind !== 'sun' && card.kind !== 'moon');
+    if (cards.length) return { type: 'useSkill', playerId: player.id, skillId: 'pisces.observeTide', cardIds: cards.map(card => card.id) };
+  }
   return { type: 'endMain', playerId: player.id };
 }
 

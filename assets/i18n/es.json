@@ -882,5 +882,18 @@
   "张，本局共": " cartas, total",
   "本地试玩 · 当前席位": "Partida local · Juegas como",
   "你所在的": "Tu",
-  "将认输，整局立即结束并进入结算。": " se rendirá. La partida termina inmediatamente."
+  "将认输，整局立即结束并进入结算。": " se rendirá. La partida termina inmediatamente.",
+  "${p0} 因双生摸 ${p1} 张风牌": "${p0} roba ${p1} cartas de Aire por Doble nacimiento.",
+  "不能发动其他星座的技能": "No puedes usar la habilidad de otro signo.",
+  "濒死或已出局角色不能发动主动技能": "Los personajes agonizantes o eliminados no pueden usar habilidades activas.",
+  "技能只能选择存活角色": "Esta habilidad requiere un objetivo vivo.",
+  "该技能需要恰好 1 张费用牌": "Esta habilidad cuesta exactamente 1 carta.",
+  "毒刺最多支付 1 张费用牌": "Aguijón acepta como máximo 1 carta de coste.",
+  "濒死或已出局的巨蟹不能发动蟹护": "Cáncer no puede usar Guardia del cangrejo si agoniza o ha sido eliminado.",
+  "阵亡判定后不能通过蟹护急救": "Guardia del cangrejo no puede rescatar a un personaje eliminado.",
+  "狮威禁止普通急救，请使用太阳": "El aura de Leo bloquea el rescate ordinario. Usa el Sol.",
+  "蟹护需要恰好 1 张水牌": "Guardia del cangrejo requiere exactamente 1 carta de Agua.",
+  "烈焰披风：每回合首次受到伤害后，伤害来源获得灼烧。": "Capa de llamas: tras tu primer daño de cada turno, aplica Quemadura al origen.",
+  "${p0} 的烈焰披风令 ${p1} 获得灼烧": "La Capa de llamas de ${p0} quema a ${p1}.",
+  "先选择 1 张任意手牌作为费用，再点击一名可回复生命的受伤角色；可以选择自己。": "Elige 1 carta de tu mano como coste y luego un personaje herido que pueda recuperar PV. Puedes elegirte a ti."
 }

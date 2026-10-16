@@ -1,7 +1,7 @@
 
 const labels = {"aries":"白羊座","leo":"狮子座","sagittarius":"射手座","gemini":"双子座","libra":"天秤座","aquarius":"水瓶座","cancer":"巨蟹座","scorpio":"天蝎座","pisces":"双鱼座","taurus":"金牛座","virgo":"处女座","capricorn":"摩羯座"};
-const skillDescriptions = {"aries.bloodRage":{"name":"血怒","text":"被动。从上个主动回合结束到当前主动回合开始前，若白羊因非神圣伤害减少过生命，则本回合下一次羊角冲伤害 +1；触发后消失，每个主动回合最多触发一次。"},"aries.ram":{"name":"羊角冲","text":"每回合一次。消耗 1 张火属性普通攻击或状态攻击牌，对一名角色造成 1 点不可防御技能伤害；若消耗的是火属性状态攻击牌，则目标同时获得灼烧。羊角冲不计入基础攻击次数，可被圣盾抵消，也会因致盲落空。"},"aries.burnSoul":{"name":"燃魂","text":"每回合限一次。你的非火普通攻击或状态攻击手牌可以视为火属性牌支付羊角冲费用；该牌只作为费用被消耗，不改变原本属性、类型和牌面效果。AOE、装备、功能、星能、太阳、月亮不能通过燃魂支付。"},"leo.aura":{"name":"狮威","text":"被动。狮子存活时，所有灼烧角色不能通过普通回复恢复生命。太阳不属于普通回复，不受狮威限制。"},"leo.roar":{"name":"狮吼","text":"每回合一次。弃 1 张火牌，指定最多 3 名角色，使其获得 1 轮灼烧；若目标已经灼烧，则不刷新持续时间。"},"leo.order":{"name":"王令","text":"弃 1 张任意牌指定一名角色。直到狮子下个回合开始前，该角色对狮子使用牌时，必须交给狮子 1 张牌，否则该牌失效。"},"sagittarius.bowcraft":{"name":"整弓","text":"被动。当你的装备被拆除、被替换或被其他角色获得时，摸 2 张牌。"},"sagittarius.seekEquipment":{"name":"寻器","text":"每回合一次。弃 1 张火属性牌和 1 张任意手牌，随机获得牌库中的 1 张武器或防具；若牌库没有装备，返还费用。"},"sagittarius.sharpshot":{"name":"神射","text":"被动。装备武器时，你每回合第一次火属性普通攻击伤害 +1；装备防具时，每次承受实际生命伤害后摸 1 张牌。"},"gemini.windForm":{"name":"双生","text":"被动。双子每减少 1 点生命，摸 1 张风牌；神圣伤害造成的生命减少不触发。"},"gemini.steal":{"name":"换影","text":"每回合一次。弃 2 张牌，或弃 1 张牌并失去 1 点生命；查看目标手牌和装备并选择获得其中 1 张。若获得的牌不是风属性，对目标造成 1 点伤害并附加致盲；若目标没有手牌和装备，改为造成 2 点伤害并附加致盲。换影无距离限制。"},"gemini.extraTurn":{"name":"连星","text":"被动。本回合使用第 3 张风属性牌后，获得 1 个额外回合；换影消耗的风牌可以计入。每轮最多触发一次。"},"libra.elementSense":{"name":"衡感","text":"被动。每轮内，每当你首次正式使用一种新属性牌时，摸 1 张牌，每轮最多 4 次；回合内外均可触发。太阳/月亮视为全属性，使用时为衡感选择一种基础属性。"},"libra.judgment":{"name":"审判","text":"被动。主动回合内，本回合首次正式使用第 3 种不同属性牌时，令一名角色获得致盲；首次正式使用第 4 种不同属性牌时触发完美审判，可选择抽取目标 1 张手牌或造成 1 点普通伤害。每项每回合最多一次。"},"libra.harmony":{"name":"裁衡","text":"每回合一次。选择两名其他存活角色，计算手牌差 D；若 D 小于 2 不能发动。天秤弃置 floor(D/2) 张风牌，并从多牌者的手牌或装备中选择等量牌交给少牌者。"},"aquarius.stormEye":{"name":"倾杯","text":"被动。水瓶受到非神圣的实际伤害后，摸 2 张牌，并可选择与至多 2 名其他存活角色交换至多 2 张等量手牌（每张交出须对应取回一张）。神酿献祭的 1 点生命会触发本被动，使水瓶额外摸 2 张牌。"},"aquarius.massHeal":{"name":"神酿","text":"每回合一次。献祭 1 点生命，并弃置 1 张风属性牌和 1 张任意牌；所有角色回复 1 点生命，受到普通恢复限制的角色不能回复。"},"aquarius.windCut":{"name":"断流","text":"被动，每轮一次。弃牌阶段一次弃置至少 2 张牌后，可以选择是否发动；若发动，选择一名其他存活角色并指定弃置其 2 张手牌，不足 2 张则弃置全部，然后对其造成 1 点伤害。"},"cancer.tideBond":{"name":"共潮","text":"被动。任意角色成功回复生命后，巨蟹摸 1 张牌；每轮最多触发 3 次。"},"cancer.heal":{"name":"疗潮","text":"每回合一次。弃 1 张任意手牌，令一名角色回复 1 点生命。"},"cancer.rescue":{"name":"蟹护","text":"每轮一次。回合外弃 1 张水牌，急救一名其他濒死角色，使其回复 1 点生命。"},"scorpio.freezeAoe":{"name":"蝎毒","text":"出牌阶段每回合一次。弃置任意 1 张水属性手牌作为技能费用，指定一名其他存活角色；目标可交给你 1 张水牌，否则你可以令其冰冻。若该目标已冰冻且未交水牌，额外发动一次毒刺。费用牌不按普通出牌结算。"},"scorpio.peek":{"name":"伏击","text":"锁定技。每个自己的回合摸牌前强制发动，不受沉默影响。查看牌堆顶部若干张牌，并将这些牌按任意顺序放回牌顶或牌底，确认后才能摸牌。5 人及以上看 5 张，4 人看 4 张，少于 4 人看 3 张；牌堆不足时只查看现有的牌。"},"scorpio.spoils":{"name":"毒刺","text":"每回合一次。对一名冰冻角色发动，通常需弃 1 张手牌；若该目标因蝎毒且没有手牌可额外支付而被冰冻，则本次对该目标可不支付手牌。结算时优先移除 1 点护甲、圣盾或一件防具；若无可移除对象，则造成 1 点普通伤害。"},"pisces.observeTide":{"name":"观潮","text":"出牌阶段每回合一次，自行选择任意数量的手牌弃置，再摸等量牌。没有牌数上限，确认前可调整或取消选择。"},"pisces.balance":{"name":"平潮","text":"选择两名角色，弃等同生命差的水牌，双方生命调整为平均值向下取整；造成生命损耗会影响回梦补牌。"},"pisces.dream":{"name":"回梦","text":"被动。弃牌阶段结束后摸 1 张牌；若本回合平潮造成过生命变化，则改为摸 2 张牌。"},"taurus.guard":{"name":"牛守","text":"每个自己的回合开始时，可以弃 1 张手牌，选择或更换一名其他存活角色作为守护对象，最多同时守护一人；不重新选择则延续原守护。守护对象每次成为普通攻击、状态攻击或 AOE 的目标时，你可免费替代其成为攻击目标，并正常防御，不限次数。技能的直接伤害不触发代承。"},"taurus.thickSkin":{"name":"厚皮","text":"被动。受伤（损失护甲或生命）后摸 1 张牌；同一次伤害同时损失护甲和生命也只摸 1 张。之后可以弃 1 张手牌，令其他存活的伤害来源沉默；若来源已沉默，改为对其造成 1 点普通伤害。"},"taurus.armor":{"name":"筑甲","text":"每回合一次。弃 1 张土牌，令自己获得 1 点护甲，不能超过护甲上限。"},"virgo.purify":{"name":"净化","text":"主动回合限一次。弃 1 张土牌指定角色：移除其全部普通异常；若其没有普通异常，则获得一次异常免疫。感染模式中可改为只移除感染。"},"virgo.domain":{"name":"净域","text":"被动。每回合一次，受到卡牌伤害后，可以选择发动；发动后，本回合剩余时间免疫所有卡牌伤害，技能伤害与神圣伤害仍正常结算。若本次不发动，之后再次满足条件时仍可选择。"},"virgo.discipline":{"name":"戒律","text":"被动。其他角色使用 AOE 或多目标牌/技能且你成为目标时，你可以对来源造成 1 点普通伤害。每次符合条件的结算均可选择发动，不设每回合次数限制。"},"infection.bossDrain":{"name":"月蚀汲取","text":"被动。Boss 主动回合首次对其他角色造成实际生命伤害后，回复 1 点生命并摸 1 张牌；满血时仍摸牌并消耗本回合触发次数。"},"infection.bossCommand":{"name":"蚀月战令","text":"Boss 开局额外摸 2 张牌。每个主动回合限一次，选择一项：本回合可额外使用 1 张基础攻击牌；或令本回合 1 张基础攻击牌额外指定 1 个目标。"},"infection.bossNoDistance":{"name":"月蚀领域","text":"被动。Boss 使用卡牌和技能无距离限制，不需要支付跨距离费用。"},"weapon.waterCodex":{"name":"潮汐法典","text":"每回合限一次，将任意 2 张手牌合成为 1 张本角色属性牌。攻击素材决定打击次数；武器素材令攻击必中且不可防御；防具素材令使用者获得 1 点护甲。"},"weapon.airCompass":{"name":"命运罗盘","text":"主动回合限一次。正式使用过 2 张不同属性牌后，选择一种属性，获得牌库中的 1 张该属性牌。"},"capricorn.unyielding":{"name":"蓄怒","text":"被动。摩羯对其他角色造成实际伤害，或承受来自其他角色的实际伤害时获得怒气；怒气没有上限。神圣伤害和自伤不增长怒气。"},"capricorn.wushuang":{"name":"重压","text":"被动。摩羯使用土属性普通攻击或土属性状态攻击时，目标需要 2 张有效防御牌才能抵消。非土牌、AOE、技能伤害、装备与功能牌伤害不触发。"},"capricorn.charge":{"name":"山崩","text":"每轮一次，弃 1 张土牌并消耗全部怒气。先令目标沉默：1 怒只沉默；3 怒再造成 1 点神圣伤害，摩羯弃全部手牌；5 怒再造成 2 点神圣伤害，双方弃全部手牌和装备。"}};
-const serverVersion = "web-6e8d17843f312001";
+const skillDescriptions = {"aries.bloodRage":{"name":"血怒","text":"被动。从上个主动回合结束到当前主动回合开始前，若白羊因非神圣伤害减少过生命，则本回合下一次羊角冲伤害 +1；触发后消失，每个主动回合最多触发一次。"},"aries.ram":{"name":"羊角冲","text":"每回合一次。消耗 1 张火属性普通攻击或状态攻击牌，对一名角色造成 1 点不可防御技能伤害；若消耗的是火属性状态攻击牌，则目标同时获得灼烧。羊角冲不计入基础攻击次数，可被圣盾抵消，也会因致盲落空。"},"aries.burnSoul":{"name":"燃魂","text":"每回合限一次。你的非火普通攻击或状态攻击手牌可以视为火属性牌支付羊角冲费用；该牌只作为费用被消耗，不改变原本属性、类型和牌面效果。AOE、装备、功能、星能、太阳、月亮不能通过燃魂支付。"},"leo.aura":{"name":"狮威","text":"被动。狮子存活时，所有灼烧角色不能通过普通回复恢复生命。太阳不属于普通回复，不受狮威限制。"},"leo.roar":{"name":"狮吼","text":"每回合一次。弃 1 张火牌，指定最多 3 名角色，使其获得 1 轮灼烧；若目标已经灼烧，则不刷新持续时间。"},"leo.order":{"name":"王令","text":"弃 1 张任意牌指定一名角色。直到狮子下个回合开始前，该角色对狮子使用牌时，必须交给狮子 1 张牌，否则该牌失效。"},"sagittarius.bowcraft":{"name":"整弓","text":"被动。当你的装备被拆除、被替换或被其他角色获得时，摸 2 张牌。"},"sagittarius.seekEquipment":{"name":"寻器","text":"每回合一次。弃 1 张火属性牌和 1 张任意手牌，随机获得牌库中的 1 张武器或防具；若牌库没有装备，返还费用。"},"sagittarius.sharpshot":{"name":"神射","text":"被动。装备武器时，你每回合第一次火属性普通攻击伤害 +1；装备防具时，每次承受非神圣的实际生命伤害后摸 1 张牌。"},"gemini.windForm":{"name":"双生","text":"被动。双子每减少 1 点生命，摸 1 张风牌；神圣伤害造成的生命减少不触发。"},"gemini.steal":{"name":"换影","text":"每回合一次。弃 2 张牌，或弃 1 张牌并失去 1 点生命；查看目标手牌和装备并选择获得其中 1 张。若获得的牌不是风属性，对目标造成 1 点伤害并附加致盲；若目标没有手牌和装备，改为造成 2 点伤害并附加致盲。换影无距离限制。"},"gemini.extraTurn":{"name":"连星","text":"被动。本回合使用第 3 张风属性牌后，获得 1 个额外回合；换影消耗的风牌可以计入。每轮最多触发一次。"},"libra.elementSense":{"name":"衡感","text":"被动。每轮内，每当你首次正式使用一种新属性牌时，摸 1 张牌，每轮最多 4 次；回合内外均可触发。太阳/月亮视为全属性，使用时为衡感选择一种基础属性。"},"libra.judgment":{"name":"审判","text":"被动。主动回合内，本回合首次正式使用第 3 种不同属性牌时，令一名角色获得致盲；首次正式使用第 4 种不同属性牌时触发完美审判，可选择抽取目标 1 张手牌或造成 1 点普通伤害。每项每回合最多一次。"},"libra.harmony":{"name":"裁衡","text":"每回合一次。选择两名其他存活角色，计算手牌差 D；若 D 小于 2 不能发动。天秤弃置 floor(D/2) 张风牌，并从多牌者的手牌或装备中选择等量牌交给少牌者。"},"aquarius.stormEye":{"name":"倾杯","text":"被动。水瓶受到非神圣的实际伤害后，摸 2 张牌，并可选择与至多 2 名其他存活角色交换至多 2 张等量手牌（每张交出须对应取回一张）。神酿献祭的 1 点生命会触发本被动，使水瓶额外摸 2 张牌。"},"aquarius.massHeal":{"name":"神酿","text":"每回合一次。献祭 1 点生命，并弃置 1 张风属性牌和 1 张任意牌；所有角色回复 1 点生命，受到普通恢复限制的角色不能回复。"},"aquarius.windCut":{"name":"断流","text":"被动，每轮一次。弃牌阶段一次弃置至少 2 张牌后，可以选择是否发动；若发动，选择一名其他存活角色并指定弃置其 2 张手牌，不足 2 张则弃置全部，然后对其造成 1 点伤害。"},"cancer.tideBond":{"name":"共潮","text":"被动。任意角色成功回复生命后，巨蟹摸 1 张牌；每轮最多触发 3 次。"},"cancer.heal":{"name":"疗潮","text":"每回合一次。弃 1 张任意手牌，令一名角色回复 1 点生命。"},"cancer.rescue":{"name":"蟹护","text":"每轮一次。回合外弃 1 张水牌，急救一名其他濒死角色，使其回复 1 点生命。"},"scorpio.freezeAoe":{"name":"蝎毒","text":"出牌阶段每回合一次。弃置任意 1 张水属性手牌作为技能费用，指定一名其他存活角色；目标可交给你 1 张水牌，否则你可以令其冰冻。若该目标已冰冻且未交水牌，额外发动一次毒刺。费用牌不按普通出牌结算。"},"scorpio.peek":{"name":"伏击","text":"锁定技。每个自己的回合摸牌前强制发动，不受沉默影响。查看牌堆顶部若干张牌，并将这些牌按任意顺序放回牌顶或牌底，确认后才能摸牌。5 人及以上看 5 张，4 人看 4 张，少于 4 人看 3 张；牌堆不足时只查看现有的牌。"},"scorpio.spoils":{"name":"毒刺","text":"每回合一次。对一名冰冻角色发动，通常需弃 1 张手牌；若该目标因蝎毒且没有手牌可额外支付而被冰冻，则本次对该目标可不支付手牌。结算时优先移除 1 点护甲、圣盾或一件防具；若无可移除对象，则造成 1 点普通伤害。"},"pisces.observeTide":{"name":"观潮","text":"出牌阶段每回合一次，自行选择任意数量的手牌弃置，再摸等量牌。没有牌数上限，确认前可调整或取消选择。"},"pisces.balance":{"name":"平潮","text":"选择两名角色，弃等同生命差的水牌，双方生命调整为平均值向下取整；造成生命损耗会影响回梦补牌。"},"pisces.dream":{"name":"回梦","text":"被动。弃牌阶段结束后摸 1 张牌；若本回合平潮造成过生命变化，则改为摸 2 张牌。"},"taurus.guard":{"name":"牛守","text":"每个自己的回合开始时，可以弃 1 张手牌，选择或更换一名其他存活角色作为守护对象，最多同时守护一人；不重新选择则延续原守护。守护对象每次成为普通攻击、状态攻击或 AOE 的目标时，你可免费替代其成为攻击目标，并正常防御，不限次数。技能的直接伤害不触发代承。"},"taurus.thickSkin":{"name":"厚皮","text":"被动。受到非神圣伤害、损失护甲或生命后摸 1 张牌；同一次伤害同时损失护甲和生命也只摸 1 张。之后可以弃 1 张手牌，令其他存活的伤害来源沉默；若来源已沉默，改为对其造成 1 点普通伤害。"},"taurus.armor":{"name":"筑甲","text":"每回合一次。弃 1 张土牌，令自己获得 1 点护甲，不能超过护甲上限。"},"virgo.purify":{"name":"净化","text":"主动回合限一次。弃 1 张土牌指定角色：移除其全部普通异常；若其没有普通异常，则获得一次异常免疫。感染模式中可改为只移除感染。"},"virgo.domain":{"name":"净域","text":"被动。每回合一次，受到卡牌伤害后，可以选择发动；发动后，本回合剩余时间免疫所有卡牌伤害，技能伤害与神圣伤害仍正常结算。若本次不发动，之后再次满足条件时仍可选择。"},"virgo.discipline":{"name":"戒律","text":"被动。其他角色使用 AOE 或多目标牌/技能且你成为目标时，你可以对来源造成 1 点普通伤害。每次符合条件的结算均可选择发动，不设每回合次数限制。"},"infection.bossDrain":{"name":"月蚀汲取","text":"被动。Boss 主动回合首次对其他角色造成实际生命伤害后，回复 1 点生命并摸 1 张牌；满血时仍摸牌并消耗本回合触发次数。"},"infection.bossCommand":{"name":"蚀月战令","text":"Boss 开局额外摸 2 张牌。每个主动回合限一次，选择一项：本回合可额外使用 1 张基础攻击牌；或令本回合 1 张基础攻击牌额外指定 1 个目标。"},"infection.bossNoDistance":{"name":"月蚀领域","text":"被动。Boss 使用卡牌和技能无距离限制，不需要支付跨距离费用。"},"weapon.waterCodex":{"name":"潮汐法典","text":"每回合限一次，将任意 2 张手牌合成为 1 张本角色属性牌。攻击素材决定打击次数；武器素材令攻击必中且不可防御；防具素材令使用者获得 1 点护甲。"},"weapon.airCompass":{"name":"命运罗盘","text":"主动回合限一次。正式使用过 2 张不同属性牌后，选择一种属性，获得牌库中的 1 张该属性牌。"},"capricorn.unyielding":{"name":"蓄怒","text":"被动。摩羯每次对其他角色造成实际伤害（包括神圣伤害），或承受来自其他角色的非神圣实际伤害时，获得 1 点怒气；怒气没有上限。被圣盾抵消的伤害和自伤不增长怒气。"},"capricorn.wushuang":{"name":"重压","text":"被动。摩羯使用土属性普通攻击或土属性状态攻击时，目标需要 2 张有效防御牌才能抵消。非土牌、AOE、技能伤害、装备与功能牌伤害不触发。"},"capricorn.charge":{"name":"山崩","text":"每轮一次，弃 1 张土牌并消耗全部怒气。先令目标沉默：1 怒只沉默；3 怒再造成 1 点神圣伤害，摩羯弃全部手牌；5 怒再造成 2 点神圣伤害，双方弃全部手牌和装备。"}};
+const serverVersion = "web-8e7b16a5f17a9f66";
 const clientGameModes = {"test":{"seatCount":4,"playerCounts":[4],"randomCharacters":false,"characters":["aries","cancer","gemini","capricorn"],"controls":["human","ai","ai","ai"],"playerNames":["A队前锋","A队辅助","B队前锋","B队终结"]},"standard":{"seatCount":4,"playerCounts":[4,6],"randomCharacters":true,"characters":["aries","cancer","gemini","capricorn","taurus","aquarius"],"controls":["human","ai","ai","ai","ai","ai"],"playerNames":["A队前锋","A队辅助","B队前锋","B队终结"]},"infection":{"seatCount":4,"playerCounts":[4,5,6,7,8],"randomCharacters":true,"characters":["aries","cancer","aquarius","taurus","virgo","sagittarius","libra","pisces"],"controls":["human","ai","ai","ai","ai","ai","ai","ai"],"playerNames":["1号位","2号位","3号位","4号位","5号位","6号位","7号位","8号位"]}};
 const allSeatIds = ['1', '2', '3', '4', '5', '6', '7', '8'];
 const infoOnlySkills = new Set([
@@ -60,6 +60,7 @@ let skillInfoAutoHideTimer = null;
 let ariesRamDrafts = {};
 let leoRoarDrafts = {};
 let leoOrderDrafts = {};
+let cancerHealDrafts = {};
 let taurusArmorDrafts = {};
 let stealDrafts = {};
 let aquariusChaliceDrafts = {};
@@ -297,7 +298,7 @@ function equipmentEffectText(card) {
     if (card.element === 'earth') return '撼岳锤：主动回合限一次。首次普通攻击被防御时，目标须额外交出 1 张手牌，否则防御无效。';
   }
   if (card.kind === 'armor') {
-    if (card.element === 'fire') return '火焰披风：每回合首次受到伤害后，伤害来源获得灼烧。';
+    if (card.element === 'fire') return '烈焰披风：每回合首次受到伤害后，伤害来源获得灼烧。';
     if (card.element === 'water') return '寒冰护甲：受到实际伤害后，限制伤害来源本回合继续输出。';
     if (card.element === 'air') return '飓风斗篷：受到首次实际伤害后，令伤害来源弃 1 张牌。';
     if (card.element === 'earth') return '石壁：单次伤害最多为 1；每轮首次受到伤害再减 1；离开装备区时，存活的装备者回复 1 点生命。';
@@ -653,6 +654,7 @@ function canReleaseSkillCostOnSeat(playerId, targetId) {
   const target = state?.players.find(candidate => candidate.id === targetId);
   const draft = activeSkillCostDraft(player);
   if (!player || !target || !draft?.requiresTarget) return false;
+  if (player.flags?.iceArmorBlockedTargetIds?.includes(target.id) && ['aries.ram','aries.burnSoul','leo.roar','scorpio.freezeAoe'].includes(draft.skillId)) return false;
   if (draft.skillId === 'leo.roar') {
     return draft.costCardIds.length === 1 && target.hp > 0 && !target.eliminated && target.id !== player.id;
   }
@@ -666,6 +668,7 @@ function canReleaseSkillCostOnSeat(playerId, targetId) {
   if (draft.skillId === 'leo.order') {
     return target.hp > 0 && target.id !== player.id;
   }
+  if (draft.skillId === 'cancer.heal') return isSkillUsable(player, draft.skillId, !setupPaused) && canReceiveOrdinaryHealing(target);
   if (draft.skillId === 'virgo.purify') {
     return target.hp > 0 && !target.eliminated;
   }
@@ -2043,6 +2046,7 @@ function renderFocusedHand(player, tableControls = '') {
     const rescueTarget = shouldPlayCardAsRescue(player, card, candidateRescueTarget) ? candidateRescueTarget : null;
     const crabRescueCard = canRescue && player.characterId === 'cancer' && card.element === 'water' &&
       player.hp > 0 && state.activePlayerId !== player.id && !player.flags.usedCancerRescueThisRound &&
+      !isOrdinaryRescueBlocked(dyingRescueTargetOf(player)) &&
       !(state.pendingRescue || state.infection?.pendingDying)?.willTransform;
     const enabled = !pendingSkillDecision && (waterDraft || airDraft
       ? false
@@ -2622,9 +2626,19 @@ function dyingRescueTargetOf(player) {
   return dying.find(candidate => candidate.teamId === player.teamId) || dying[0] || null;
 }
 
+function isOrdinaryRescueBlocked(target) {
+  return Boolean(target?.statuses?.burn && state.players.some(candidate => candidate.characterId === 'leo' && candidate.hp > 0 && !candidate.eliminated));
+}
+
+function canReceiveOrdinaryHealing(target) {
+  return Boolean(target && target.hp > 0 && !target.eliminated && target.hp < target.maxHp && !isOrdinaryRescueBlocked(target) &&
+    !(state.mode === 'infection' && (target.infected || target.factionId === 'infected')));
+}
+
 function canUseRescueCard(player, card) {
   const legalKind = state.mode === 'infection' ? card.kind === 'sun' : card.kind === 'sun' || card.kind === 'energy';
-  return legalKind && Boolean(dyingRescueTargetOf(player));
+  const target = dyingRescueTargetOf(player);
+  return legalKind && Boolean(target) && !player.eliminated && (card.kind === 'sun' || !isOrdinaryRescueBlocked(target));
 }
 
 function shouldPlayCardAsRescue(player, card, target) {
@@ -2664,6 +2678,14 @@ function isAquariusMassHealCostCard(player, card) {
 function activeSkillCostDraft(player) {
   if (!player || state.activePlayerId !== player.id || state.phase !== 'main') return null;
   const id = selectedSkills[player.id];
+  if (!id || isSkillDisabled(player, id, !setupPaused)) return null;
+  if (id === 'cancer.heal') {
+    const validCardIds = player.hand.map(card => card.id);
+    const costCardIds = (cancerHealDrafts[player.id]?.costCardIds || []).filter(id => validCardIds.includes(id)).slice(0, 1);
+    cancerHealDrafts[player.id] = {costCardIds};
+    return {skillId:id,skillName:'疗潮',costCardIds,validCardIds,ready:costCardIds.length === 1,requiresTarget:true,autoConfirm:false,
+      hint:'先选择 1 张任意手牌作为费用，再点击一名可回复生命的受伤角色；可以选择自己。'};
+  }
   if (id === 'scorpio.freezeAoe') {
     const validCardIds = player.hand.filter(card => card.element === 'water').map(card => card.id);
     const costCardIds = (scorpioPoisonDrafts[player.id]?.costCardIds || []).filter(id => validCardIds.includes(id)).slice(0,1);
@@ -2834,6 +2856,11 @@ function toggleSkillCostCard(playerId, cardId) {
   const player = state.players.find(candidate => candidate.id === playerId);
   const draft = activeSkillCostDraft(player);
   if (!draft || !draft.validCardIds.includes(cardId)) return;
+  if (draft.skillId === 'cancer.heal') {
+    cancerHealDrafts[playerId] = {costCardIds:draft.costCardIds.includes(cardId) ? [] : [cardId]};
+    render();
+    return;
+  }
   if (draft.skillId === 'scorpio.freezeAoe') {
     scorpioPoisonDrafts[player.id] = {costCardIds:draft.costCardIds.includes(cardId) ? [] : [cardId]};
     render();
@@ -2916,6 +2943,7 @@ function cancelActiveSkillCost(playerId) {
   delete ariesRamDrafts[playerId];
   delete leoRoarDrafts[playerId];
   delete leoOrderDrafts[playerId];
+  delete cancerHealDrafts[playerId];
   delete aquariusMassHealDrafts[playerId];
   delete waterCodexDrafts[playerId];
   delete taurusArmorDrafts[playerId];
@@ -2931,6 +2959,12 @@ function confirmActiveSkillCost(playerId, targetId = '') {
   const opponent = player ? selectedEnemyOf(player) : null;
   const target = targetId ? state.players.find(candidate => candidate.id === targetId) : opponent;
   if (!player || !draft || !draft.ready) return;
+  if (draft.skillId === 'cancer.heal') {
+    if (!canReleaseSkillCostOnSeat(playerId, targetId)) return;
+    delete cancerHealDrafts[playerId];
+    delete selectedSkills[playerId];
+    return action({type:'useSkill',playerId,skillId:'cancer.heal',targetId,cardIds:draft.costCardIds});
+  }
   if (draft.skillId === 'scorpio.freezeAoe') {
     if (!canReleaseSkillCostOnSeat(playerId, targetId)) return;
     delete scorpioPoisonDrafts[playerId];
@@ -3509,7 +3543,7 @@ function respondInfection(playerId, cardId = '') {
 function skipInfectionRescue(playerId) { return action({ type: 'skipRescue', playerId }); }
 function rescueWithCrabGuard(playerId, cardId) {
   const pending = state.pendingRescue || state.infection?.pendingDying;
-  if (!pending || pending.currentResponderId !== playerId) return;
+  if (!pending || pending.currentResponderId !== playerId || isOrdinaryRescueBlocked(state.players.find(player => player.id === pending.targetId))) return;
   return action({type:'useSkill',playerId,skillId:'cancer.rescue',targetId:pending.targetId,cardIds:[cardId]});
 }
 function chooseInfectionReward(playerId, option) {
@@ -3674,6 +3708,7 @@ function shouldKeepLeoRoarSelection(player, id) {
 
 function skill(player, id, event) {
   if (!player) return;
+  if (id === 'cancer.heal' && selectedSkills[player.id] === id && activeSkillCostDraft(player)) { render(); return; }
   if (id === 'scorpio.freezeAoe' && selectedSkills[player.id] === id && activeSkillCostDraft(player)) { render(); return; }
   if (id === 'pisces.observeTide' && selectedSkills[player.id] === id && activeSkillCostDraft(player)) {
     render();
@@ -3773,9 +3808,11 @@ function skill(player, id, event) {
     return;
   }
   if (id === 'scorpio.spoils') {
+    const targets = enemiesOf(player).filter(enemy => enemy.statuses?.frozen && !player.flags.iceArmorBlockedTargetIds.includes(enemy.id));
+    const target = targets.find(enemy => player.flags.scorpioFreeStingTargetIds.includes(enemy.id)) || targets[0];
     spoilsDrafts[player.id] = {
-      costCardId: player.hand[0]?.id || '',
-      targetId: enemiesOf(player).find(enemy => enemy.statuses?.frozen)?.id || opponent?.id || ''
+      costCardId: target && player.flags.scorpioFreeStingTargetIds.includes(target.id) ? '' : player.hand[0]?.id || '',
+      targetId: target?.id || ''
     };
     render();
     return;
@@ -3804,7 +3841,11 @@ function skill(player, id, event) {
     render();
     return;
   }
-  if (id === 'cancer.heal' && first && ally) return action({ type: 'useSkill', playerId: player.id, skillId: id, targetId: ally.id, cardIds: [first.id] });
+  if (id === 'cancer.heal') {
+    cancerHealDrafts[player.id] = {costCardIds:[]};
+    render();
+    return;
+  }
   if (id === 'capricorn.charge' && earth && opponent) {
     if (needsSkillDistanceCost(player, id, opponent)) {
       const nextDraft = { type: 'useSkill', playerId: player.id, skillId: id, targetId: opponent.id, cardIds: [earth.id] };
@@ -4061,15 +4102,23 @@ function confirmScorpioPeek(playerId) {
 }
 
 function setSpoilsDraft(playerId, field, value) {
-  spoilsDrafts[playerId] = { ...(spoilsDrafts[playerId] || {}), [field]: value };
+  const draft = spoilsDrafts[playerId] || {};
+  const player = state.players.find(player => player.id === playerId);
+  spoilsDrafts[playerId] = { ...draft, [field]: field === 'costCardId' && draft.costCardId === value ? '' : value };
+  if (field === 'targetId' && player?.flags.scorpioFreeStingTargetIds.includes(value)) spoilsDrafts[playerId].costCardId = '';
   render();
 }
 
 function confirmScorpioSpoils(playerId) {
   const draft = spoilsDrafts[playerId] || {};
   const player = state.players.find(p => p.id === playerId);
+  if (!player || !isSkillUsable(player, 'scorpio.spoils', state.activePlayerId === playerId && state.phase === 'main')) return;
+  const target = enemiesOf(player).find(enemy => enemy.id === draft.targetId && enemy.statuses?.frozen && !player.flags.iceArmorBlockedTargetIds.includes(enemy.id));
+  if (!target || (draft.costCardId && !player.hand.some(card => card.id === draft.costCardId))) return;
   const freeTarget = player?.flags?.scorpioFreeStingTargetIds?.includes(draft.targetId);
   if (!draft.targetId || (!freeTarget && !draft.costCardId)) return;
+  delete spoilsDrafts[playerId];
+  delete selectedSkills[playerId];
   return action({
     type: 'useSkill',
     playerId,
@@ -4080,6 +4129,7 @@ function confirmScorpioSpoils(playerId) {
 }
 
 function isSkillDisabled(player, id, canAct) {
+  if (!infoOnlySkills.has(id) && (player.hp <= 0 || player.eliminated)) return true;
   if (state.pendingSkillDecisions?.length && !infoOnlySkills.has(id)) return true;
   const canUseTurnStartSkill = state.activePlayerId === player.id && state.phase === 'draw';
   const silencedInOwnActionTurn = Boolean(player.statuses?.silence && state.activePlayerId === player.id);
@@ -4093,6 +4143,7 @@ function isSkillDisabled(player, id, canAct) {
   else if (id === 'weapon.airCompass') disabled = !canActivateEquipmentSkill(player, id);
   else if (id === 'infection.bossCommand') disabled = !isInitialInfectionBoss(player) || player.flags.usedInfectionBossCommand || silencedInOwnActionTurn || !canAct;
   else if (silencedInOwnActionTurn || !canAct) disabled = true;
+  else if (id === 'cancer.heal') disabled = player.flags.usedCancerHeal || player.hand.length === 0 || !state.players.some(canReceiveOrdinaryHealing);
   else if (id === 'aries.ram') disabled = player.flags.usedAriesRam || !ramCosts.some(card => card.element === 'fire');
   else if (id === 'aries.burnSoul') disabled = player.flags.usedAriesRam || player.flags.usedAriesBurnSoul || !ramCosts.some(card => card.element !== 'fire');
   else if (id === 'aquarius.massHeal') {
@@ -4100,11 +4151,25 @@ function isSkillDisabled(player, id, canAct) {
     const other = player.hand.find(card => card.id !== air?.id);
     disabled = player.flags.usedAquariusMassHeal || !air || !other;
   }
-  else if (id === 'gemini.steal') disabled = player.flags.usedGeminiSteal;
+  else if (id === 'gemini.steal') disabled = player.flags.usedGeminiSteal || player.hand.length === 0;
+  else if (id === 'taurus.armor') disabled = player.flags.usedTaurusArmor || player.armor >= player.maxArmor || !player.hand.some(card => card.element === 'earth');
+  else if (id === 'libra.harmony') {
+    const others = state.players.filter(target => target.id !== player.id && target.hp > 0 && !target.eliminated);
+    const airCount = player.hand.filter(card => card.element === 'air').length;
+    disabled = player.flags.usedLibraHarmony || !others.some(first => others.some(second => {
+      const difference = Math.abs(first.hand.length - second.hand.length);
+      return first.id !== second.id && difference >= 2 && Math.floor(difference / 2) <= airCount;
+    }));
+  }
+  else if (id === 'pisces.balance') {
+    const living = state.players.filter(target => target.hp > 0 && !target.eliminated);
+    const waterCount = player.hand.filter(card => card.element === 'water').length;
+    disabled = player.flags.usedPiscesBalance || !living.some(first => living.some(second => first.id !== second.id && Math.abs(first.hp - second.hp) <= waterCount));
+  }
   else if (id === 'pisces.observeTide') disabled = player.flags.usedPiscesObserveTide || player.hand.length === 0;
-  else if (id === 'scorpio.freezeAoe') disabled = player.flags.usedScorpioPoison || !player.hand.some(card => card.element === 'water');
-  else if (id === 'scorpio.spoils') disabled = player.flags.usedScorpioSting || (freeStingTargets.length === 0 && player.hand.length === 0) || !enemiesOf(player).some(enemy => enemy.statuses?.frozen);
-  else if (id === 'leo.roar') disabled = player.flags.usedLeoRoar || !player.hand.some(card => card.element === 'fire');
+  else if (id === 'scorpio.freezeAoe') disabled = player.flags.usedScorpioPoison || !player.hand.some(card => card.element === 'water') || !state.players.some(target => target.id !== player.id && target.hp > 0 && !target.eliminated && !player.flags.iceArmorBlockedTargetIds.includes(target.id));
+  else if (id === 'scorpio.spoils') disabled = player.flags.usedScorpioSting || !enemiesOf(player).some(enemy => enemy.statuses?.frozen && !player.flags.iceArmorBlockedTargetIds.includes(enemy.id) && (player.hand.length > 0 || freeStingTargets.includes(enemy.id)));
+  else if (id === 'leo.roar') disabled = player.flags.usedLeoRoar || !player.hand.some(card => card.element === 'fire') || !state.players.some(target => target.id !== player.id && target.hp > 0 && !target.eliminated && !player.flags.iceArmorBlockedTargetIds.includes(target.id));
   else if (id === 'leo.order') disabled = player.flags.usedLeoOrder || player.hand.length === 0;
   else if (id === 'sagittarius.seekEquipment') {
     disabled = player.flags.usedSagittariusSeek || player.hand.length < 2 || !player.hand.some(card => card.element === 'fire');
@@ -4406,11 +4471,12 @@ function skillInfo(player) {
   }
   if (id === 'scorpio.spoils' && state.activePlayerId === player.id && state.phase === 'main') {
     const freeTargets = player.flags?.scorpioFreeStingTargetIds || [];
+    const frozenTargets = enemiesOf(player).filter(enemy => enemy.statuses?.frozen && !player.flags.iceArmorBlockedTargetIds.includes(enemy.id));
+    const defaultTarget = frozenTargets.find(enemy => freeTargets.includes(enemy.id)) || frozenTargets[0];
     const draft = spoilsDrafts[player.id] || {
-      costCardId: player.hand[0]?.id || '',
-      targetId: enemiesOf(player).find(enemy => freeTargets.includes(enemy.id))?.id || enemiesOf(player).find(enemy => enemy.statuses?.frozen)?.id || ''
+      costCardId: defaultTarget && freeTargets.includes(defaultTarget.id) ? '' : player.hand[0]?.id || '',
+      targetId: defaultTarget?.id || ''
     };
-    const frozenTargets = enemiesOf(player).filter(enemy => enemy.statuses?.frozen);
     const costOptions = player.hand.map(card =>
       '<button class="choiceCard ' + (draft.costCardId === card.id ? 'selected' : '') + '" onclick="setSpoilsDraft(\'' + player.id + '\', \'costCardId\', \'' + card.id + '\')">' + cardText(card) + '</button>'
     ).join('');

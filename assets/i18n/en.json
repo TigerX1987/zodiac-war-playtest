@@ -882,5 +882,18 @@
   "张，本局共": " cards, match total ",
   "本地试玩 · 当前席位": "Playtest · Playing as ",
   "你所在的": "Your ",
-  "将认输，整局立即结束并进入结算。": " will surrender. The match ends immediately."
+  "将认输，整局立即结束并进入结算。": " will surrender. The match ends immediately.",
+  "${p0} 因双生摸 ${p1} 张风牌": "${p0} draws ${p1} Air cards from Twinborn.",
+  "不能发动其他星座的技能": "You cannot use another zodiac’s skill.",
+  "濒死或已出局角色不能发动主动技能": "Dying or eliminated characters cannot use active skills.",
+  "技能只能选择存活角色": "This skill requires a living target.",
+  "该技能需要恰好 1 张费用牌": "This skill requires exactly 1 payment card.",
+  "毒刺最多支付 1 张费用牌": "Sting accepts at most 1 payment card.",
+  "濒死或已出局的巨蟹不能发动蟹护": "Dying or eliminated Cancer cannot use Crab Guard.",
+  "阵亡判定后不能通过蟹护急救": "Crab Guard cannot rescue an eliminated character.",
+  "狮威禁止普通急救，请使用太阳": "Leo’s aura blocks ordinary rescue. Use the Sun.",
+  "蟹护需要恰好 1 张水牌": "Crab Guard requires exactly 1 Water card.",
+  "烈焰披风：每回合首次受到伤害后，伤害来源获得灼烧。": "Flame Cloak: after your first damage each turn, Burn the damage source.",
+  "${p0} 的烈焰披风令 ${p1} 获得灼烧": "${p0}'s Flame Cloak Burns ${p1}.",
+  "先选择 1 张任意手牌作为费用，再点击一名可回复生命的受伤角色；可以选择自己。": "Choose any 1 hand card as payment, then click a wounded character who can recover HP. You may choose yourself."
 }
