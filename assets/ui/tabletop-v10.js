@@ -258,9 +258,13 @@ window.TabletopV10 = {
   controls(handFocus, controls) {
     if (state.pendingSkillDecisions?.length) return '';
     const main = !setupPaused && state.phase === 'main' && state.activePlayerId === handFocus.id && handFocus.control === 'human';
+    const draft = main ? activeSkillCostDraft(handFocus) : null;
+    const synthesizing = draft?.skillId === 'weapon.waterCodex';
+    const canConfirm = synthesizing ? draft.ready && canActivateEquipmentSkill(handFocus, draft.skillId) : this.canConfirmCard();
+    const confirmHandler = synthesizing ? "confirmActiveSkillCost('" + handFocus.id + "')" : 'TabletopV10.confirmCard()';
     const many = (controls.match(/<button/g) || []).length > 2;
     return '<div class="v10-actions' + (many ? ' v10-actions-options' : '') + '">' + (main ? '<button id="v10-confirm-card" class="v10-confirm-card" ' +
-      (this.canConfirmCard() ? '' : 'disabled') + ' onclick="TabletopV10.confirmCard()">确认出牌</button>' : '') +
+      (canConfirm ? '' : 'disabled') + ' onclick="' + confirmHandler + '">' + (synthesizing ? '确认合成' : '确认出牌') + '</button>' : '') +
       controls.replace('结束出牌', '结束回合').replace('自动弃至体力', '自动弃牌') + '</div>';
   },
   header() {
