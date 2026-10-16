@@ -145,6 +145,10 @@ body.tabletopV10.matchOpen #board .v10-seat.dead, body.tabletopV10.matchOpen #bo
 .tabletopV10 .v10-compass > img { position: absolute; left: 6%; top: 0; width: 88%; height: 88%; object-fit: contain; opacity: .55; filter: saturate(.5); }
 .tabletopV10 .v10-zodiac { position: absolute; transform: translate(-50%, -50%); font-size: 12px; color: #8a9095; white-space: nowrap; line-height: 1; }
 .tabletopV10 .v10-zodiac.present { color: #ffe29c; text-shadow: 0 0 7px #ffaf44; font-weight: 700; }
+.tabletopV10 .v10-turn-direction { position: absolute; left: 50%; top: 45%; width: 48%; aspect-ratio: 1; transform: translate(-50%, -50%); display: grid; place-items: center; color: #efcf8b; font-size: 11px; text-shadow: 0 1px 3px #020810; }
+.tabletopV10 .v10-turn-direction svg { position: absolute; inset: 0; width: 100%; height: 100%; filter: drop-shadow(0 0 3px #ba873c66); }
+.tabletopV10 .v10-turn-direction.reverse svg { transform: scaleX(-1); }
+.tabletopV10 .v10-turn-direction b { position: relative; font-weight: 600; line-height: 1; white-space: nowrap; }
 .tabletopV10 .v10-compass > small { position: absolute; bottom: 0; left: 0; right: 0; text-align: center; color: #dfca94; font-family: SimSun, serif; font-size: 14px; }
 .tabletopV10 .v10-center { position: absolute; left: calc(var(--v10-self-width) + 24px); right: calc(var(--v10-side) + 24px); top: calc(var(--v10-seat-height) + 12px); bottom: calc(var(--v10-hand-height) + 26px); min-height: 0; }
 .tabletopV10 .v10-center .playedCardsLayer { inset: 0; min-height: 0; height: 100%; overflow: hidden; padding: 0; }
@@ -324,6 +328,7 @@ body.tabletopV10.matchOpen #board .setupPause {
   .tabletopV10 .v10-skill > small { font-size: 8px; }
   .tabletopV10 .v10-compass { right: 6px; top: 2px; height: calc(var(--v10-seat-height) - 40px); }
   .tabletopV10 .v10-zodiac { font-size: 9px; }
+  .tabletopV10 .v10-turn-direction { font-size: 9px; }
   .tabletopV10 .v10-compass > small { font-size: 10px; }
   .tabletopV10 .v10-center { left: calc(var(--v10-self-width) + 12px); right: calc(var(--v10-side) + 12px); top: calc(var(--v10-seat-height) + 8px); bottom: calc(var(--v10-hand-height) + 40px); }
   .tabletopV10 .v10-center .playedCardDisplay { height: min(130px, 100%); width: 72px; padding: 3px; }
