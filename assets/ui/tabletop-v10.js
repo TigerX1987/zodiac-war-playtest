@@ -42,6 +42,11 @@ window.TabletopV10 = {
     if (state.mode === 'infection') return player.infectionRole === 'initial' ? '初始感染者' : player.factionId === 'infected' ? '感染者' : '幸存者';
     return player.teamId + ' 队';
   },
+  relation(player) {
+    const local = localHumanPlayer();
+    const side = state.mode === 'infection' ? 'factionId' : 'teamId';
+    return player[side] === local?.[side] ? '友' : '敌';
+  },
   statuses(player) {
     const names = { burn: '灼烧', frozen: '冰冻', blind: '致盲', silence: '沉默', shield: '圣盾', abnormalImmunity: '异常免疫', sureHit: '必中', infection: '感染' };
     const artwork = { shield: 'shield', abnormalImmunity: 'immunity', sureHit: 'hit' };
@@ -136,7 +141,7 @@ window.TabletopV10 = {
       ' onfocusin="TabletopV10.hoverPlayer(\'' + player.id + '\',event)" onfocusout="TabletopV10.hideHover()"' +
       ' ondragover="allowCardDrop(event,\'' + player.id + '\')" ondrop="dropCardOnSeat(event,\'' + player.id + '\')">' +
       '<div class="v10-portrait">' + this.portrait(player, self) + '<header class="v10-player-heading"><strong>' + safeText(labels[player.characterId]) +
-      '</strong><span class="' + (player.infectionRole === 'initial' ? 'boss' : '') + '">' + safeText(this.identity(player)) + '</span></header>' +
+      '</strong><span class="' + (player.infectionRole === 'initial' ? 'boss' : '') + '">' + this.relation(player) + '</span></header>' +
       '<div class="v10-statuses">' + this.statuses(player) + '</div>' +
       (shouldShowRage(player) ? '<span class="v10-rage" title="怒气">' + this.icon('power') + player.rage + '</span>' : '') +
       '</div>' + this.vitals(player) + '<div class="v10-equipment-row">' + this.equipment(player, 'weapon') + this.equipment(player, 'armor') + '</div>' +

@@ -7,7 +7,7 @@ import {
   createInfectionGame,
 } from '../src/game/engine.mjs';
 
-const SERVER_VERSION = "web-8fcc6163a4b8e28a";
+const SERVER_VERSION = "web-043409e6808f312d";
 const MULLIGAN_SECONDS = 8;
 const MAIN_TOTAL_SECONDS = 65;
 const MAIN_IDLE_SECONDS = 20;
