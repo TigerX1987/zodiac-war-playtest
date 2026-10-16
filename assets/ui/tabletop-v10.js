@@ -52,6 +52,12 @@ window.TabletopV10 = {
     const artwork = { shield: 'shield', abnormalImmunity: 'immunity', sureHit: 'hit' };
     const ids = Object.keys(player.statuses || {}).filter(id => player.statuses[id]);
     if (player.infected) ids.push('infection');
+    const guardian = state.players.find(candidate => candidate.characterId === 'taurus' && candidate.id !== player.id && candidate.hp > 0 && !candidate.eliminated && candidate.flags.taurusGuardTargetId === player.id);
+    if (guardian) {
+      ids.push('taurusGuard');
+      names.taurusGuard = '牛守：由金牛座守护，可选择代承攻击';
+      artwork.taurusGuard = 'guard';
+    }
     const unique = [...new Set(ids)];
     const allLabels = unique.map(id => names[id] || id).join('、');
     return unique.map(id => {
