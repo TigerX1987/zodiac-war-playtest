@@ -17,7 +17,7 @@ const weaponNames                              = {
 };
 
 const armorNames                              = {
-  fire: '烈焰神盾',
+  fire: '烈焰披风',
   water: '寒冰护甲',
   air: '飓风斗篷',
   earth: '磐石壁垒',
