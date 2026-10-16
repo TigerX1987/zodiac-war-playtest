@@ -139,7 +139,7 @@ window.TabletopV10 = {
     const queued = selectedCard?.targetIds?.includes(player.id);
     const roarSelected = active && selectedSkills[active.id] === 'leo.roar' && isLeoRoarTargetSelected(active.id, player.id);
     const feedback = effectFeedbackFor(player);
-    const classes = ['seatCard', self ? 'v10-self stageFocusCard' : 'v10-seat', state.mode === 'infection' && player.infectionRole === 'initial' ? 'v10-boss' : '', state.activePlayerId === player.id ? 'current' : '',
+    const classes = ['seatCard', self ? 'v10-self stageFocusCard' : 'v10-seat', this.relation(player) === '友' ? 'v10-friend' : 'v10-enemy', state.mode === 'infection' && player.infectionRole === 'initial' ? 'v10-boss' : '', state.activePlayerId === player.id ? 'current' : '',
       queued ? 'target' : '', roarSelected ? 'multiSkillTargetSelected' : '', canTarget || canSkill ? 'selectedCardTarget' : '', player.eliminated || player.hp <= 0 ? 'dead' : '', feedback.className].filter(Boolean).join(' ');
     return '<article class="' + classes + '" data-player-id="' + player.id + '" tabindex="0" aria-label="' + safeText(labels[player.characterId] + '，' + this.identity(player) + (roarSelected ? '，狮吼已选目标' : '')) +
       '" onclick="TabletopV10.clickPlayer(\'' + player.id + '\')" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();TabletopV10.clickPlayer(\'' + player.id + '\')}"' +

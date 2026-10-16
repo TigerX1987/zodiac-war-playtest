@@ -72,11 +72,13 @@ body.tabletopV10.matchOpen #board .v10-arena {
 .tabletopV10 .v10-right-seat { position: absolute; right: 12px; top: calc(var(--v10-seat-height) + 18px); width: var(--v10-side); height: var(--v10-seat-height); }
 body.tabletopV10.matchOpen #board .v10-seat, body.tabletopV10.matchOpen #board .v10-self {
   display: grid; position: relative; grid-template: minmax(0, 1fr) 30px 46px / minmax(0, 1fr); gap: 0;
-  height: 100%; min-height: 0; max-height: none; min-width: 0; margin: 0; padding: 0; border: 2px solid #b08b4b;
+  height: 100%; min-height: 0; max-height: none; min-width: 0; margin: 0; padding: 0; border: 2px solid var(--v10-faction-border, #b08b4b);
   border-radius: 7px; background: #091521; color: #eee3c8; overflow: hidden; box-sizing: border-box; pointer-events: auto;
   box-shadow: 0 3px 12px #000a; transform: none; opacity: 1; filter: none;
 }
 body.tabletopV10.matchOpen #board .v10-self { grid-template-rows: minmax(0, 1fr) 32px 50px 90px; width: 100%; }
+.tabletopV10 .v10-friend { --v10-faction-border: #66b98b; }
+.tabletopV10 .v10-enemy { --v10-faction-border: #cf665f; }
 .tabletopV10 .v10-seat::before, .tabletopV10 .v10-seat::after, .tabletopV10 .v10-self::before, .tabletopV10 .v10-self::after, .tabletopV10 .v10-arena::before, .tabletopV10 .v10-arena::after { content: none; }
 .tabletopV10 .v10-portrait { position: relative; min-height: 0; overflow: hidden; background: #101c2a; }
 .tabletopV10 .v10-person-image {
@@ -90,6 +92,8 @@ body.tabletopV10.matchOpen #board .v10-self { grid-template-rows: minmax(0, 1fr)
 .tabletopV10 .v10-player-heading strong { min-width: 0; font-family: SimSun, serif; font-size: 18px; white-space: nowrap; line-height: 1.2; }
 .tabletopV10 .v10-player-heading > span { white-space: nowrap; font-size: 10px; color: #c6d9e9; border: 1px solid #41647e; padding: 1px 4px; background: #092035; }
 .tabletopV10 .v10-player-heading > span.boss { color: #f5b4aa; border-color: #9c5148; background: #3a171a; }
+.tabletopV10 .v10-friend .v10-player-heading > span:not(.boss) { color: #c4ecd4; border-color: #4c8666; background: #102c21; }
+.tabletopV10 .v10-enemy .v10-player-heading > span:not(.boss) { color: #f2c3bd; border-color: #9e514b; background: #341819; }
 .tabletopV10 .v10-statuses {
   position: absolute; bottom: 2px; left: 5px; right: 5px; display: flex; align-items: end; gap: 2px; pointer-events: none;
   padding: 0; margin: 0; min-height: 0; border: 0; background: none;
@@ -130,17 +134,19 @@ body.tabletopV10.matchOpen #board .v10-self { grid-template-rows: minmax(0, 1fr)
 .tabletopV10 .v10-skill > .v10-icon { width: 40px; height: 40px; object-fit: contain; }
 .tabletopV10 .v10-skill > small { position: absolute; top: 2px; left: 3px; font-family: "Microsoft YaHei", sans-serif; font-size: 9px; color: #c4b183; }
 .tabletopV10 .v10-skill.selected { border-color: #f5da8c; box-shadow: inset 0 0 0 1px #f5da8c; }
-body.tabletopV10.matchOpen #board .v10-seat.target, body.tabletopV10.matchOpen #board .v10-self.target { border-color: #ffd06d; box-shadow: 0 0 14px #f5a9439c; }
-body.tabletopV10.matchOpen #board .v10-seat.current, body.tabletopV10.matchOpen #board .v10-self.current { border-color: #e6c471; }
+body.tabletopV10.matchOpen #board .v10-seat.selectedCardTarget, body.tabletopV10.matchOpen #board .v10-self.selectedCardTarget {
+  outline: 2px dashed #f3d38c; outline-offset: 2px; box-shadow: 0 0 12px #e6bd6555;
+}
+body.tabletopV10.matchOpen #board .v10-seat.current, body.tabletopV10.matchOpen #board .v10-self.current {
+  outline: 2px solid #e6c471; outline-offset: 2px; box-shadow: 0 0 0 1px #07101b, 0 3px 12px #000c;
+}
+body.tabletopV10.matchOpen #board .v10-seat.target, body.tabletopV10.matchOpen #board .v10-self.target,
+body.tabletopV10.matchOpen #board .v10-seat.multiSkillTargetSelected, body.tabletopV10.matchOpen #board .v10-self.multiSkillTargetSelected {
+  outline: 3px solid #ffd06d; outline-offset: 2px; box-shadow: 0 0 14px #f5a9439c;
+}
 body.tabletopV10.matchOpen #board .v10-seat.v10-boss, body.tabletopV10.matchOpen #board .v10-self.v10-boss {
   border-color: #a7424d #752330 #401018;
   box-shadow: 0 0 0 1px #10070a, 0 3px 12px #000c;
-}
-body.tabletopV10.matchOpen #board .v10-seat.v10-boss.current, body.tabletopV10.matchOpen #board .v10-self.v10-boss.current {
-  box-shadow: 0 0 0 1px #10070a, 0 0 0 3px #e6c4719c, 0 3px 12px #000c;
-}
-body.tabletopV10.matchOpen #board .v10-seat.v10-boss.target, body.tabletopV10.matchOpen #board .v10-self.v10-boss.target {
-  box-shadow: 0 0 0 1px #10070a, 0 0 0 4px #ffd06d, 0 0 14px #f5a9439c;
 }
 body.tabletopV10.matchOpen #board .v10-seat.dead, body.tabletopV10.matchOpen #board .v10-self.dead { filter: saturate(.25); opacity: .65; }
 .tabletopV10 .v10-compass { position: absolute; top: 8px; right: 12px; width: var(--v10-side); height: calc(var(--v10-seat-height) - 8px); pointer-events: none; }
