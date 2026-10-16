@@ -2941,11 +2941,15 @@ function handleSkill(state           , action                                   
 
   if (action.skillId === 'pisces.observeTide') {
     if (player.flags.usedPiscesObserveTide) throw new Error('观潮每回合限一次');
-    player.flags.usedPiscesObserveTide = true;
     const ids = action.cardIds ?? [];
+    if (new Set(ids).size !== ids.length || ids.some(id => !player.hand.some(card => card.id === id))) {
+      throw new Error('观潮只能选择自己手牌中不重复的牌');
+    }
     for (const id of ids) state.discard.push(takeCard(player, id));
+    player.flags.usedPiscesObserveTide = true;
     drawCards(state, player, ids.length);
     triggerSkillMetric(state, action.skillId);
+    log(state, `${player.name} 发动观潮，弃 ${ids.length} 张牌，摸 ${ids.length} 张牌`, player.id, 'skill');
     return;
   }
 

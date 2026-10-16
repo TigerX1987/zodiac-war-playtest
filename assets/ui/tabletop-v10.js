@@ -260,11 +260,13 @@ window.TabletopV10 = {
     const main = !setupPaused && state.phase === 'main' && state.activePlayerId === handFocus.id && handFocus.control === 'human';
     const draft = main ? activeSkillCostDraft(handFocus) : null;
     const synthesizing = draft?.skillId === 'weapon.waterCodex';
-    const canConfirm = synthesizing ? draft.ready && canActivateEquipmentSkill(handFocus, draft.skillId) : this.canConfirmCard();
-    const confirmHandler = synthesizing ? "confirmActiveSkillCost('" + handFocus.id + "')" : 'TabletopV10.confirmCard()';
+    const observing = draft?.skillId === 'pisces.observeTide';
+    const confirmingSkill = synthesizing || observing;
+    const canConfirm = confirmingSkill ? draft.ready && (synthesizing ? canActivateEquipmentSkill(handFocus, draft.skillId) : isSkillUsable(handFocus, draft.skillId, main)) : this.canConfirmCard();
+    const confirmHandler = confirmingSkill ? "confirmActiveSkillCost('" + handFocus.id + "')" : 'TabletopV10.confirmCard()';
     const many = (controls.match(/<button/g) || []).length > 2;
     return '<div class="v10-actions' + (many ? ' v10-actions-options' : '') + '">' + (main ? '<button id="v10-confirm-card" class="v10-confirm-card" ' +
-      (canConfirm ? '' : 'disabled') + ' onclick="' + confirmHandler + '">' + (synthesizing ? '确认合成' : '确认出牌') + '</button>' : '') +
+      (canConfirm ? '' : 'disabled') + ' onclick="' + confirmHandler + '">' + (synthesizing ? '确认合成' : observing ? '确认观潮' : '确认出牌') + '</button>' : '') +
       controls.replace('结束出牌', '结束回合').replace('自动弃至体力', '自动弃牌') + '</div>';
   },
   header() {

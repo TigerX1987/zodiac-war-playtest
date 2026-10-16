@@ -102,7 +102,7 @@ export const SKILL_DESCRIPTIONS                                   = {
   },
   'pisces.observeTide': {
     name: '观潮',
-    text: '每回合一次，弃任意数量牌，摸等量牌。当前原型默认弃前 2 张手牌，便于快速测试资源循环。',
+    text: '出牌阶段每回合一次，自行选择任意数量的手牌弃置，再摸等量牌。没有牌数上限，确认前可调整或取消选择。',
   },
   'pisces.balance': {
     name: '平潮',
