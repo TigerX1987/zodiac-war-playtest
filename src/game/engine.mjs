@@ -987,6 +987,37 @@ function resolveSkillDecision(
   const player = findPlayer(state, decision.playerId);
   const source = decision.sourceId ? findPlayer(state, decision.sourceId) : undefined;
 
+  if (decision.kind === 'scorpioPoisonOffer') {
+    if (!source) throw new Error('蝎毒发动者不存在');
+    if (action.activate) {
+      const ids = action.cardIds ?? [];
+      const cost = ids.length === 1 ? player.hand.find(card => card.id === ids[0] && card.element === 'water') : undefined;
+      if (!cost) throw new Error('蝎毒只能交出 1 张水属性手牌');
+      source.hand.push(takeCard(player, cost.id));
+      log(state, `${player.name} 交给 ${source.name} 一张 ${cost.name}，抵消蝎毒冰冻`, player.id, 'skill');
+    } else {
+      queueSkillDecision(state, {kind:'scorpioPoisonFreeze',playerId:source.id,targetId:player.id});
+      log(state, `${player.name} 未交水牌，等待 ${source.name} 决定是否令其冰冻`, player.id, 'skill');
+    }
+  }
+
+  if (decision.kind === 'scorpioPoisonFreeze') {
+    const target = findPlayer(state, decision.targetId );
+    if (action.activate && target.hp > 0 && !target.eliminated) {
+      const alreadyFrozen = Boolean(target.statuses.frozen);
+      if (target.hand.length === 0) markFreeScorpioStingTarget(player, target);
+      addStatus(state, target, 'frozen', 1);
+      log(state, `${player.name} 发动蝎毒，令 ${target.name} 冰冻`, player.id, 'skill');
+      if (alreadyFrozen) {
+        triggerSkillMetric(state, 'scorpio.spoils');
+        log(state, `${player.name} 对已冰冻的 ${target.name} 额外发动一次毒刺`, player.id, 'skill');
+        resolveScorpioStingEffect(state, player, target);
+      }
+    } else {
+      log(state, `${player.name} 放弃令 ${target.name} 冰冻`, player.id, 'skill');
+    }
+  }
+
   if (decision.kind === 'taurusGuard') {
     const target = findPlayer(state, decision.targetId );
     if (action.activate) {
@@ -1595,15 +1626,6 @@ function makePendingAttack(state           , source             , card      , ta
     defensesRemaining: isCapricornWushuangAttack(source, card) ? 2 : 1,
     statusDefensePerfect: true,
   };
-}
-
-function isScorpioPoisonAttack(source             , card      ) {
-  return (
-    source.characterId === 'scorpio' &&
-    !source.flags.usedScorpioPoison &&
-    card.element === 'water' &&
-    (card.kind === 'normalAttack' || card.kind === 'statusAttack' || card.kind === 'aoe')
-  );
 }
 
 function isCapricornWushuangAttack(source             , card      ) {
@@ -2542,9 +2564,6 @@ function handlePlayCard(state           , action                                
       triggerSkillMetric(state, 'sagittarius.sharpshot');
       log(state, `${player.name} 的神射令本回合首次火属性普通攻击伤害 +1`, player.id, 'skill');
     }
-    const scorpioPoisonTargets = isScorpioPoisonAttack(player, card)
-      ? targets.map((candidate) => candidate.id)
-      : undefined;
     const usesStoredSureHit = card.kind === 'normalAttack' && Boolean(player.statuses.sureHit);
     if (usesStoredSureHit) delete player.statuses.sureHit;
     state.pendingAttack = makePendingAttack(
@@ -2557,12 +2576,6 @@ function handlePlayCard(state           , action                                
     if (usesStoredSureHit) state.pendingAttack.unavoidable = true;
     if (isFirstNormalAttackThisTurn && player.equipment.weapon?.element === 'earth') {
       state.pendingAttack.earthHammerCostRequired = true;
-    }
-    if (scorpioPoisonTargets) {
-      state.pendingAttack.scorpioPoisonTargetIds = scorpioPoisonTargets;
-      player.flags.usedScorpioPoison = true;
-      triggerSkillMetric(state, 'scorpio.freezeAoe');
-      log(state, `${player.name} 的蝎毒触发：本次水牌命中的目标响应后需额外交给天蝎 1 张牌`, player.id, 'skill');
     }
     if (energyCharged) {
       log(state, `${player.name} 的星能蓄能强化了本次攻击`, player.id, 'card');
@@ -3091,7 +3104,18 @@ function handleSkill(state           , action                                   
   }
 
   if (action.skillId === 'scorpio.freezeAoe') {
-    throw new Error('蝎毒是被动技能，只在本回合首次打出水属性攻击牌后触发');
+    if (player.characterId !== 'scorpio') throw new Error('只有天蝎可以发动蝎毒');
+    if (player.flags.usedScorpioPoison) throw new Error('蝎毒每回合限一次');
+    if (!action.targetId || target.id === player.id || target.hp <= 0 || target.eliminated) throw new Error('蝎毒需要指定一名其他存活角色');
+    const ids = action.cardIds ?? [];
+    const cost = ids.length === 1 ? player.hand.find(card => card.id === ids[0] && card.element === 'water') : undefined;
+    if (!cost) throw new Error('蝎毒需要弃置 1 张水属性手牌');
+    state.discard.push(takeCard(player, cost.id));
+    player.flags.usedScorpioPoison = true;
+    triggerSkillMetric(state, action.skillId);
+    log(state, `${player.name} 弃置 ${cost.name} 对 ${target.name} 发动蝎毒`, player.id, 'skill');
+    queueSkillDecision(state, {kind:'scorpioPoisonOffer',playerId:target.id,sourceId:player.id});
+    return;
   }
 
   if (action.skillId === 'scorpio.spoils') {
@@ -3730,6 +3754,14 @@ export function chooseAiAction(state           )                     {
   if (skillDecision) {
     const player = findPlayer(state, skillDecision.playerId);
     if (player.control !== 'ai') return undefined;
+    if (skillDecision.kind === 'scorpioPoisonOffer') {
+      const water = player.hand.find(card => card.element === 'water');
+      return {type:'resolveSkillDecision',playerId:player.id,activate:Boolean(water),cardIds:water ? [water.id] : []};
+    }
+    if (skillDecision.kind === 'scorpioPoisonFreeze') {
+      const target = aiHostilePlayers(state, player).find(candidate => candidate.id === skillDecision.targetId && !isIceArmorBlocked(player, candidate));
+      return {type:'resolveSkillDecision',playerId:player.id,activate:Boolean(target)};
+    }
     const preferredTarget = aiHostilePlayers(state, player)
       .find((candidate) => !isIceArmorBlocked(player, candidate));
     // Judgment is mandatory and permits self-targeting even when all enemies
@@ -3933,6 +3965,11 @@ export function chooseAiAction(state           )                     {
   if (!enemy) return { type: 'endMain', playerId: player.id };
   const outputEnemy = lowestHpEnemy(state, player, (candidate) => !isIceArmorBlocked(player, candidate));
   const canUseActiveSkill = !isSilencedInOwnActionTurn(state, player);
+
+  if (canUseActiveSkill && player.characterId === 'scorpio' && !player.flags.usedScorpioPoison && outputEnemy) {
+    const water = firstCost(player, card => card.element === 'water');
+    if (water) return {type:'useSkill',playerId:player.id,skillId:'scorpio.freezeAoe',targetId:outputEnemy.id,cardIds:[water.id]};
+  }
 
   if (
     canUseActiveSkill &&
