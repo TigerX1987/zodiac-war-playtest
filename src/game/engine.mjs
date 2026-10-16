@@ -2619,7 +2619,7 @@ function handleSkill(state           , action                                   
     return;
   }
   if (player.id !== state.activePlayerId) throw new Error('Only active player can use active skills');
-  if (isSilencedInOwnActionTurn(state, player)) throw new Error(`${player.name} is silenced`);
+  if (action.skillId !== 'scorpio.peek' && isSilencedInOwnActionTurn(state, player)) throw new Error(`${player.name} is silenced`);
   if (action.skillId === 'scorpio.peek' || action.skillId === 'taurus.guard') {
     if (state.phase !== 'draw') throw new Error('伏击只能在摸牌阶段前发动');
   } else if (state.phase !== 'main') {
@@ -3515,6 +3515,9 @@ export function applyAction(input           , action        )                   
   if (action.type === 'drawPhase') {
     if (state.phase !== 'draw') throw new Error('Not in draw phase');
     const player = findPlayer(state, state.activePlayerId);
+    if (player.characterId === 'scorpio' && !player.flags.usedScorpioPeek) {
+      throw new Error('请先完成锁定技伏击，再进入摸牌阶段');
+    }
     state.metrics.turns += 1;
     drawCards(state, player, state.firstTurn ? 1 : 2);
     state.phase = 'main';
@@ -3922,7 +3925,12 @@ export function chooseAiAction(state           )                     {
   const player = findPlayer(state, state.activePlayerId);
   if (player.control !== 'ai') return undefined;
 
-  if (state.phase === 'draw') return { type: 'drawPhase' };
+  if (state.phase === 'draw') {
+    if (player.characterId === 'scorpio' && !player.flags.usedScorpioPeek) {
+      return { type: 'useSkill', playerId: player.id, skillId: 'scorpio.peek' };
+    }
+    return { type: 'drawPhase' };
+  }
   if (state.phase === 'discard') return { type: 'discard', playerId: player.id, cardIds: autoDiscardToHp(state, player.id) };
   if (state.phase !== 'main') return undefined;
 
