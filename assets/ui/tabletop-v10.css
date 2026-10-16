@@ -395,3 +395,31 @@ body.tabletopV10.matchOpen #board .setupPause {
 @media (prefers-reduced-motion: reduce) {
   .tabletopV10 .v10-arena *, .tabletopV10 .v10-arena *::before, .tabletopV10 .v10-arena *::after { animation: none !important; transition: none !important; }
 }
+
+/* Language controls and longer labels keep the approved portrait dimensions. */
+.game-language { display: flex; align-items: center; gap: 10px; min-width: 0; font-family: system-ui, sans-serif; color: #e8d5a6; }
+.game-language > span { flex: 0 0 auto; font-size: 13px; }
+.game-language select { flex: 1 1 auto; min-width: 0; min-height: 44px; padding: 6px 10px; color: #f1dfb5; background: #0b1521; border: 1px solid #cda75b; border-radius: 4px; font-size: 16px; }
+#lobby-language { display: flex; justify-content: flex-end; margin-bottom: 14px; }
+#lobby-language .game-language { width: min(100%, 270px); }
+#game-language-error { color: #ffb6a9; font-size: 13px; white-space: normal; }
+.tabletopV10 .v10-settings-menu { max-height: calc(100dvh - var(--v10-header) - 26px); overflow-y: auto; box-sizing: border-box; }
+.tabletopV10 .v10-settings-menu .game-language { display: grid; gap: 4px; }
+.tabletopV10 .v10-title strong { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.tabletopV10 .v10-player-heading strong { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tabletopV10 .v10-player-heading > span { flex-shrink: 0; }
+.tabletopV10 .v10-skill > span { max-width: 100%; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tabletopV10 .v10-equipment > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.tabletopV10 .v10-dialog p, .tabletopV10 .skillChoiceBody, .tabletopV10 .v10-skill-hover { overflow-wrap: anywhere; }
+.tabletopV10 .v10-actions button { white-space: normal; line-height: 1.2; overflow-wrap: anywhere; }
+html:not([lang^="zh"]) .tabletopV10 .cardName { overflow-wrap: anywhere; hyphens: auto; }
+@media (max-height: 600px) and (orientation: landscape) {
+  html:not([lang^="zh"]) .tabletopV10 .v10-title > span:not(.v10-deck-count) { max-width: 24vw; overflow: hidden; text-overflow: ellipsis; }
+  html:not([lang^="zh"]) .tabletopV10 .v10-turn-direction b { max-width: 54px; white-space: normal; text-align: center; line-height: 1.2; }
+  html:not([lang^="zh"]) .tabletopV10 .v10-zodiac { max-width: 53px; overflow: hidden; text-overflow: ellipsis; }
+  html:not([lang^="zh"]) .tabletopV10 .v10-skill > span { font-size: 10px; }
+  html:not([lang^="zh"]) .tabletopV10 .v10-equipment > span { font-size: 9px; }
+  html:not([lang^="zh"]) .tabletopV10 .v10-actions > button, html:not([lang^="zh"]) .tabletopV10 .v10-actions .stageHandControls button { font-size: 15px; }
+}
+
+html:not([lang^="zh"]) .tabletopV10 .v10-hand-dock .cardBottom { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; max-height: 2.3em; line-height: 1.15; text-align: center; }

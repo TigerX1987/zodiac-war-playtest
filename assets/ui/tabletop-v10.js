@@ -298,7 +298,7 @@ window.TabletopV10 = {
       (this.exitMenuOpen ? '<div class="v10-exit-menu"><button onclick="TabletopV10.requestNavigation(\'exit\')">' + this.icon('exit') + '退出游戏</button>' +
       '<button class="v10-surrender" ' + (setupPaused || state.winnerTeamId ? 'disabled' : '') + ' onclick="TabletopV10.requestNavigation(\'surrender\')">' +
       this.icon('surrender') + '投降本局</button></div>' : '') +
-      (this.settingsOpen ? '<div class="v10-settings-menu">' + renderEntrustButton() +
+      (this.settingsOpen ? '<div class="v10-settings-menu">' + (window.GameI18n?.selector('battle-language-select') || '') + renderEntrustButton() +
         (this.inLandscapeFrame() ? '<button onclick="TabletopV10.leaveLandscape()">恢复普通显示</button>' : '') +
         '<span>本地试玩 · 当前席位 ' + safeText(labels[localHumanPlayer()?.characterId] || '') + '</span></div>' : '') +
       '</nav></header>';

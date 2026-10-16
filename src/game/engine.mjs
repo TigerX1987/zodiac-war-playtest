@@ -1,10 +1,10 @@
-import { createBaseDeck, createInfectionDeck, effectiveRitualCard, ELEMENT_LABELS, statusForElement } from '../content/cards.mjs?v=web-2b1387e9bc288804';
+import { createBaseDeck, createInfectionDeck, effectiveRitualCard, ELEMENT_LABELS, statusForElement } from '../content/cards.mjs?v=web-6e8d17843f312001';
 import {
   CHARACTERS,
   DEFAULT_CHARACTER_PAIR,
   DEFAULT_DEMO_CHARACTERS,
   zodiacSeatIndices,
-} from '../content/characters.mjs?v=web-2b1387e9bc288804';
+} from '../content/characters.mjs?v=web-6e8d17843f312001';
              
          
        
@@ -22,7 +22,7 @@ import {
               
             
                      
-import { shuffleWithSeed } from './random.mjs?v=web-2b1387e9bc288804';
+import { shuffleWithSeed } from './random.mjs?v=web-6e8d17843f312001';
 
 const STATUS_LABELS                           = {
   burn: '灼烧',
@@ -194,8 +194,22 @@ function makeMetrics()              {
   };
 }
 
-function log(state           , message        , playerId         , type = 'info') {
-  state.log.unshift({ type, message, playerId });
+// Retain source templates at their call sites; never infer them from a finished log.
+function messageTemplate(parts                      , ...values           ) {
+  let key = parts[0];
+  let message = parts[0];
+  const params                                  = {};
+  values.forEach((value, index) => {
+    params['p' + index] = typeof value === 'number' ? value : String(value);
+    key += String.fromCharCode(36) + '{p' + index + '}' + parts[index + 1];
+    message += String(value) + parts[index + 1];
+  });
+  return { message, key, params };
+}
+
+function log(state           , entry                                                                                    , playerId         , type = 'info') {
+  const localized = typeof entry === 'string' ? { message: entry, key: entry, params: {} } : entry;
+  state.log.unshift({ type, ...localized, playerId });
 }
 
 function makePlayedCardDisplay(
@@ -402,7 +416,7 @@ function payDistanceCost(
   if (reservedCardIds.includes(extraCostCardId)) throw new Error('距离费用不能复用已支付的牌');
   const cost = takeCard(player, extraCostCardId);
   state.discard.push(cost);
-  log(state, `${player.name} 跨距离指定 ${target.name}，额外弃置 1 张距离费用`, player.id, 'card');
+  log(state, messageTemplate`${player.name} 跨距离指定 ${target.name}，额外弃置 1 张距离费用`, player.id, 'card');
 }
 
 function leoOrderReceiverForTargets(state           , source             , targets               ) {
@@ -427,7 +441,7 @@ function payLeoOrderIfNeeded(
   if (reservedCardIds.includes(paymentCardId)) throw new Error('Leo order payment cannot reuse another cost card');
   const payment = takeCard(player, paymentCardId);
   leo.hand.push(payment);
-  log(state, `${player.name} pays ${payment.name} to ${leo.name} for Leo order`, player.id, 'skill');
+  log(state, messageTemplate`${player.name} pays ${payment.name} to ${leo.name} for Leo order`, player.id, 'skill');
 }
 
 function takeCard(player             , cardId        ) {
@@ -514,33 +528,33 @@ function drawCards(state           , player             , count        , filter 
     drawn += 1;
   }
 
-  if (drawn > 0) log(state, `${player.name} 摸 ${drawn} 张牌`, player.id, 'draw');
+  if (drawn > 0) log(state, messageTemplate`${player.name} 摸 ${drawn} 张牌`, player.id, 'draw');
 }
 
 function addStatus(state           , player             , status          , turns         ) {
   const isAbnormal = status !== 'shield' && status !== 'abnormalImmunity' && status !== 'sureHit';
   if (isAbnormal && player.statuses.shield) {
     delete player.statuses.shield;
-    log(state, `${player.name} 的圣盾免疫了 ${STATUS_LABELS[status]}`, player.id, 'shield');
+    log(state, messageTemplate`${player.name} 的圣盾免疫了 ${STATUS_LABELS[status]}`, player.id, 'shield');
     return;
   }
 
   if (isAbnormal && player.statuses.abnormalImmunity) {
     delete player.statuses.abnormalImmunity;
-    log(state, `${player.name} 的异常免疫抵消了 ${STATUS_LABELS[status]}`, player.id, 'status');
+    log(state, messageTemplate`${player.name} 的异常免疫抵消了 ${STATUS_LABELS[status]}`, player.id, 'status');
     return;
   }
 
   player.statuses[status] = { id: status, turns };
   if (isAbnormal) state.metrics.statusesApplied += 1;
-  log(state, `${player.name} 获得 ${STATUS_LABELS[status]}`, player.id, 'status');
+  log(state, messageTemplate`${player.name} 获得 ${STATUS_LABELS[status]}`, player.id, 'status');
 }
 
 function removeOneRoundStatuses(state           , player             ) {
   for (const status of ['burn', 'frozen', 'silence']              ) {
     if (player.statuses[status]) {
       delete player.statuses[status];
-      log(state, `${player.name} 的 ${STATUS_LABELS[status]} 消失`, player.id, 'status');
+      log(state, messageTemplate`${player.name} 的 ${STATUS_LABELS[status]} 消失`, player.id, 'status');
     }
   }
 }
@@ -557,12 +571,12 @@ function heal(
     !options.bypassInfection &&
     (player.infected || isInfectedFaction(player))
   ) {
-    log(state, `${player.name} 受到月蚀感染影响，不能通过普通恢复回复生命`, player.id, 'infection');
+    log(state, messageTemplate`${player.name} 受到月蚀感染影响，不能通过普通恢复回复生命`, player.id, 'infection');
     return;
   }
   const leoAuraActive = state.players.some((candidate) => candidate.hp > 0 && candidate.characterId === 'leo');
   if (!options.bypassLeoAura && leoAuraActive && player.statuses.burn) {
-    log(state, `${player.name} is burning and cannot recover because Leo aura is active`, player.id, 'heal');
+    log(state, messageTemplate`${player.name} is burning and cannot recover because Leo aura is active`, player.id, 'heal');
     return;
   }
   const before = player.hp;
@@ -579,9 +593,9 @@ function heal(
       cancer.flags.cancerTideBondDraws += 1;
       drawCards(state, cancer, 1);
       triggerSkillMetric(state, 'cancer.tideBond');
-      log(state, `${cancer.name} 因共潮摸 1 张牌`, cancer.id, 'skill');
+      log(state, messageTemplate`${cancer.name} 因共潮摸 1 张牌`, cancer.id, 'skill');
     }
-    log(state, `${player.name} 回复 ${healed} 点生命`, player.id, 'heal');
+    log(state, messageTemplate`${player.name} 回复 ${healed} 点生命`, player.id, 'heal');
   }
 }
 
@@ -608,7 +622,7 @@ function gainCapricornRage(state           , player                         , am
   if (!player || player.characterId !== 'capricorn' || amount <= 0) return;
   player.rage += amount;
   triggerSkillMetric(state, 'capricorn.unyielding');
-  log(state, `${player.name} 因蓄怒${reason}获得 ${amount} 点怒气`, player.id, 'skill');
+  log(state, messageTemplate`${player.name} 因蓄怒${reason}获得 ${amount} 点怒气`, player.id, 'skill');
 }
 
 const NORMAL_ABNORMAL_STATUSES             = ['burn', 'frozen', 'blind', 'silence'];
@@ -617,7 +631,7 @@ function cleanseInfection(state           , player             , source         
   if (!isInfectionMode(state) || !player.infected) return false;
   player.infected = false;
   state.infection .metrics.cleansed += 1;
-  log(state, `${player.name} 的感染被净化`, source?.id ?? player.id, 'infection');
+  log(state, messageTemplate`${player.name} 的感染被净化`, source?.id ?? player.id, 'infection');
   return true;
 }
 
@@ -627,7 +641,7 @@ function applyInfection(state           , player             , source           
   state.infection .metrics.applied += 1;
   log(
     state,
-    `${player.name} 获得感染${viaCard ? '（感染牌）' : ''}`,
+    messageTemplate`${player.name} 获得感染${viaCard ? '（感染牌）' : ''}`,
     source?.id ?? player.id,
     'infection',
   );
@@ -667,12 +681,12 @@ function transformSurvivor(state           , player             ) {
   player.maxHp = Math.max(1, (player.baseMaxHp ?? CHARACTERS[player.characterId].maxHp) - 1);
   player.hp = 1;
   state.infection .metrics.transformed += 1;
-  log(state, `${player.name} 转化为月蚀感染者，以 1 点生命复活`, player.id, 'transform');
+  log(state, messageTemplate`${player.name} 转化为月蚀感染者，以 1 点生命复活`, player.id, 'transform');
   const boss = state.players.find((candidate) => candidate.id === state.infection .bossPlayerId);
   if (boss && isAlive(boss)) {
     drawCards(state, boss, 2);
     triggerSkillMetric(state, 'infection.bossConversionReward');
-    log(state, `${boss.name} 因幸存者转化摸 2 张牌`, boss.id, 'infection');
+    log(state, messageTemplate`${boss.name} 因幸存者转化摸 2 张牌`, boss.id, 'infection');
   }
 }
 
@@ -770,7 +784,7 @@ function queueInfectionReward(
     endTurnAfterResolution,
   };
   state.phase = 'reward';
-  log(state, `${killer.name} 击杀感染者，可立即选择一项奖励`, killer.id, 'reward');
+  log(state, messageTemplate`${killer.name} 击杀感染者，可立即选择一项奖励`, killer.id, 'reward');
 }
 
 function eliminateInfectionPlayer(
@@ -790,9 +804,9 @@ function eliminateInfectionPlayer(
   recordInfectionDeath(state, player);
   if (player.infectionRole === 'initial') {
     state.infection .damageSpreadEnabled = false;
-    log(state, `${player.name} 作为初始感染者阵亡，伤害型感染传播停止`, player.id, 'eliminate');
+    log(state, messageTemplate`${player.name} 作为初始感染者阵亡，伤害型感染传播停止`, player.id, 'eliminate');
   } else {
-    log(state, `${player.name} 永久出局`, player.id, 'eliminate');
+    log(state, messageTemplate`${player.name} 永久出局`, player.id, 'eliminate');
   }
   if (defeatedFaction === 'infected') {
     queueInfectionReward(
@@ -880,7 +894,7 @@ function beginInfectionDying(
   state.phase = 'rescue';
   log(
     state,
-    `${target.name} 濒死，等待太阳急救${willTransform ? '；未获救将转化' : ''}`,
+    messageTemplate`${target.name} 濒死，等待太阳急救${willTransform ? '；未获救将转化' : ''}`,
     target.id,
     'rescue',
   );
@@ -906,7 +920,7 @@ function resolveInfectionReward(
       const chosen = statusId ?? NORMAL_ABNORMAL_STATUSES.find((id) => player.statuses[id]);
       if (!chosen || !player.statuses[chosen]) throw new Error('角色没有可移除的异常状态');
       delete player.statuses[chosen];
-      log(state, `${player.name} 通过击杀奖励移除异常`, player.id, 'reward');
+      log(state, messageTemplate`${player.name} 通过击杀奖励移除异常`, player.id, 'reward');
     }
   } else {
     drawCards(
@@ -916,7 +930,7 @@ function resolveInfectionReward(
       (card) => card.element === CHARACTERS[player.characterId].element,
     );
   }
-  log(state, `${player.name} 结算感染者击杀奖励：${option}`, player.id, 'reward');
+  log(state, messageTemplate`${player.name} 结算感染者击杀奖励：${option}`, player.id, 'reward');
   delete state.infection .pendingReward;
   continueAfterInfectionInterruption(
     state,
@@ -963,7 +977,7 @@ function checkInfectionVictory(state           ) {
     (player) => player.factionId === winner && isAlive(player),
   )?.id;
   clearPlayedCards(state);
-  log(state, `${winner === 'survivor' ? '幸存者' : '感染者'}阵营获胜`, state.winnerId, 'gameOver');
+  log(state, messageTemplate`${winner === 'survivor' ? '幸存者' : '感染者'}阵营获胜`, state.winnerId, 'gameOver');
 }
 
 function findTaurusGuardianFor(state           , target             ) {
@@ -989,7 +1003,7 @@ function offerTaurusGuardSetup(state           ) {
   const previous = state.players.find(candidate => candidate.id === player.flags.taurusGuardTargetId);
   if (previous && !isAlive(previous)) player.flags.taurusGuardTargetId = undefined;
   queueSkillDecision(state, {kind:'taurusGuardSetup',playerId:player.id});
-  log(state, `${player.name} 回合开始，可弃 1 张牌设置或更换牛守目标，也可延续原守护`, player.id, 'skill');
+  log(state, messageTemplate`${player.name} 回合开始，可弃 1 张牌设置或更换牛守目标，也可延续原守护`, player.id, 'skill');
 }
 
 function setTaurusGuardTarget(state           , player             , targetId                    , cardIds          ) {
@@ -1002,7 +1016,7 @@ function setTaurusGuardTarget(state           , player             , targetId   
   player.flags.taurusGuardTargetId = target.id;
   player.flags.taurusGuardSetupDone = true;
   triggerSkillMetric(state, 'taurus.guard');
-  log(state, `${player.name} 弃置 ${cost.name}，将牛守目标设为 ${target.name}`, player.id, 'skill');
+  log(state, messageTemplate`${player.name} 弃置 ${cost.name}，将牛守目标设为 ${target.name}`, player.id, 'skill');
 }
 
 function offerTaurusGuardInterception(state           ) {
@@ -1014,7 +1028,7 @@ function offerTaurusGuardInterception(state           ) {
   const guardian = findTaurusGuardianFor(state, target);
   if (!guardian || guardian.id === pending.sourceId) return;
   queueSkillDecision(state, {kind:'taurusGuard',playerId:guardian.id,sourceId:pending.sourceId,targetId:target.id});
-  log(state, `${guardian.name} 可以发动牛守，替代 ${target.name} 成为 ${pending.card.name} 的目标`, guardian.id, 'skill');
+  log(state, messageTemplate`${guardian.name} 可以发动牛守，替代 ${target.name} 成为 ${pending.card.name} 的目标`, guardian.id, 'skill');
 }
 
 function resumeAfterSkillDecisions(state           ) {
@@ -1053,10 +1067,10 @@ function resolveSkillDecision(
       const cost = ids.length === 1 ? player.hand.find(card => card.id === ids[0] && card.element === 'water') : undefined;
       if (!cost) throw new Error('蝎毒只能交出 1 张水属性手牌');
       source.hand.push(takeCard(player, cost.id));
-      log(state, `${player.name} 交给 ${source.name} 一张 ${cost.name}，抵消蝎毒冰冻`, player.id, 'skill');
+      log(state, messageTemplate`${player.name} 交给 ${source.name} 一张 ${cost.name}，抵消蝎毒冰冻`, player.id, 'skill');
     } else {
       queueSkillDecision(state, {kind:'scorpioPoisonFreeze',playerId:source.id,targetId:player.id});
-      log(state, `${player.name} 未交水牌，等待 ${source.name} 决定是否令其冰冻`, player.id, 'skill');
+      log(state, messageTemplate`${player.name} 未交水牌，等待 ${source.name} 决定是否令其冰冻`, player.id, 'skill');
     }
   }
 
@@ -1066,14 +1080,14 @@ function resolveSkillDecision(
       const alreadyFrozen = Boolean(target.statuses.frozen);
       if (target.hand.length === 0) markFreeScorpioStingTarget(player, target);
       addStatus(state, target, 'frozen', 1);
-      log(state, `${player.name} 发动蝎毒，令 ${target.name} 冰冻`, player.id, 'skill');
+      log(state, messageTemplate`${player.name} 发动蝎毒，令 ${target.name} 冰冻`, player.id, 'skill');
       if (alreadyFrozen) {
         triggerSkillMetric(state, 'scorpio.spoils');
-        log(state, `${player.name} 对已冰冻的 ${target.name} 额外发动一次毒刺`, player.id, 'skill');
+        log(state, messageTemplate`${player.name} 对已冰冻的 ${target.name} 额外发动一次毒刺`, player.id, 'skill');
         resolveScorpioStingEffect(state, player, target);
       }
     } else {
-      log(state, `${player.name} 放弃令 ${target.name} 冰冻`, player.id, 'skill');
+      log(state, messageTemplate`${player.name} 放弃令 ${target.name} 冰冻`, player.id, 'skill');
     }
   }
 
@@ -1085,7 +1099,7 @@ function resolveSkillDecision(
     } else {
       player.flags.taurusGuardSetupDone = true;
       const target = state.players.find(candidate => candidate.id === player.flags.taurusGuardTargetId && isAlive(candidate));
-      log(state, target ? `${player.name} 延续对 ${target.name} 的牛守` : `${player.name} 本回合不设置牛守目标`, player.id, 'skill');
+      log(state, target ? messageTemplate`${player.name} 延续对 ${target.name} 的牛守` : messageTemplate`${player.name} 本回合不设置牛守目标`, player.id, 'skill');
     }
   }
 
@@ -1101,9 +1115,9 @@ function resolveSkillDecision(
       if (pending.moonAmplifiedTargetId === target.id) pending.moonAmplifiedTargetId = player.id;
       triggerSkillMetric(state, 'taurus.guard');
       rememberCenterPlayedCard(state, source , pending.card, player.id, pending.targetIds, true);
-      log(state, `${player.name} 发动牛守，替代 ${target.name} 成为攻击目标，可以正常防御`, player.id, 'skill');
+      log(state, messageTemplate`${player.name} 发动牛守，替代 ${target.name} 成为攻击目标，可以正常防御`, player.id, 'skill');
     } else {
-      log(state, `${player.name} 本次不代承，${target.name} 仍为攻击目标`, player.id, 'skill');
+      log(state, messageTemplate`${player.name} 本次不代承，${target.name} 仍为攻击目标`, player.id, 'skill');
     }
     state.phase = 'response';
   }
@@ -1116,10 +1130,10 @@ function resolveSkillDecision(
     state.discard.push(discarded);
     if (source.statuses.silence) {
       applyDamage(state, source, player, 1, {skillKey:'taurus.thickSkin'});
-      log(state, `${player.name} 弃置 ${discarded.name} 发动厚皮，对已沉默的 ${source.name} 造成 1 点伤害`, player.id, 'skill');
+      log(state, messageTemplate`${player.name} 弃置 ${discarded.name} 发动厚皮，对已沉默的 ${source.name} 造成 1 点伤害`, player.id, 'skill');
     } else {
       addStatus(state, source, 'silence', 1);
-      log(state, `${player.name} 弃置 ${discarded.name} 发动厚皮，令 ${source.name} 沉默`, player.id, 'skill');
+      log(state, messageTemplate`${player.name} 弃置 ${discarded.name} 发动厚皮，令 ${source.name} 沉默`, player.id, 'skill');
     }
   }
 
@@ -1127,13 +1141,13 @@ function resolveSkillDecision(
     player.flags.usedVirgoDomainThisTurn = true;
     player.flags.virgoDomainActive = true;
     triggerSkillMetric(state, 'virgo.domain');
-    log(state, `${player.name} 发动净域，本回合后续卡牌伤害无效`, player.id, 'skill');
+    log(state, messageTemplate`${player.name} 发动净域，本回合后续卡牌伤害无效`, player.id, 'skill');
   }
 
   if (decision.kind === 'virgoDiscipline' && action.activate && source?.hp && source.hp > 0) {
     applyDamage(state, source, player, 1, { skillKey: 'virgo.discipline' });
     triggerSkillMetric(state, 'virgo.discipline');
-    log(state, `${player.name} 发动戒律，对 ${source.name} 造成 1 点普通伤害`, player.id, 'skill');
+    log(state, messageTemplate`${player.name} 发动戒律，对 ${source.name} 造成 1 点普通伤害`, player.id, 'skill');
   }
 
   if (decision.kind === 'aquariusWindCut' && action.activate) {
@@ -1153,7 +1167,7 @@ function resolveSkillDecision(
     player.flags.usedAquariusWindCutThisRound = true;
     applyDamage(state, target, player, 1);
     triggerSkillMetric(state, 'aquarius.windCut');
-    log(state, `${player.name} 发动断流，弃置 ${target.name} ${discarded.length} 张牌并造成 1 点伤害`, player.id, 'skill');
+    log(state, messageTemplate`${player.name} 发动断流，弃置 ${target.name} ${discarded.length} 张牌并造成 1 点伤害`, player.id, 'skill');
   }
 
   if (decision.kind === 'aquariusChalice' && action.activate) {
@@ -1188,7 +1202,7 @@ function resolveSkillDecision(
       player.hand.push(takeCardObj);
     }
     triggerSkillMetric(state, 'aquarius.stormEye');
-    log(state, `${player.name} 发动倾杯，与 ${new Set(targetIds).size} 名玩家交换 ${perTarget} 张手牌`, player.id, 'skill');
+    log(state, messageTemplate`${player.name} 发动倾杯，与 ${new Set(targetIds).size} 名玩家交换 ${perTarget} 张手牌`, player.id, 'skill');
   }
 
   if (decision.kind === 'libraJudgment') {
@@ -1197,7 +1211,7 @@ function resolveSkillDecision(
     assertNotIceArmorBlocked(player, target);
     addStatus(state, target, 'blind', 1);
     triggerSkillMetric(state, 'libra.judgment');
-    log(state, `${player.name} 发动审判，令 ${target.name} 获得致盲`, player.id, 'skill');
+    log(state, messageTemplate`${player.name} 发动审判，令 ${target.name} 获得致盲`, player.id, 'skill');
   }
 
   if (decision.kind === 'libraPerfectJudgment') {
@@ -1206,14 +1220,14 @@ function resolveSkillDecision(
     assertNotIceArmorBlocked(player, target);
     if (action.option === 'damage') {
       applyDamage(state, target, player, 1);
-      log(state, `${player.name} 发动完美审判，对 ${target.name} 造成 1 点普通伤害`, player.id, 'skill');
+      log(state, messageTemplate`${player.name} 发动完美审判，对 ${target.name} 造成 1 点普通伤害`, player.id, 'skill');
     } else if (action.option === 'steal') {
       if (!action.selectedCardId || !target.hand.some((card) => card.id === action.selectedCardId)) {
         throw new Error('完美审判需要选择目标 1 张手牌');
       }
       const stolen = takeCard(target, action.selectedCardId);
       player.hand.push(stolen);
-      log(state, `${player.name} 发动完美审判，获得 ${target.name} 的 1 张手牌`, player.id, 'skill');
+      log(state, messageTemplate`${player.name} 发动完美审判，获得 ${target.name} 的 1 张手牌`, player.id, 'skill');
     } else {
       throw new Error('完美审判需要选择伤害或获得手牌');
     }
@@ -1248,12 +1262,12 @@ function applyDamage(
     !sacredDamage
   ) {
     amount = 0;
-    log(state, `${target.name} 的净域免疫了卡牌伤害`, target.id, 'skill');
+    log(state, messageTemplate`${target.name} 的净域免疫了卡牌伤害`, target.id, 'skill');
   }
 
   if (target.statuses.shield && (amount > 0 || options.status)) {
     delete target.statuses.shield;
-    log(state, `${target.name} 的圣盾免疫了本次伤害或状态`, target.id, 'shield');
+    log(state, messageTemplate`${target.name} 的圣盾免疫了本次伤害或状态`, target.id, 'shield');
     return;
   }
 
@@ -1264,7 +1278,7 @@ function applyDamage(
     if (damage > 0 && !target.flags.usedEarthArmorReductionThisRound) {
       target.flags.usedEarthArmorReductionThisRound = true;
       damage = Math.max(0, damage - 1);
-      log(state, `${target.name} 的石壁令本轮首次伤害额外 -1`, target.id, 'equipment');
+      log(state, messageTemplate`${target.name} 的石壁令本轮首次伤害额外 -1`, target.id, 'equipment');
     }
   }
 
@@ -1273,7 +1287,7 @@ function applyDamage(
     const blocked = Math.min(target.armor, damage);
     target.armor -= blocked;
     damage -= blocked;
-    log(state, `${target.name} 的护甲抵消 ${blocked} 点伤害`, target.id, 'armor');
+    log(state, messageTemplate`${target.name} 的护甲抵消 ${blocked} 点伤害`, target.id, 'armor');
   }
 
   if (damage > 0) {
@@ -1284,7 +1298,7 @@ function applyDamage(
       if (source.id !== target.id && !sacredDamage) gainCapricornRage(state, source, 1, '造成实际伤害');
     }
     if (source && source.id !== target.id && !sacredDamage) gainCapricornRage(state, target, 1, '承受实际伤害');
-    log(state, `${target.name} 受到 ${damage} 点${options.trueDamage ? '真实' : ''}伤害`, target.id, 'damage');
+    log(state, messageTemplate`${target.name} 受到 ${damage} 点${options.trueDamage ? '真实' : ''}伤害`, target.id, 'damage');
     if (target.characterId === 'aries' && !sacredDamage) {
       target.flags.ariesBloodRageReady = true;
       triggerSkillMetric(state, 'aries.bloodRageReady');
@@ -1292,12 +1306,12 @@ function applyDamage(
     if (target.characterId === 'gemini' && !sacredDamage) {
       drawCards(state, target, 1, (card) => card.element === 'air');
       triggerSkillMetric(state, 'gemini.windForm');
-      log(state, `${target.name} 因双生摸 1 张风牌`, target.id, 'skill');
+      log(state, messageTemplate`${target.name} 因双生摸 1 张风牌`, target.id, 'skill');
     }
     if (target.characterId === 'sagittarius' && target.equipment.armor) {
       drawCards(state, target, 1);
       triggerSkillMetric(state, 'sagittarius.sharpshot');
-      log(state, `${target.name} 的神射因装备防具并承受实际伤害，摸 1 张牌`, target.id, 'skill');
+      log(state, messageTemplate`${target.name} 的神射因装备防具并承受实际伤害，摸 1 张牌`, target.id, 'skill');
     }
     if (
       isInfectionMode(state) &&
@@ -1314,7 +1328,7 @@ function applyDamage(
       drawCards(state, source, 1);
       state.infection .metrics.bossPassiveDraws += 1;
       triggerSkillMetric(state, 'infection.bossDrain');
-      log(state, `${source.name} 触发月蚀汲取：回复生命并摸 1 张牌`, source.id, 'infection');
+      log(state, messageTemplate`${source.name} 触发月蚀汲取：回复生命并摸 1 张牌`, source.id, 'infection');
     }
     if (
       isInfectionMode(state) &&
@@ -1332,17 +1346,17 @@ function applyDamage(
       target.hp > 0
     ) {
       queueSkillDecision(state, { kind: 'virgoDomain', playerId: target.id });
-      log(state, `${target.name} 可以发动净域，免疫本回合后续卡牌伤害`, target.id, 'skill');
+      log(state, messageTemplate`${target.name} 可以发动净域，免疫本回合后续卡牌伤害`, target.id, 'skill');
     }
     if (target.characterId === 'aquarius' && !sacredDamage && target.hp > 0) {
       // 倾杯（被动）：水瓶受到非神圣的实际伤害后，摸 2 张牌，并可选择换牌。
       drawCards(state, target, 2);
       triggerSkillMetric(state, 'aquarius.stormEye');
-      log(state, `${target.name} 的倾杯触发，摸 2 张牌`, target.id, 'skill');
+      log(state, messageTemplate`${target.name} 的倾杯触发，摸 2 张牌`, target.id, 'skill');
       const others = state.players.filter((candidate) => candidate.id !== target.id && candidate.hp > 0);
       if (others.length > 0 && target.hand.length > 0) {
         queueSkillDecision(state, { kind: 'aquariusChalice', playerId: target.id });
-        log(state, `${target.name} 可以选择发动倾杯，与至多 2 名玩家交换至多 2 张等量手牌`, target.id, 'skill');
+        log(state, messageTemplate`${target.name} 可以选择发动倾杯，与至多 2 名玩家交换至多 2 张等量手牌`, target.id, 'skill');
       }
     }
   }
@@ -1350,10 +1364,10 @@ function applyDamage(
   if (target.characterId === 'taurus' && isAlive(target) && (armorBefore > target.armor || damage > 0)) {
     drawCards(state, target, 1);
     triggerSkillMetric(state, 'taurus.thickSkin');
-    log(state, `${target.name} 因厚皮受伤后摸 1 张牌`, target.id, 'skill');
+    log(state, messageTemplate`${target.name} 因厚皮受伤后摸 1 张牌`, target.id, 'skill');
     if (source && source.id !== target.id && isAlive(source) && target.hand.length > 0) {
       queueSkillDecision(state, {kind:'taurusThickSkin',playerId:target.id,sourceId:source.id});
-      log(state, `${target.name} 可以弃 1 张牌发动厚皮，${source.statuses.silence ? '对已沉默的来源造成 1 点伤害' : '令伤害来源沉默'}`, target.id, 'skill');
+      log(state, messageTemplate`${target.name} 可以弃 1 张牌发动厚皮，${source.statuses.silence ? '对已沉默的来源造成 1 点伤害' : '令伤害来源沉默'}`, target.id, 'skill');
     }
   }
 
@@ -1374,16 +1388,16 @@ function triggerArmorAfterDamage(state           , target             , source  
   if (armor.element === 'fire' && !target.flags.firstAttackDamageApplied) {
     target.flags.firstAttackDamageApplied = true;
     addStatus(state, source, 'burn', 1);
-    log(state, `${target.name} 的火焰披风令 ${source.name} 获得灼烧`, target.id, 'equipment');
+    log(state, messageTemplate`${target.name} 的火焰披风令 ${source.name} 获得灼烧`, target.id, 'equipment');
   }
   if (armor.element === 'water') {
     if (!source.flags.iceArmorBlockedTargetIds.includes(target.id)) source.flags.iceArmorBlockedTargetIds.push(target.id);
-    log(state, `${target.name} 的寒冰护甲限制 ${source.name} 本回合继续输出`, target.id, 'equipment');
+    log(state, messageTemplate`${target.name} 的寒冰护甲限制 ${source.name} 本回合继续输出`, target.id, 'equipment');
   }
   if (armor.element === 'air' && !target.flags.firstAttackDamageApplied && source.hand.length > 0) {
     target.flags.firstAttackDamageApplied = true;
     state.discard.push(source.hand.shift() );
-    log(state, `${target.name} 的飓风斗篷令 ${source.name} 弃 1 张牌`, target.id, 'equipment');
+    log(state, messageTemplate`${target.name} 的飓风斗篷令 ${source.name} 弃 1 张牌`, target.id, 'equipment');
   }
 }
 
@@ -1442,7 +1456,7 @@ function checkDefeat(state           ) {
       eligibleResponderIds, passedResponderIds: [], currentResponderId: eligibleResponderIds[0],
     };
     state.phase = 'rescue';
-    log(state, `${target.name} 濒死，等待太阳、星能或蟹护急救`, target.id, 'rescue');
+    log(state, messageTemplate`${target.name} 濒死，等待太阳、星能或蟹护急救`, target.id, 'rescue');
     return;
   }
   const defeatedTeams = defeatedTeamIds(state);
@@ -1450,7 +1464,7 @@ function checkDefeat(state           ) {
     for (const player of state.players) {
       if (player.hp > 0 || player.eliminated || defeatedTeams.includes(player.teamId)) continue;
       player.eliminated = true;
-      log(state, `${player.name} 阵亡，退出行动序列`, player.id, 'defeat');
+      log(state, messageTemplate`${player.name} 阵亡，退出行动序列`, player.id, 'defeat');
     }
   };
   if (defeatedTeams.length === 0) {
@@ -1463,14 +1477,14 @@ function checkDefeat(state           ) {
     state.phase = 'gameOver';
     state.winnerId = undefined;
     state.winnerTeamId = undefined;
-    log(state, `${rescueReviewTeams.join('/')} 队进入急救复核，可使用太阳或星能急救`, undefined, 'defeat');
+    log(state, messageTemplate`${rescueReviewTeams.join('/')} 队进入急救复核，可使用太阳或星能急救`, undefined, 'defeat');
     return;
   }
   const winner = state.players.find((player) => !defeatedTeams.includes(player.teamId) && player.hp > 0);
   state.winnerId = winner?.id;
   state.winnerTeamId = winner?.teamId;
   state.phase = 'gameOver';
-  log(state, `${defeatedTeams.join('/')} 队全员濒死，${winner?.teamId ?? '对方'} 队获胜`, winner?.id, 'gameOver');
+  log(state, messageTemplate`${defeatedTeams.join('/')} 队全员濒死，${winner?.teamId ?? '对方'} 队获胜`, winner?.id, 'gameOver');
 }
 
 function moveTurnAfterDyingActivePlayer(state           , player             ) {
@@ -1480,7 +1494,7 @@ function moveTurnAfterDyingActivePlayer(state           , player             ) {
   advanceTurnOrder(state, player.id);
   state.phase = 'draw';
   state.firstTurn = false;
-  log(state, `${player.name} 濒死，行动立即结束`, player.id, 'defeat');
+  log(state, messageTemplate`${player.name} 濒死，行动立即结束`, player.id, 'defeat');
   offerTaurusGuardSetup(state);
   return true;
 }
@@ -1510,7 +1524,7 @@ function recordCardElement(state           , player             , card      , ch
     player.flags.libraRoundElements.push(element);
     drawCards(state, player, 1);
     triggerSkillMetric(state, 'libra.elementSense');
-    log(state, `${player.name} 的衡感触发，首次正式使用${element}属性牌`, player.id, 'skill');
+    log(state, messageTemplate`${player.name} 的衡感触发，首次正式使用${element}属性牌`, player.id, 'skill');
   }
 
   const turnElementCount = player.flags.usedCardElements.length;
@@ -1519,13 +1533,13 @@ function recordCardElement(state           , player             , card      , ch
   if (canTriggerLibraJudgment && turnElementCount >= 3 && !player.flags.usedLibraJudgmentThisTurn) {
     player.flags.usedLibraJudgmentThisTurn = true;
     queueSkillDecision(state, { kind: 'libraJudgment', playerId: player.id });
-    log(state, `${player.name} 的审判触发，等待选择目标`, player.id, 'skill');
+    log(state, messageTemplate`${player.name} 的审判触发，等待选择目标`, player.id, 'skill');
   }
 
   if (canTriggerLibraJudgment && turnElementCount >= 4 && !player.flags.usedLibraPerfectJudgmentThisTurn) {
     player.flags.usedLibraPerfectJudgmentThisTurn = true;
     queueSkillDecision(state, { kind: 'libraPerfectJudgment', playerId: player.id });
-    log(state, `${player.name} 的完美审判触发，等待选择效果和目标`, player.id, 'skill');
+    log(state, messageTemplate`${player.name} 的完美审判触发，等待选择效果和目标`, player.id, 'skill');
   }
 
   if (
@@ -1537,7 +1551,7 @@ function recordCardElement(state           , player             , card      , ch
     player.flags.usedGeminiExtraTurnThisRound = true;
     player.flags.grantedExtraTurn = true;
     triggerSkillMetric(state, 'gemini.extraTurn');
-    log(state, `${player.name} 的连星准备额外回合`, player.id, 'skill');
+    log(state, messageTemplate`${player.name} 的连星准备额外回合`, player.id, 'skill');
   }
 
 }
@@ -1635,13 +1649,13 @@ function offerEarthHammerBreak(state           , pending               ) {
   const source = findPlayer(state, pending.sourceId);
   const defender = findPlayer(state, pending.currentTargetId);
   if (defender.hand.length === 0) {
-    log(state, `${defender.name} 无牌支付撼岳锤的额外防御费用，防御无效`, defender.id, 'equipment');
+    log(state, messageTemplate`${defender.name} 无牌支付撼岳锤的额外防御费用，防御无效`, defender.id, 'equipment');
     triggerSkillMetric(state, 'weapon.earthHammer');
     resolveFailedDefense(state);
     return true;
   }
   state.phase = 'hammerBreak';
-  log(state, `${source.name} 的撼岳锤生效：${defender.name} 需额外弃 1 张手牌完成防御`, defender.id, 'equipment');
+  log(state, messageTemplate`${source.name} 的撼岳锤生效：${defender.name} 需额外弃 1 张手牌完成防御`, defender.id, 'equipment');
   return true;
 }
 
@@ -1652,9 +1666,9 @@ function applySuccessfulDefenseOutcome(state           ) {
 
   if (pending.card.kind === 'statusAttack' && pending.statusToApply && !pending.statusDefensePerfect) {
     addStatus(state, defender, pending.statusToApply, 1);
-    log(state, `${defender.name} 异属性防御：抵消伤害，但未抵消异常`, defender.id, 'defense');
+    log(state, messageTemplate`${defender.name} 异属性防御：抵消伤害，但未抵消异常`, defender.id, 'defense');
   } else {
-    log(state, `${defender.name} 完美防御成功`, defender.id, 'defense');
+    log(state, messageTemplate`${defender.name} 完美防御成功`, defender.id, 'defense');
   }
   finishCurrentHit(state);
 }
@@ -1712,7 +1726,7 @@ function finishCurrentHit(state           ) {
     pending.defensesRemaining = isCapricornWushuangAttack(source, pending.card) ? 2 : 1;
     pending.statusDefensePerfect = true;
     state.phase = 'response';
-    log(state, `${pending.card.name} 还需结算第 ${pending.hitsPerTarget - pending.hitsRemaining + 1} 次打击`, pending.sourceId, 'attack');
+    log(state, messageTemplate`${pending.card.name} 还需结算第 ${pending.hitsPerTarget - pending.hitsRemaining + 1} 次打击`, pending.sourceId, 'attack');
     return;
   }
   enterScorpioPoisonStepOrAdvance(state);
@@ -1735,7 +1749,7 @@ function enterScorpioPoisonStepOrAdvance(state           ) {
     pending.scorpioPoisonStep = true;
     pending.defensesRemaining = 0;
     state.phase = 'response';
-    log(state, `${target.name} must pay 1 water card to avoid Scorpio poison freeze`, target.id, 'skill');
+    log(state, messageTemplate`${target.name} must pay 1 water card to avoid Scorpio poison freeze`, target.id, 'skill');
     return;
   }
   clearPendingOrNextTarget(state);
@@ -1756,10 +1770,10 @@ function resolveScorpioPoisonPayment(state           , defender             , ca
   source.hand.push(card);
   if (card.element === 'water') {
     pending.scorpioPoisonPaidTargetIds = [...(pending.scorpioPoisonPaidTargetIds ?? []), defender.id];
-    log(state, `${defender.name} gives ${card.name} to ${source.name} to avoid Scorpio poison freeze`, defender.id, 'skill');
+    log(state, messageTemplate`${defender.name} gives ${card.name} to ${source.name} to avoid Scorpio poison freeze`, defender.id, 'skill');
   } else {
     addStatus(state, defender, 'frozen', 1);
-    log(state, `${defender.name} gives ${card.name} to ${source.name} and is frozen by Scorpio poison`, defender.id, 'skill');
+    log(state, messageTemplate`${defender.name} gives ${card.name} to ${source.name} and is frozen by Scorpio poison`, defender.id, 'skill');
   }
   pending.scorpioPoisonStep = false;
   rememberCenterPlayedCard(state, defender, card, pending.sourceId);
@@ -1774,7 +1788,7 @@ function acceptScorpioPoisonFreeze(state           ) {
   if (target.hand.length === 0) markFreeScorpioStingTarget(source, target);
   addStatus(state, target, 'frozen', 1);
   pending.scorpioPoisonStep = false;
-  log(state, `${target.name} failed to pay water and is frozen by Scorpio poison`, target.id, 'skill');
+  log(state, messageTemplate`${target.name} failed to pay water and is frozen by Scorpio poison`, target.id, 'skill');
   clearPendingOrNextTarget(state);
   return true;
 }
@@ -1802,9 +1816,9 @@ function resolveDefense(state           , defender             , defenseCard    
   if (defenseCard.kind === 'sun') {
     drawCards(state, defender, 1);
     pending.defensesRemaining -= 1;
-    log(state, `${defender.name} 使用太阳完美防御并摸 1 张牌`, defender.id, 'defense');
+    log(state, messageTemplate`${defender.name} 使用太阳完美防御并摸 1 张牌`, defender.id, 'defense');
     if (pending.defensesRemaining > 0) {
-      log(state, `${defender.name} defended once and still needs ${pending.defensesRemaining} defense card`, defender.id, 'defense');
+      log(state, messageTemplate`${defender.name} defended once and still needs ${pending.defensesRemaining} defense card`, defender.id, 'defense');
       return;
     }
     if (offerEarthHammerBreak(state, pending)) return;
@@ -1813,7 +1827,7 @@ function resolveDefense(state           , defender             , defenseCard    
   }
 
   if (defenseCard.kind === 'moon') {
-    log(state, `${defender.name} 使用月亮完美防御并反击`, defender.id, 'defense');
+    log(state, messageTemplate`${defender.name} 使用月亮完美防御并反击`, defender.id, 'defense');
     pending.defensesRemaining -= 1;
     applyDamage(state, source, defender, 1, { sacredDamage: true });
     if (state.phase === 'gameOver' || resolutionIsPending(state)) return;
@@ -1825,7 +1839,7 @@ function resolveDefense(state           , defender             , defenseCard    
     }
     if (moveTurnAfterDyingActivePlayer(state, source)) return;
     if (pending.defensesRemaining > 0) {
-      log(state, `${defender.name} defended once and still needs ${pending.defensesRemaining} defense card`, defender.id, 'defense');
+      log(state, messageTemplate`${defender.name} defended once and still needs ${pending.defensesRemaining} defense card`, defender.id, 'defense');
       return;
     }
     if (offerEarthHammerBreak(state, pending)) return;
@@ -1835,7 +1849,7 @@ function resolveDefense(state           , defender             , defenseCard    
 
   pending.defensesRemaining -= 1;
   if (pending.defensesRemaining > 0) {
-    log(state, `${defender.name} 防御成功 1 张，还需 ${pending.defensesRemaining} 张防御牌`, defender.id, 'defense');
+    log(state, messageTemplate`${defender.name} 防御成功 1 张，还需 ${pending.defensesRemaining} 张防御牌`, defender.id, 'defense');
     return;
   }
 
@@ -1888,11 +1902,11 @@ function resolveFailedDefense(state           ) {
   if (source.statuses.blind) {
     delete source.statuses.blind;
     if (pending.unavoidable) {
-      log(state, `${source.name} 的必中抵消了致盲影响`, source.id, 'status');
+      log(state, messageTemplate`${source.name} 的必中抵消了致盲影响`, source.id, 'status');
     } else {
       damage = 0;
       status = undefined;
-      log(state, `${source.name} 因致盲，本次攻击落空`, source.id, 'status');
+      log(state, messageTemplate`${source.name} 因致盲，本次攻击落空`, source.id, 'status');
     }
   }
 
@@ -1923,7 +1937,7 @@ function handleEarthHammerBreak(state           , action                        
   if (action.playerId !== defender.id) throw new Error('Only defender can resolve earth hammer cost');
 
   if (!action.cardId) {
-    log(state, `${defender.name} 放弃支付撼岳锤额外费用，防御无效`, defender.id, 'equipment');
+    log(state, messageTemplate`${defender.name} 放弃支付撼岳锤额外费用，防御无效`, defender.id, 'equipment');
     triggerSkillMetric(state, 'weapon.earthHammer');
     resolveFailedDefense(state);
     return;
@@ -1932,7 +1946,7 @@ function handleEarthHammerBreak(state           , action                        
   const card = takeCard(defender, action.cardId);
   state.discard.push(card);
   triggerSkillMetric(state, 'weapon.earthHammer');
-  log(state, `${defender.name} 额外弃置 ${card.name}，完成对撼岳锤攻击的防御`, defender.id, 'equipment');
+  log(state, messageTemplate`${defender.name} 额外弃置 ${card.name}，完成对撼岳锤攻击的防御`, defender.id, 'equipment');
   applySuccessfulDefenseOutcome(state);
 }
 
@@ -1952,7 +1966,7 @@ function endTurn(state           , player             , skipEndEffects = false) 
   ) {
     player.hp -= 1;
     state.infection .metrics.lifeLost += 1;
-    log(state, `${player.name} 因感染在回合结束时失去 1 点生命`, player.id, 'infection');
+    log(state, messageTemplate`${player.name} 因感染在回合结束时失去 1 点生命`, player.id, 'infection');
     if (player.hp <= 0) {
       beginInfectionDying(state, player, undefined, 'discard', true);
       if (state.phase === 'gameOver' || resolutionIsPending(state)) return;
@@ -2006,12 +2020,12 @@ function triggerEquipmentLeftOwner(
 ) {
   if (card.kind === 'armor' && card.element === 'earth' && isAlive(owner)) {
     heal(state, owner, 1, owner);
-    log(state, `${owner.name} 的石壁离开装备区`, owner.id, 'equipment');
+    log(state, messageTemplate`${owner.name} 的石壁离开装备区`, owner.id, 'equipment');
   }
   if (owner.characterId !== 'sagittarius' || !isAlive(owner)) return;
   drawCards(state, owner, 2);
   triggerSkillMetric(state, 'sagittarius.bowcraft');
-  log(state, `${owner.name} 的整弓触发：${card.name} 离开装备区，摸 2 张牌`, owner.id, 'skill');
+  log(state, messageTemplate`${owner.name} 的整弓触发：${card.name} 离开装备区，摸 2 张牌`, owner.id, 'skill');
 }
 
 function playEquipment(state           , player             , card      ) {
@@ -2031,7 +2045,7 @@ function playEquipment(state           , player             , card      ) {
     }
     player.equipment.armor = card;
   }
-  log(state, `${player.name} 装备 ${card.name}`, player.id, 'equipment');
+  log(state, messageTemplate`${player.name} 装备 ${card.name}`, player.id, 'equipment');
 }
 
 function handleMulligan(state           , action                                       ) {
@@ -2044,9 +2058,9 @@ function handleMulligan(state           , action                                
     const replaceCount = player.hand.length;
     state.discard.push(...player.hand.splice(0));
     drawCards(state, player, replaceCount);
-    log(state, `${player.name} 更换起手牌，弃 ${replaceCount} 张并重摸 ${replaceCount} 张`, player.id, 'setup');
+    log(state, messageTemplate`${player.name} 更换起手牌，弃 ${replaceCount} 张并重摸 ${replaceCount} 张`, player.id, 'setup');
   } else {
-    log(state, `${player.name} 保留起手牌`, player.id, 'setup');
+    log(state, messageTemplate`${player.name} 保留起手牌`, player.id, 'setup');
   }
 
   state.mulliganPendingPlayerIds.splice(pendingIndex, 1);
@@ -2057,7 +2071,7 @@ function handleMulligan(state           , action                                
 
   state.activePlayerId = state.startingPlayerId;
   state.phase = 'draw';
-  log(state, `起手选择完成，轮到 ${findPlayer(state, state.activePlayerId).name} 摸牌`, state.activePlayerId, 'setup');
+  log(state, messageTemplate`起手选择完成，轮到 ${findPlayer(state, state.activePlayerId).name} 摸牌`, state.activePlayerId, 'setup');
   offerTaurusGuardSetup(state);
 }
 
@@ -2111,7 +2125,7 @@ function reviveGameIfRescued(
   state.phase = 'main';
   state.winnerId = undefined;
   state.winnerTeamId = undefined;
-  log(state, `${target.name} 通过${rescueName}急救成功，牌局继续`, target.id, event);
+  log(state, messageTemplate`${target.name} 通过${rescueName}急救成功，牌局继续`, target.id, event);
 }
 
 function resolveInfectionRescueWithSun(
@@ -2139,7 +2153,7 @@ function resolveInfectionRescueWithSun(
   });
   addStatus(state, target, 'shield');
   delete state.infection .pendingDying;
-  log(state, `${player.name} 使用太阳急救 ${target.name}`, player.id, 'sun');
+  log(state, messageTemplate`${player.name} 使用太阳急救 ${target.name}`, player.id, 'sun');
   continueAfterInfectionInterruption(
     state,
     pending.resumePhase,
@@ -2160,7 +2174,7 @@ function playSun(state           , player             , card      , targetId    
     state.discard.push(card);
     rescueHeal(state, target, 1, player, { bypassLeoAura: true });
     addStatus(state, target, 'shield');
-    log(state, `${player.name} 使用太阳急救 ${target.name}`, player.id, 'sun');
+    log(state, messageTemplate`${player.name} 使用太阳急救 ${target.name}`, player.id, 'sun');
     if (state.pendingRescue) return finishStandardRescue(state);
     reviveGameIfRescued(state, target, '太阳');
     if (state.phase !== 'gameOver') checkDefeat(state);
@@ -2182,7 +2196,7 @@ function playSun(state           , player             , card      , targetId    
     bypassInfection: isInfectionMode(state),
   });
   for (const status of ['burn', 'frozen', 'blind', 'silence']              ) delete target.statuses[status];
-  log(state, `${player.name} 使用太阳：获得本属性牌、回复并净化`, player.id, 'sun');
+  log(state, messageTemplate`${player.name} 使用太阳：获得本属性牌、回复并净化`, player.id, 'sun');
 }
 
 function playEnergyRescue(state           , player             , card      , targetId         ) {
@@ -2192,7 +2206,7 @@ function playEnergyRescue(state           , player             , card      , tar
   requireStandardDyingRescueTarget(state, target, '星能急救');
   state.discard.push(card);
   rescueHeal(state, target, 1, player);
-  log(state, `${player.name} 使用星能急救 ${target.name}`, player.id, 'card');
+  log(state, messageTemplate`${player.name} 使用星能急救 ${target.name}`, player.id, 'card');
   if (state.pendingRescue) return finishStandardRescue(state);
   reviveGameIfRescued(state, target, '星能', 'card');
   if (state.phase !== 'gameOver') checkDefeat(state);
@@ -2223,7 +2237,7 @@ function playRitual(
     state.infection .metrics.infectionCardsPlayed += 1;
     state.phase = 'infectionResponse';
     rememberCenterPlayedCard(state, player, effectiveRitualCard(card, true), target.id);
-    log(state, `${player.name} 对 ${target.name} 使用${card.element ?? ''}感染牌`, player.id, 'infection');
+    log(state, messageTemplate`${player.name} 对 ${target.name} 使用${card.element ?? ''}感染牌`, player.id, 'infection');
     return;
   }
 
@@ -2289,7 +2303,7 @@ function handleInfectionResponse(
       : responseCard,
     source.id,
   );
-  log(state, `${target.name} 使用${responseCard.name}抵消感染牌`, target.id, 'infection');
+  log(state, messageTemplate`${target.name} 使用${responseCard.name}抵消感染牌`, target.id, 'infection');
   delete state.infection .pendingInfectionCard;
   state.phase = pending.resumePhase;
   checkInfectionVictory(state);
@@ -2303,13 +2317,13 @@ function handleSkipRescue(
     const pending = state.pendingRescue;
     if (pending.currentResponderId !== action.playerId) throw new Error('当前不是该角色的急救时机');
     pending.passedResponderIds.push(action.playerId);
-    log(state, `${findPlayer(state, action.playerId).name} 放弃急救 ${findPlayer(state, pending.targetId).name}`, action.playerId, 'rescue');
+    log(state, messageTemplate`${findPlayer(state, action.playerId).name} 放弃急救 ${findPlayer(state, pending.targetId).name}`, action.playerId, 'rescue');
     const next = pending.eligibleResponderIds.find(id => !pending.passedResponderIds.includes(id));
     if (next) pending.currentResponderId = next;
     else {
       const target = findPlayer(state, pending.targetId);
       target.eliminated = true;
-      log(state, `${target.name} 未获急救，阵亡并退出行动序列`, target.id, 'defeat');
+      log(state, messageTemplate`${target.name} 未获急救，阵亡并退出行动序列`, target.id, 'defeat');
       finishStandardRescue(state);
     }
     return;
@@ -2338,7 +2352,7 @@ function playMoon(state           , player             , card      , targetId   
     pending.moonAmplifiedTargetId = target.id;
     state.discard.push(card);
     rememberCenterPlayedCard(state, player, card, target.id);
-    log(state, `${player.name} 使用月亮增伤：本次对 ${target.name} 的伤害 +1`, player.id, 'moon');
+    log(state, messageTemplate`${player.name} 使用月亮增伤：本次对 ${target.name} 的伤害 +1`, player.id, 'moon');
     return;
   }
   state.discard.push(card);
@@ -2347,7 +2361,7 @@ function playMoon(state           , player             , card      , targetId   
   const discarded = target.hand.shift();
   if (discarded) state.discard.push(discarded);
   addStatus(state, target, 'silence', 1);
-  log(state, `${player.name} 使用月亮窥视与诅咒：弃 ${target.name} 1 张牌并施加沉默`, player.id, 'moon');
+  log(state, messageTemplate`${player.name} 使用月亮窥视与诅咒：弃 ${target.name} 1 张牌并施加沉默`, player.id, 'moon');
 }
 
 function handleCancerRescue(state           , action                                       , player             ) {
@@ -2375,7 +2389,7 @@ function handleCancerRescue(state           , action                            
   player.flags.usedCancerRescueThisRound = true;
   rescueHeal(state, target, 1, player);
   triggerSkillMetric(state, action.skillId);
-  log(state, `${player.name} 发动蟹护急救 ${target.name}`, player.id, 'skill');
+  log(state, messageTemplate`${player.name} 发动蟹护急救 ${target.name}`, player.id, 'skill');
   if (state.pendingRescue) return finishStandardRescue(state);
   if (isInfectionMode(state) && infectionPending) {
     delete state.infection .pendingDying;
@@ -2418,7 +2432,7 @@ function handlePlayCard(state           , action                                
     if (card.fusion.armorGain > 0) {
       const armorBefore = player.armor;
       player.armor = Math.min(player.maxArmor, player.armor + card.fusion.armorGain);
-      log(state, `${player.name} 的合成牌获得 ${player.armor - armorBefore} 点护甲`, player.id, 'equipment');
+      log(state, messageTemplate`${player.name} 的合成牌获得 ${player.armor - armorBefore} 点护甲`, player.id, 'equipment');
     }
     if (card.fusion.attackCount === 0) {
       clearCenterPlayedCards(state);
@@ -2427,7 +2441,7 @@ function handlePlayCard(state           , action                                
       if (card.fusion.sureHit) addStatus(state, player, 'sureHit');
       log(
         state,
-        `${player.name} 使用 ${card.name}${card.fusion.sureHit ? '，下一张普通攻击必中且不可防御' : ''}`,
+        messageTemplate`${player.name} 使用 ${card.name}${card.fusion.sureHit ? '，下一张普通攻击必中且不可防御' : ''}`,
         player.id,
         'equipment',
       );
@@ -2460,7 +2474,7 @@ function handlePlayCard(state           , action                                
     clearCenterPlayedCards(state);
     state.discard.push(card);
     player.flags.energyChargeElement = card.element;
-    log(state, `${player.name} 使用${card.name}蓄能：下一张同属性普通攻击或状态攻击伤害 +1`, player.id, 'card');
+    log(state, messageTemplate`${player.name} 使用${card.name}蓄能：下一张同属性普通攻击或状态攻击伤害 +1`, player.id, 'card');
     return;
   }
 
@@ -2487,14 +2501,14 @@ function handlePlayCard(state           , action                                
     state.discard.push(card);
     if (card.element === 'fire') {
       applyDamage(state, target, player, 1, { cardDamage: true });
-      log(state, `${player.name} 发动元素对决，${target.name} 失去 1 点生命`, player.id, 'card');
+      log(state, messageTemplate`${player.name} 发动元素对决，${target.name} 失去 1 点生命`, player.id, 'card');
     } else if (card.element === 'water') {
       const stolen = takeWaterStealableCard(target, action.selectedCardId);
       if (stolen) {
         player.hand.push(stolen);
-        log(state, `${player.name} 发动潮汐窃取，获得 ${target.name} 1 张手牌`, player.id, 'card');
+        log(state, messageTemplate`${player.name} 发动潮汐窃取，获得 ${target.name} 1 张手牌`, player.id, 'card');
       } else {
-        log(state, `${player.name} 发动潮汐窃取，但 ${target.name} 没有手牌`, player.id, 'card');
+        log(state, messageTemplate`${player.name} 发动潮汐窃取，但 ${target.name} 没有手牌`, player.id, 'card');
       }
     } else if (card.element === 'air') {
       const removableEquipment = [target.equipment.weapon, target.equipment.armor]
@@ -2508,14 +2522,14 @@ function handlePlayCard(state           , action                                
         state.discard.push(discarded);
         const removedEquipment = removableEquipment.find((candidate) => candidate.id === discarded.id);
         if (removedEquipment) triggerEquipmentLeftOwner(state, target, removedEquipment);
-        log(state, `${player.name} 发动风之制裁，弃置 ${target.name} 1 张手牌`, player.id, 'card');
+        log(state, messageTemplate`${player.name} 发动风之制裁，弃置 ${target.name} 1 张手牌`, player.id, 'card');
       } else {
         addStatus(state, target, 'blind', 1);
-        log(state, `${player.name} 发动风之制裁，${target.name} 没有手牌并获得致盲`, player.id, 'card');
+        log(state, messageTemplate`${player.name} 发动风之制裁，${target.name} 没有手牌并获得致盲`, player.id, 'card');
       }
     } else {
       drawCards(state, player, 2);
-      log(state, `${player.name} 发动石之宝藏，摸 2 张牌`, player.id, 'card');
+      log(state, messageTemplate`${player.name} 发动石之宝藏，摸 2 张牌`, player.id, 'card');
     }
     return;
   }
@@ -2582,7 +2596,7 @@ function handlePlayCard(state           , action                                
     if (card.kind === 'aoe' && player.characterId === 'capricorn') {
       if (player.rage > 0) {
         player.rage -= 1;
-        log(state, `${player.name} 使用 AOE 消耗 1 点怒气`, player.id, 'skill');
+        log(state, messageTemplate`${player.name} 使用 AOE 消耗 1 点怒气`, player.id, 'skill');
       } else {
         applyDamage(state, player, player, 1, { sacredDamage: true });
         if (state.phase === 'gameOver') return;
@@ -2600,7 +2614,7 @@ function handlePlayCard(state           , action                                
       player.flags.usedSagittariusFirstFireAttack = true;
       attackDamage += 1;
       triggerSkillMetric(state, 'sagittarius.sharpshot');
-      log(state, `${player.name} 的神射令本回合首次火属性普通攻击伤害 +1`, player.id, 'skill');
+      log(state, messageTemplate`${player.name} 的神射令本回合首次火属性普通攻击伤害 +1`, player.id, 'skill');
     }
     const usesStoredSureHit = card.kind === 'normalAttack' && Boolean(player.statuses.sureHit);
     if (usesStoredSureHit) delete player.statuses.sureHit;
@@ -2616,13 +2630,13 @@ function handlePlayCard(state           , action                                
       state.pendingAttack.earthHammerCostRequired = true;
     }
     if (energyCharged) {
-      log(state, `${player.name} 的星能蓄能强化了本次攻击`, player.id, 'card');
+      log(state, messageTemplate`${player.name} 的星能蓄能强化了本次攻击`, player.id, 'card');
     }
-    log(state, `${player.name} 对 ${targets.map((candidate) => candidate.name).join('、')} 使用 ${card.name}`, player.id, 'attack');
+    log(state, messageTemplate`${player.name} 对 ${targets.map((candidate) => candidate.name).join('、')} 使用 ${card.name}`, player.id, 'attack');
     state.phase = 'response';
     offerTaurusGuardInterception(state);
     if (state.pendingAttack.unavoidable) {
-      log(state, `${card.name} 必中且不可防御，直接结算`, player.id, 'attack');
+      log(state, messageTemplate`${card.name} 必中且不可防御，直接结算`, player.id, 'attack');
       resolveUnavoidableAttack(state);
     } else {
       state.phase = 'response';
@@ -2633,12 +2647,12 @@ function handlePlayCard(state           , action                                
 function resolveScorpioStingEffect(state           , player             , target             ) {
   if (target.armor > 0) {
     target.armor = Math.max(0, target.armor - 1);
-    log(state, `${player.name} uses Scorpio sting to remove 1 armor from ${target.name}`, player.id, 'skill');
+    log(state, messageTemplate`${player.name} uses Scorpio sting to remove 1 armor from ${target.name}`, player.id, 'skill');
     return;
   }
   if (target.statuses.shield) {
     delete target.statuses.shield;
-    log(state, `${player.name} uses Scorpio sting to remove shield from ${target.name}`, player.id, 'skill');
+    log(state, messageTemplate`${player.name} uses Scorpio sting to remove shield from ${target.name}`, player.id, 'skill');
     return;
   }
   if (target.equipment.armor) {
@@ -2646,7 +2660,7 @@ function resolveScorpioStingEffect(state           , player             , target
     state.discard.push(removedArmor);
     delete target.equipment.armor;
     triggerEquipmentLeftOwner(state, target, removedArmor);
-    log(state, `${player.name} uses Scorpio sting to remove armor equipment from ${target.name}`, player.id, 'skill');
+    log(state, messageTemplate`${player.name} uses Scorpio sting to remove armor equipment from ${target.name}`, player.id, 'skill');
     return;
   }
   applyDamage(state, target, player, 1);
@@ -2677,7 +2691,7 @@ function handleSkill(state           , action                                   
     triggerSkillMetric(state, action.skillId);
     log(
       state,
-      `${player.name} 发动蚀月战令：${action.option === 'extraAttack' ? '本回合可额外使用 1 张基础攻击牌' : '本回合 1 张基础攻击牌可额外指定 1 个目标'}`,
+      messageTemplate`${player.name} 发动蚀月战令：${action.option === 'extraAttack' ? '本回合可额外使用 1 张基础攻击牌' : '本回合 1 张基础攻击牌可额外指定 1 个目标'}`,
       player.id,
       'infection',
     );
@@ -2697,7 +2711,7 @@ function handleSkill(state           , action                                   
     triggerSkillMetric(state, action.skillId);
     log(
       state,
-      `${player.name} 发动潮汐法典，将 ${materials.map((card) => card.name).join('、')} 合成为 ${fusionCard.name}`,
+      messageTemplate`${player.name} 发动潮汐法典，将 ${materials.map((card) => card.name).join('、')} 合成为 ${fusionCard.name}`,
       player.id,
       'equipment',
     );
@@ -2717,7 +2731,7 @@ function handleSkill(state           , action                                   
     if (player.hand.length === before) throw new Error('牌库中没有所选属性牌');
     player.flags.usedWindCompass = true;
     triggerSkillMetric(state, action.skillId);
-    log(state, `${player.name} 发动命运罗盘，获得 1 张${element}属性牌`, player.id, 'equipment');
+    log(state, messageTemplate`${player.name} 发动命运罗盘，获得 1 张${element}属性牌`, player.id, 'equipment');
     return;
   }
 
@@ -2756,12 +2770,12 @@ function handleSkill(state           , action                                   
     }
     if (player.statuses.blind) {
       delete player.statuses.blind;
-      log(state, `${player.name} 因致盲，羊角冲落空`, player.id, 'status');
+      log(state, messageTemplate`${player.name} 因致盲，羊角冲落空`, player.id, 'status');
     } else {
       applyDamage(state, target, player, damage, { status: card.kind === 'statusAttack' && card.element === 'fire' ? 'burn' : undefined });
     }
     triggerSkillMetric(state, action.skillId);
-    log(state, `${player.name}${usedBurnSoul ? ' 以燃魂' : ''}发动羊角冲，对 ${target.name} 造成不可防御伤害`, player.id, 'skill');
+    log(state, messageTemplate`${player.name}${usedBurnSoul ? ' 以燃魂' : ''}发动羊角冲，对 ${target.name} 造成不可防御伤害`, player.id, 'skill');
     return;
   }
 
@@ -2784,7 +2798,7 @@ function handleSkill(state           , action                                   
       if (!candidate.statuses.burn) addStatus(state, candidate, 'burn', 1);
     }
     triggerSkillMetric(state, action.skillId);
-    log(state, `${player.name} uses Leo roar on ${leoTargets.map((candidate) => candidate.name).join(', ')}`, player.id, 'skill');
+    log(state, messageTemplate`${player.name} uses Leo roar on ${leoTargets.map((candidate) => candidate.name).join(', ')}`, player.id, 'skill');
     return;
   }
 
@@ -2799,7 +2813,7 @@ function handleSkill(state           , action                                   
     player.flags.usedLeoOrder = true;
     player.flags.leoOrderTargetId = target.id;
     triggerSkillMetric(state, action.skillId);
-    log(state, `${player.name} uses Leo order on ${target.name}`, player.id, 'skill');
+    log(state, messageTemplate`${player.name} uses Leo order on ${target.name}`, player.id, 'skill');
     return;
   }
 
@@ -2813,7 +2827,7 @@ function handleSkill(state           , action                                   
     player.flags.usedCancerHeal = true;
     heal(state, target, 1, player);
     triggerSkillMetric(state, action.skillId);
-    log(state, `${player.name} 发动疗潮，治疗 ${target.name}`, player.id, 'skill');
+    log(state, messageTemplate`${player.name} 发动疗潮，治疗 ${target.name}`, player.id, 'skill');
     return;
   }
 
@@ -2829,7 +2843,7 @@ function handleSkill(state           , action                                   
     const before = target.armor;
     target.armor = Math.min(target.maxArmor, target.armor + 1);
     triggerSkillMetric(state, action.skillId);
-    log(state, `${player.name} 发动筑甲，${target.name} 护甲 ${before} -> ${target.armor}`, player.id, 'skill');
+    log(state, messageTemplate`${player.name} 发动筑甲，${target.name} 护甲 ${before} -> ${target.armor}`, player.id, 'skill');
     return;
   }
 
@@ -2864,7 +2878,7 @@ function handleSkill(state           , action                                   
       applyDamage(state, target, player, 2, { status: 'blind' });
       player.flags.usedGeminiSteal = true;
       triggerSkillMetric(state, action.skillId);
-      log(state, `${player.name} 发动换影，${target.name} 没有手牌和装备，受到 2 点伤害并获得致盲`, player.id, 'skill');
+      log(state, messageTemplate`${player.name} 发动换影，${target.name} 没有手牌和装备，受到 2 点伤害并获得致盲`, player.id, 'skill');
       return;
     }
     if (!action.selectedCardId) throw new Error('换影需要选择目标手牌或装备中的 1 张');
@@ -2910,7 +2924,7 @@ function handleSkill(state           , action                                   
     }
     player.flags.usedGeminiSteal = true;
     triggerSkillMetric(state, action.skillId);
-    log(state, `${player.name} 发动换影，获得 ${target.name} 的${sourceText} ${stolen.name}`, player.id, 'skill');
+    log(state, messageTemplate`${player.name} 发动换影，获得 ${target.name} 的${sourceText} ${stolen.name}`, player.id, 'skill');
     return;
   }
 
@@ -2958,7 +2972,7 @@ function handleSkill(state           , action                                   
     triggerSkillMetric(state, action.skillId);
     log(
       state,
-      `${player.name} 发动裁衡，${richer.name} 将 ${transferred.map((card) => card.name).join('、')} 交给 ${poorer.name}`,
+      messageTemplate`${player.name} 发动裁衡，${richer.name} 将 ${transferred.map((card) => card.name).join('、')} 交给 ${poorer.name}`,
       player.id,
       'skill',
     );
@@ -2980,12 +2994,12 @@ function handleSkill(state           , action                                   
     player.flags.usedAquariusMassHeal = true;
     // 神酿献祭 1 点生命走正常受伤流程，使水瓶的被动「倾杯」被触发（受伤→摸 2 牌），实现与 2 技能的联动。
     applyDamage(state, player, player, 1, { skillKey: 'aquarius.massHeal' });
-    log(state, `${player.name} 发动神酿，献祭 1 点生命`, player.id, 'skill');
+    log(state, messageTemplate`${player.name} 发动神酿，献祭 1 点生命`, player.id, 'skill');
     for (const candidate of state.players) {
       if (candidate.hp > 0 && candidate.hp < candidate.maxHp) heal(state, candidate, 1, player);
     }
     triggerSkillMetric(state, action.skillId);
-    log(state, `${player.name} 发动神酿，所有角色回复 1 点生命`, player.id, 'skill');
+    log(state, messageTemplate`${player.name} 发动神酿，所有角色回复 1 点生命`, player.id, 'skill');
     return;
   }
 
@@ -2999,7 +3013,7 @@ function handleSkill(state           , action                                   
     player.flags.usedPiscesObserveTide = true;
     drawCards(state, player, ids.length);
     triggerSkillMetric(state, action.skillId);
-    log(state, `${player.name} 发动观潮，弃 ${ids.length} 张牌，摸 ${ids.length} 张牌`, player.id, 'skill');
+    log(state, messageTemplate`${player.name} 发动观潮，弃 ${ids.length} 张牌，摸 ${ids.length} 张牌`, player.id, 'skill');
     return;
   }
 
@@ -3039,7 +3053,7 @@ function handleSkill(state           , action                                   
     triggerSkillMetric(state, action.skillId);
     log(
       state,
-      `${player.name} 对 ${first.name}、${second.name} 发动平潮，双方生命变为 ${average}`,
+      messageTemplate`${player.name} 对 ${first.name}、${second.name} 发动平潮，双方生命变为 ${average}`,
       player.id,
       'skill',
     );
@@ -3065,7 +3079,7 @@ function handleSkill(state           , action                                   
       (card) => card.kind === 'weapon' || card.kind === 'armor',
     );
     if (equipmentIndex < 0) {
-      log(state, `${player.name} 发动寻器但牌库中没有装备，资源返还`, player.id, 'skill');
+      log(state, messageTemplate`${player.name} 发动寻器但牌库中没有装备，资源返还`, player.id, 'skill');
       return;
     }
     for (const id of costIds) state.discard.push(takeCard(player, id));
@@ -3073,7 +3087,7 @@ function handleSkill(state           , action                                   
     player.hand.push(equipment);
     player.flags.usedSagittariusSeek = true;
     triggerSkillMetric(state, action.skillId);
-    log(state, `${player.name} 发动寻器，获得 ${equipment.name}`, player.id, 'skill');
+    log(state, messageTemplate`${player.name} 发动寻器，获得 ${equipment.name}`, player.id, 'skill');
     return;
   }
 
@@ -3095,7 +3109,7 @@ function handleSkill(state           , action                                   
       const abnormalities = NORMAL_ABNORMAL_STATUSES.filter((status) => target.statuses[status]);
       if (abnormalities.length > 0) {
         for (const status of abnormalities) delete target.statuses[status];
-        log(state, `${player.name} 净化 ${target.name} 的全部异常状态`, player.id, 'skill');
+        log(state, messageTemplate`${player.name} 净化 ${target.name} 的全部异常状态`, player.id, 'skill');
       } else {
         addStatus(state, target, 'abnormalImmunity');
       }
@@ -3131,7 +3145,7 @@ function handleSkill(state           , action                                   
 
     log(
       state,
-      `${player.name} 查看牌堆顶 ${peeked.length} 张；牌顶：${topCards.map((card) => card.name).join('、') || '无'}；牌底：${bottomCards.map((card) => card.name).join('、') || '无'}`,
+      messageTemplate`${player.name} 查看牌堆顶 ${peeked.length} 张；牌顶：${topCards.map((card) => card.name).join('、') || '无'}；牌底：${bottomCards.map((card) => card.name).join('、') || '无'}`,
       player.id,
       'skill',
     );
@@ -3150,7 +3164,7 @@ function handleSkill(state           , action                                   
     state.discard.push(takeCard(player, cost.id));
     player.flags.usedScorpioPoison = true;
     triggerSkillMetric(state, action.skillId);
-    log(state, `${player.name} 弃置 ${cost.name} 对 ${target.name} 发动蝎毒`, player.id, 'skill');
+    log(state, messageTemplate`${player.name} 弃置 ${cost.name} 对 ${target.name} 发动蝎毒`, player.id, 'skill');
     queueSkillDecision(state, {kind:'scorpioPoisonOffer',playerId:target.id,sourceId:player.id});
     return;
   }
@@ -3220,7 +3234,7 @@ function handleSkill(state           , action                                   
       state.discard.push(...player.hand.splice(0));
     }
     triggerSkillMetric(state, action.skillId);
-    log(state, `${player.name} 消耗 ${spent} 怒发动山崩`, player.id, 'skill');
+    log(state, messageTemplate`${player.name} 消耗 ${spent} 怒发动山崩`, player.id, 'skill');
     return;
   }
 
@@ -3312,10 +3326,10 @@ export function createGame(options
       recipientId: lastPlayer.id,
     };
     const directionText = state.turnDirection === 1 ? '顺时针' : '逆时针';
-    log(state, `${firstPlayer.name} 抽到命运牌 ${openingFateCard.name}，确定${directionText}行动，并将命运牌交给末位 ${lastPlayer.name}`, firstPlayer.id, 'setup');
+    log(state, messageTemplate`${firstPlayer.name} 抽到命运牌 ${openingFateCard.name}，确定${directionText}行动，并将命运牌交给末位 ${lastPlayer.name}`, firstPlayer.id, 'setup');
   }
   const first = findPlayer(state, state.activePlayerId);
-  log(state, `星盘先确定出牌次序：${first.name} 先手；随后 8 秒内所有角色同时确认是否更换起手牌`, first.id, 'setup');
+  log(state, messageTemplate`星盘先确定出牌次序：${first.name} 先手；随后 8 秒内所有角色同时确认是否更换起手牌`, first.id, 'setup');
   return state;
 }
 
@@ -3453,7 +3467,7 @@ export function createInfectionGame(options
   for (const player of players) drawCards(state, player, 4);
   drawCards(state, boss, 2);
   triggerSkillMetric(state, 'infection.bossCommandOpening');
-  log(state, `${boss.name} 的蚀月战令令其开局额外摸 2 张牌`, boss.id, 'infection');
+  log(state, messageTemplate`${boss.name} 的蚀月战令令其开局额外摸 2 张牌`, boss.id, 'infection');
   if (openingFateCard) {
     const lastPlayer = findPlayer(
       state,
@@ -3467,7 +3481,7 @@ export function createInfectionGame(options
     const directionText = state.turnDirection === 1 ? '顺时针' : '逆时针';
     log(
       state,
-      `初始感染者 ${boss.name}（摩羯座）公开并先手，抽到命运牌 ${openingFateCard.name}，确定${directionText}行动；命运牌交给末位 ${lastPlayer.name}`,
+      messageTemplate`初始感染者 ${boss.name}（摩羯座）公开并先手，抽到命运牌 ${openingFateCard.name}，确定${directionText}行动；命运牌交给末位 ${lastPlayer.name}`,
       boss.id,
       'setup',
     );
@@ -3500,7 +3514,7 @@ export function applyAction(input           , action        )                   
     delete state.pendingSkillResume;
     state.mulliganPendingPlayerIds = [];
     state.phase = 'gameOver';
-    log(state, `${player.name} 确认投降，所在${isInfectionMode(state) ? '阵营' : '队伍'}认输`, player.id, 'gameOver');
+    log(state, messageTemplate`${player.name} 确认投降，所在${isInfectionMode(state) ? '阵营' : '队伍'}认输`, player.id, 'gameOver');
     return { state, events: state.log.slice(0, state.log.length - beforeLogLength) };
   }
   if (
@@ -3616,7 +3630,7 @@ export function applyAction(input           , action        )                   
     if (canOfferWindCut) {
       queueSkillDecision(state, { kind: 'aquariusWindCut', playerId: player.id });
       state.pendingSkillResume = 'endTurn';
-      log(state, `${player.name} 可以选择是否发动断流`, player.id, 'skill');
+      log(state, messageTemplate`${player.name} 可以选择是否发动断流`, player.id, 'skill');
     } else {
       endTurn(state, player);
     }
@@ -4213,7 +4227,7 @@ export function applySingleAiAction(input           )                           
     return applyAction(input, action);
   } catch (error) {
     const next = cloneState(input);
-    log(next, `AI 托管停止：${error instanceof Error ? error.message : String(error)}`, next.activePlayerId, 'ai');
+    log(next, messageTemplate`AI 托管停止：${error instanceof Error ? error.message : String(error)}`, next.activePlayerId, 'ai');
     return { state: next, events: next.log.slice(0, next.log.length - input.log.length) };
   }
 }
