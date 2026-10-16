@@ -1,10 +1,10 @@
-import { createBaseDeck, createInfectionDeck, effectiveRitualCard, ELEMENT_LABELS, statusForElement } from '../content/cards.mjs?v=web-442a2e200ed036e3';
+import { createBaseDeck, createInfectionDeck, effectiveRitualCard, ELEMENT_LABELS, statusForElement } from '../content/cards.mjs?v=web-2b1387e9bc288804';
 import {
   CHARACTERS,
   DEFAULT_CHARACTER_PAIR,
   DEFAULT_DEMO_CHARACTERS,
   zodiacSeatIndices,
-} from '../content/characters.mjs?v=web-442a2e200ed036e3';
+} from '../content/characters.mjs?v=web-2b1387e9bc288804';
              
          
        
@@ -22,7 +22,7 @@ import {
               
             
                      
-import { shuffleWithSeed } from './random.mjs?v=web-442a2e200ed036e3';
+import { shuffleWithSeed } from './random.mjs?v=web-2b1387e9bc288804';
 
 const STATUS_LABELS                           = {
   burn: '灼烧',
@@ -331,6 +331,26 @@ function circularSeatDistance(state           , source             , target     
   if (sourceIndex < 0 || targetIndex < 0) return Number.POSITIVE_INFINITY;
   const direct = Math.abs(sourceIndex - targetIndex);
   return Math.min(direct, seats.length - direct);
+}
+
+function advanceTurnOrder(state           , previousPlayerId        ) {
+  const order = orderedPlayerIdsFrom(state, state.players[0].id);
+  const next = nextLivingPlayerAfter(state, previousPlayerId);
+  state.activePlayerId = next.id;
+  // The round boundary remains at the original first seat even after its owner
+  // is eliminated. Compare the full seat order instead of requiring that turn.
+  if (order.indexOf(next.id) > order.indexOf(previousPlayerId)) return;
+  state.round += 1;
+  for (const player of state.players) {
+    player.flags.usedGeminiExtraTurnThisRound = false;
+    player.flags.libraRoundElements = [];
+    player.flags.usedCapricornChargeThisRound = false;
+    player.flags.usedCancerRescueThisRound = false;
+    player.flags.cancerTideBondDraws = 0;
+    player.flags.usedAquariusWindCutThisRound = false;
+    player.flags.usedVirgoDisciplineThisRound = false;
+    player.flags.usedEarthArmorReductionThisRound = false;
+  }
 }
 
 function isCrossDistanceTarget(state           , source             , target             ) {
@@ -1457,9 +1477,7 @@ function moveTurnAfterDyingActivePlayer(state           , player             ) {
   if (state.phase === 'gameOver' || player.hp > 0 || state.activePlayerId !== player.id) return false;
   state.pendingAttack = undefined;
   clearPlayedCards(state);
-  state.activePlayerId = nextLivingPlayerAfter(state, player.id).id;
-  const enteredNewRound = state.activePlayerId === state.players[0].id;
-  state.round += enteredNewRound ? 1 : 0;
+  advanceTurnOrder(state, player.id);
   state.phase = 'draw';
   state.firstTurn = false;
   log(state, `${player.name} 濒死，行动立即结束`, player.id, 'defeat');
@@ -1971,21 +1989,7 @@ function endTurn(state           , player             , skipEndEffects = false) 
   }
 
   if (!extraTurn) {
-    state.activePlayerId = nextLivingPlayerAfter(state, player.id).id;
-    const enteredNewRound = state.activePlayerId === state.players[0].id;
-    state.round += enteredNewRound ? 1 : 0;
-    if (enteredNewRound) {
-      for (const candidate of state.players) {
-        candidate.flags.usedGeminiExtraTurnThisRound = false;
-        candidate.flags.libraRoundElements = [];
-        candidate.flags.usedCapricornChargeThisRound = false;
-        candidate.flags.usedCancerRescueThisRound = false;
-        candidate.flags.cancerTideBondDraws = 0;
-        candidate.flags.usedAquariusWindCutThisRound = false;
-        candidate.flags.usedVirgoDisciplineThisRound = false;
-        candidate.flags.usedEarthArmorReductionThisRound = false;
-      }
-    }
+    advanceTurnOrder(state, player.id);
   }
 
   state.phase = 'draw';

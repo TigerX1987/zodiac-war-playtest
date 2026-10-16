@@ -1,13 +1,13 @@
-import { SKILL_DESCRIPTIONS } from '../src/content/skillDescriptions.mjs?v=web-442a2e200ed036e3';
+import { SKILL_DESCRIPTIONS } from '../src/content/skillDescriptions.mjs?v=web-2b1387e9bc288804';
 import {
   applyAction,
   applySingleAiAction,
   autoDiscardToHp,
   createGame,
   createInfectionGame,
-} from '../src/game/engine.mjs?v=web-442a2e200ed036e3';
+} from '../src/game/engine.mjs?v=web-2b1387e9bc288804';
 
-const SERVER_VERSION = "web-442a2e200ed036e3";
+const SERVER_VERSION = "web-2b1387e9bc288804";
 const MULLIGAN_SECONDS = 8;
 const MAIN_TOTAL_SECONDS = 65;
 const MAIN_IDLE_SECONDS = 20;

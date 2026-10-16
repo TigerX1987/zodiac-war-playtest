@@ -1,4 +1,4 @@
-import {request, snapshot, restoreSnapshot} from './game.mjs?v=web-442a2e200ed036e3';
+import {request, snapshot, restoreSnapshot} from './game.mjs?v=web-2b1387e9bc288804';
 const storageKey = 'zodiac-playtest-session-v1';
 try {restoreSnapshot(JSON.parse(sessionStorage.getItem(storageKey)));} catch (_) {}
 const networkFetch = window.fetch.bind(window);
@@ -10,7 +10,7 @@ window.fetch = async (input, options = {}) => {
   return response;
 };
 const script = document.createElement('script');
-script.src = '/zodiac-war-playtest/runtime/client.js?v=web-442a2e200ed036e3';
+script.src = '/zodiac-war-playtest/runtime/client.js?v=web-2b1387e9bc288804';
 script.onerror = () => {document.getElementById('web-load-status').textContent = '载入失败，请刷新重试。';};
 script.onload = () => {document.getElementById('web-load-status')?.remove();};
 document.body.appendChild(script);
