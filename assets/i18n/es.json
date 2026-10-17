@@ -895,5 +895,17 @@
   "蟹护需要恰好 1 张水牌": "Guardia del cangrejo requiere exactamente 1 carta de Agua.",
   "烈焰披风：每回合首次受到伤害后，伤害来源获得灼烧。": "Capa de llamas: tras tu primer daño de cada turno, aplica Quemadura al origen.",
   "${p0} 的烈焰披风令 ${p1} 获得灼烧": "La Capa de llamas de ${p0} quema a ${p1}.",
-  "先选择 1 张任意手牌作为费用，再点击一名可回复生命的受伤角色；可以选择自己。": "Elige 1 carta de tu mano como coste y luego un personaje herido que pueda recuperar PV. Puedes elegirte a ti."
+  "先选择 1 张任意手牌作为费用，再点击一名可回复生命的受伤角色；可以选择自己。": "Elige 1 carta de tu mano como coste y luego un personaje herido que pueda recuperar PV. Puedes elegirte a ti.",
+  "声音设置": "Ajustes de sonido",
+  "语音模式": "Modo de voces",
+  "精简（推荐）": "Reducido (recomendado)",
+  "完整": "Completo",
+  "关闭语音": "Sin voces",
+  "角色语音": "Voces de personajes",
+  "战斗音效": "Efectos de combate",
+  "背景音乐": "Música",
+  "角色语音音量": "Volumen de voces",
+  "战斗音效音量": "Volumen de efectos",
+  "背景音乐音量": "Volumen de música",
+  "精简语音优先技能、濒死和急救。十二角色均使用各自中文声线。": "El modo reducido prioriza habilidades y rescates. Los doce personajes tienen su propia voz en chino."
 }

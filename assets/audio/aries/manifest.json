@@ -1,0 +1,582 @@
+{
+  "version": "aries-compact-pilot-v1",
+  "locale": "zh-CN",
+  "characterId": "aries",
+  "cues": {
+    "aries.turn_start": {
+      "file": "aries.turn_start-9d22a158.mp3",
+      "text": "这一阵，我来破。",
+      "duration": 2.42,
+      "sha256": "9d22a1586743994f2b954f628ef9f3bf8aceeb4ef6b51891683217a7aac4af6d",
+      "bytes": 25004
+    },
+    "aries.bloodRage": {
+      "file": "aries.bloodRage-1dfebafa.mp3",
+      "text": "这道伤，燃得正好。",
+      "duration": 2.56,
+      "sha256": "1dfebafad64ec6e8bf648a187ff283579d015dd42c0425e48c3bf0a81d05614b",
+      "bytes": 26444
+    },
+    "aries.ram": {
+      "file": "aries.ram-53fc3d51.mp3",
+      "text": "正面，击穿！",
+      "duration": 1.74,
+      "sha256": "53fc3d516bd2bd71c5575044c5022cedbd67e995f092d0f81d3625d443695594",
+      "bytes": 18284
+    },
+    "aries.burnSoul": {
+      "file": "aries.burnSoul-9be4f213.mp3",
+      "text": "借此一烬，燃我战意！",
+      "duration": 2.64,
+      "sha256": "9be4f2136c14f42a0a61103b7cd4acdcae418e0457fdfebaad0e7d4cc8fa79f0",
+      "bytes": 27164
+    },
+    "aries.hurt": {
+      "file": "aries.hurt-2634a714.mp3",
+      "text": "还没到退的时候。",
+      "duration": 1.76,
+      "sha256": "2634a71447e387deb9e89f001469603e38b4079598ce6fcc200b4a7100ee4477",
+      "bytes": 18524
+    },
+    "aries.dying": {
+      "file": "aries.dying-6f75e36e.mp3",
+      "text": "火……还没熄。",
+      "duration": 1.68,
+      "sha256": "6f75e36e28e2db0dba4d56536512b23b868020a1d2f78bd68b23591bbbe68212",
+      "bytes": 17564
+    },
+    "aries.rescue_given": {
+      "file": "aries.rescue_given-4ca78134.mp3",
+      "text": "起来，和我再冲一次。",
+      "duration": 2.16,
+      "sha256": "4ca78134e20d6e8e707a21fcbaaf3bfc70218bc3a8ecb885b3ca7a6ac2da0516",
+      "bytes": 22364
+    },
+    "aries.rescued": {
+      "file": "aries.rescued-b3637f3c.mp3",
+      "text": "好，再战！",
+      "duration": 1.52,
+      "sha256": "b3637f3c3c0990f6980afb3fe82c43d43c7ebc002e962e15cf71e195f0c11210",
+      "bytes": 16124
+    },
+    "normal.fire": {
+      "file": "aries.card.normal.fire-2163e298.mp3",
+      "text": "接这团火！",
+      "duration": 1.28,
+      "sha256": "2163e2984ef85aea3b0865b938c4a1458ef65a497aaefc4e50552c1278e1586d",
+      "bytes": 13724
+    },
+    "defense.fire": {
+      "file": "aries.card.defense.fire-3ab750e8.mp3",
+      "text": "火势，挡回去！",
+      "duration": 1.92,
+      "sha256": "3ab750e849a257e09f788716837b2598b06c80365666701874f54f21f41ba566",
+      "bytes": 19964
+    },
+    "normal.water": {
+      "file": "aries.card.normal.water-71c8b40d.mp3",
+      "text": "逐浪，接招！",
+      "duration": 1.44,
+      "sha256": "71c8b40dc2e8fff31c6e72075992150304579d681ca549b8e7b773adcda2aac7",
+      "bytes": 15164
+    },
+    "defense.water": {
+      "file": "aries.card.defense.water-25e62039.mp3",
+      "text": "潮回，护我！",
+      "duration": 1.92,
+      "sha256": "25e62039e70c7012438b75aec744697cb4283151e9c0ee8345c445f99396808a",
+      "bytes": 19964
+    },
+    "normal.air": {
+      "file": "aries.card.normal.air-dd3ab665.mp3",
+      "text": "疾风，破阵！",
+      "duration": 1.6,
+      "sha256": "dd3ab6652f81db8d007a61c38c5b058d393028647be145dd2af846308308b5c9",
+      "bytes": 16844
+    },
+    "defense.air": {
+      "file": "aries.card.defense.air-7f464dcc.mp3",
+      "text": "借风，卸力！",
+      "duration": 1.44,
+      "sha256": "7f464dcc85c41f1030ca2a267108cd1c22bb11b9550db5e6e4c11697f92ade12",
+      "bytes": 15164
+    },
+    "normal.earth": {
+      "file": "aries.card.normal.earth-6e18479e.mp3",
+      "text": "飞岩，破敌！",
+      "duration": 1.76,
+      "sha256": "6e18479e4bf1c6b8da4575b8fbfff495775963c1cd431a20d814ef5cdb230d93",
+      "bytes": 18524
+    },
+    "defense.earth": {
+      "file": "aries.card.defense.earth-d2d04ff0.mp3",
+      "text": "岩挡，稳住！",
+      "duration": 1.6,
+      "sha256": "d2d04ff0f2f326a94998b071a2a1c8b3e376fd1560586a6b63fd6fe41324fe84",
+      "bytes": 16844
+    },
+    "status.fire": {
+      "file": "aries.card.status.fire-9a1d1c36.mp3",
+      "text": "烈焰，灼身！",
+      "duration": 1.68,
+      "sha256": "9a1d1c3635f705d5ae37b9c0a96bf2916fff823f3e633209a5001496412409d4",
+      "bytes": 17564
+    },
+    "status.water": {
+      "file": "aries.card.status.water-679d13ab.mp3",
+      "text": "寒潮，凝结！",
+      "duration": 2.08,
+      "sha256": "679d13abf128e529b16a46d0c22309544d260543b6fed4f3d0f233b4e755eb63",
+      "bytes": 21644
+    },
+    "status.air": {
+      "file": "aries.card.status.air-d08659f7.mp3",
+      "text": "乱风，蔽目！",
+      "duration": 1.36,
+      "sha256": "d08659f7001d459808c7938c04d8a37144c4aa16c29462f3742e1f246b6d8ef3",
+      "bytes": 14444
+    },
+    "status.earth": {
+      "file": "aries.card.status.earth-dcfd4336.mp3",
+      "text": "岩封，止语！",
+      "duration": 2.08,
+      "sha256": "dcfd433664ade156930c0e59494ef204a2ef0bc86173bbc14743760ca1eb3f73",
+      "bytes": 21644
+    },
+    "aoe.fire": {
+      "file": "aries.card.aoe.fire-378be0b6.mp3",
+      "text": "让火，席卷战场！",
+      "duration": 2.48,
+      "sha256": "378be0b6e8ec5dacde4a021538d86e9d63005bfb126dd7aef07843e179d37e60",
+      "bytes": 25724
+    },
+    "aoe.water": {
+      "file": "aries.card.aoe.water-a467e09d.mp3",
+      "text": "洪潮，漫过战线！",
+      "duration": 2,
+      "sha256": "a467e09d2983f250634ef1407689c7afe23bb6676933967375357c67fa338299",
+      "bytes": 20924
+    },
+    "aoe.air": {
+      "file": "aries.card.aoe.air-1a28a6e4.mp3",
+      "text": "狂风，横扫此阵！",
+      "duration": 1.76,
+      "sha256": "1a28a6e498627379232083731864ae5d0e2ad9bb3236fb13fd57781240cbdcff",
+      "bytes": 18524
+    },
+    "aoe.earth": {
+      "file": "aries.card.aoe.earth-c9d4c09c.mp3",
+      "text": "地动，群岩迸起！",
+      "duration": 2.08,
+      "sha256": "c9d4c09c64d31d5d6a917df8a17aec42ad31c5b87abafc81ebd1e321603aabce",
+      "bytes": 21644
+    },
+    "energy.fire": {
+      "file": "aries.card.energy.fire-7cc5a08e.mp3",
+      "text": "聚火，蓄势。",
+      "duration": 2.56,
+      "sha256": "7cc5a08ed079a646a7b220ec89bae1e32c2db10b1435cd5190bd70104d0450fa",
+      "bytes": 26444
+    },
+    "energy.water": {
+      "file": "aries.card.energy.water-27864b1b.mp3",
+      "text": "凝潮，蓄势。",
+      "duration": 1.44,
+      "sha256": "27864b1bc4ea1318f61235742054e1dbf5ac2fc3abce93a53914c91c580f9207",
+      "bytes": 15164
+    },
+    "energy.air": {
+      "file": "aries.card.energy.air-36debd5d.mp3",
+      "text": "御风，蓄势。",
+      "duration": 1.84,
+      "sha256": "36debd5dede8180411d1ed05e0dc9ba02fdca0e350014c70bf3341baaafa2663",
+      "bytes": 19244
+    },
+    "energy.earth": {
+      "file": "aries.card.energy.earth-05a33c89.mp3",
+      "text": "汇岩，蓄势。",
+      "duration": 1.68,
+      "sha256": "05a33c891e04e0bf1a764b4fc9a8422d01dc425c5a8a5c82b2cab610a430b299",
+      "bytes": 17564
+    },
+    "utility.fire": {
+      "file": "aries.card.utility.fire-f0d2e1e2.mp3",
+      "text": "这一手，较个高下。",
+      "duration": 2.4,
+      "sha256": "f0d2e1e2ffbd2337abd3284c45726aaa530ca65ba57992314427a0b16442fa0f",
+      "bytes": 24764
+    },
+    "utility.water": {
+      "file": "aries.card.utility.water-cded9c1b.mp3",
+      "text": "随潮，取来。",
+      "duration": 2.24,
+      "sha256": "cded9c1b7b0850d4c61cec8dcff9a24a10ab5c9cd86748633e20148bb19430f3",
+      "bytes": 23324
+    },
+    "utility.air": {
+      "file": "aries.card.utility.air-4c2330a4.mp3",
+      "text": "多余之物，随风散去。",
+      "duration": 3.04,
+      "sha256": "4c2330a4bf186dc363de3dda6751be325c77ad1c535b872b7a081d0daa096e57",
+      "bytes": 31244
+    },
+    "utility.earth": {
+      "file": "aries.card.utility.earth-eaa6ef58.mp3",
+      "text": "岩藏，开。",
+      "duration": 1.36,
+      "sha256": "eaa6ef58fc95e6a6a086d3c8491494da6f1da30a2bd69e80ffebba989202d5f0",
+      "bytes": 14444
+    },
+    "sun.active": {
+      "file": "aries.card.sun.active-07b24758.mp3",
+      "text": "日光，驱散阴霾。",
+      "duration": 2.24,
+      "sha256": "07b24758bcddd0ae622b23a7253330739aa5fb2b188c2256d151bd3b56f783c6",
+      "bytes": 23324
+    },
+    "moon.curse": {
+      "file": "aries.card.moon.curse-acfc58c8.mp3",
+      "text": "月影，夺你先机。",
+      "duration": 1.68,
+      "sha256": "acfc58c861de3fede720f591f099047c95ea51c59f4c6fed0fd8ab187c0c85af",
+      "bytes": 17564
+    },
+    "sun.defense": {
+      "file": "aries.card.sun.defense-fa01d38b.mp3",
+      "text": "日辉，护我！",
+      "duration": 1.84,
+      "sha256": "fa01d38b4e348f1f5a4736d0eb827a1e56e8172c158a79024e9190b730850c70",
+      "bytes": 19244
+    },
+    "moon.defense": {
+      "file": "aries.card.moon.defense-c429b8b9.mp3",
+      "text": "月影，还你一击！",
+      "duration": 2.08,
+      "sha256": "c429b8b985dfde247e7fbc7c7b76df13904c584873b4e9df5bf0aba044ece934",
+      "bytes": 21644
+    },
+    "moon.amplify": {
+      "file": "aries.card.moon.amplify-4b54a964.mp3",
+      "text": "借月，再添锋芒。",
+      "duration": 2.88,
+      "sha256": "4b54a9644b0544cfe0967ba1f58cf81dabb69fdaf8553a7cbeb3812596d235c3",
+      "bytes": 29564
+    },
+    "fusion.support": {
+      "file": "aries.card.fusion.support-9d69934c.mp3",
+      "text": "新章，启用。",
+      "duration": 1.6,
+      "sha256": "9d69934c864b300b6638c50dd46a01bda7586ca74e8df5e4b43bd4072c4c740a",
+      "bytes": 16844
+    },
+    "sun.rescue.other": {
+      "file": "aries.card.sun.rescue.other-c97c0959.mp3",
+      "text": "借日辉，唤你归来。",
+      "duration": 2.48,
+      "sha256": "c97c095990395085a756453182054995c72b3c38f2a6ef063ee684d5ecc1b1b4",
+      "bytes": 25724
+    },
+    "sun.rescue.self": {
+      "file": "aries.card.sun.rescue.self-4e6b863d.mp3",
+      "text": "日光，照我再起。",
+      "duration": 2.08,
+      "sha256": "4e6b863da5c26caa40eefd83cb03e4a14acf04bbf718b33c927bb0e70b80b804",
+      "bytes": 21644
+    },
+    "energy.rescue.other": {
+      "file": "aries.card.energy.rescue.other-c90b5bfc.mp3",
+      "text": "借星之力，续你生息。",
+      "duration": 2.4,
+      "sha256": "c90b5bfc516bd250925fe22a890171ffd07fcbba3055547be1d8f094e1d7adb7",
+      "bytes": 24764
+    },
+    "energy.rescue.self": {
+      "file": "aries.card.energy.rescue.self-4deacaa0.mp3",
+      "text": "借此星光，续我生息。",
+      "duration": 2.4,
+      "sha256": "4deacaa0d9762f25fcbe61928c6da99d86dd62bded19e3e89dad806e5bee3365",
+      "bytes": 24764
+    },
+    "ritual.cleanse": {
+      "file": "aries.card.ritual.cleanse-3fe89dcc.mp3",
+      "text": "蚀影，散去。",
+      "duration": 1.68,
+      "sha256": "3fe89dcc199d86515c7471ea2f4b701956794160899a5c554e3a06f01deeee95",
+      "bytes": 17564
+    },
+    "ritual.infect": {
+      "file": "aries.card.ritual.infect-48e0007f.mp3",
+      "text": "月蚀，入你星命。",
+      "duration": 2.64,
+      "sha256": "48e0007f061f0b56f93f6586cb7b730d7dceef1601d6eaa0af3a596fb3f4b993",
+      "bytes": 27164
+    },
+    "ritual.counter": {
+      "file": "aries.card.ritual.counter-e5789df3.mp3",
+      "text": "蚀影，止于此。",
+      "duration": 2.08,
+      "sha256": "e5789df3541eeecf2d179990e0358774a9b3d2bb72154a35cf58fccbbef0189b",
+      "bytes": 21644
+    },
+    "equip.fire-weapon": {
+      "file": "aries.card.equip.fire-weapon-27dfb58b.mp3",
+      "text": "机括就位，火势不歇。",
+      "duration": 1.92,
+      "sha256": "27dfb58b6a99207a81be6a50d2a2d17e6bfebfadedf18e4dd87fc5a5869e116d",
+      "bytes": 19964
+    },
+    "equip.water-weapon": {
+      "file": "aries.card.equip.water-weapon-2feb67b5.mp3",
+      "text": "法典在手，另开新章。",
+      "duration": 3.6,
+      "sha256": "2feb67b5f9a797286faa602a03badc33d1a93f46babe94802d58428f518174d0",
+      "bytes": 36764
+    },
+    "equip.air-weapon": {
+      "file": "aries.card.equip.air-weapon-762ac7c1.mp3",
+      "text": "执此罗盘，循星而行。",
+      "duration": 2.64,
+      "sha256": "762ac7c14a7d6d4aa01ba4043bbf07944688dbca335c757e2886531f2965ed33",
+      "bytes": 27164
+    },
+    "equip.earth-weapon": {
+      "file": "aries.card.equip.earth-weapon-cc612aa0.mp3",
+      "text": "重锤在握，撼岳而行。",
+      "duration": 3.12,
+      "sha256": "cc612aa0987436730fad67970e5ea19d23943a9dd999424ba4b1d98ef46f4fd9",
+      "bytes": 31964
+    },
+    "equip.fire-armor": {
+      "file": "aries.card.equip.fire-armor-dadb2d10.mp3",
+      "text": "披上烈焰，来者自慎。",
+      "duration": 2.32,
+      "sha256": "dadb2d10397f0833570d982049711d7f5eb84e1e354611efd9224f0426a205b7",
+      "bytes": 24044
+    },
+    "equip.water-armor": {
+      "file": "aries.card.equip.water-armor-aa765396.mp3",
+      "text": "寒甲在身，霜意将至。",
+      "duration": 2.56,
+      "sha256": "aa765396c9f4cf60c4cbd87f32e088579c1c702ee4e22badae3d7879c28e3cfa",
+      "bytes": 26444
+    },
+    "equip.air-armor": {
+      "file": "aries.card.equip.air-armor-cd401039.mp3",
+      "text": "披风随行，进退如风。",
+      "duration": 3.04,
+      "sha256": "cd401039a173543ca62b6fb96b2af5730b869e53e1e1095ed870f35b22396ddf",
+      "bytes": 31244
+    },
+    "equip.earth-armor": {
+      "file": "aries.card.equip.earth-armor-e70a7fe2.mp3",
+      "text": "岩壁在身，稳守此地。",
+      "duration": 2.4,
+      "sha256": "e70a7fe2fe0c23b01e92e0ae3145af5ad113a4cc2b4b11dd3c3fd15d8e38d3de",
+      "bytes": 24764
+    },
+    "gear.waterCodex": {
+      "file": "aries.card.gear.waterCodex-9144b163.mp3",
+      "text": "旧形归一，新章初成。",
+      "duration": 3.12,
+      "sha256": "9144b1633f5b7155521406c397999b2aa6b67389c9e1e4f1e5fa787855b17ef5",
+      "bytes": 31964
+    },
+    "gear.airCompass": {
+      "file": "aries.card.gear.airCompass-3d420971.mp3",
+      "text": "星路既定，循光而取。",
+      "duration": 2.88,
+      "sha256": "3d42097171b452f9d9da6ddd18b8ad3c0dc0480727156355f07472b964e93df6",
+      "bytes": 29564
+    },
+    "gear.fireRepeat": {
+      "file": "aries.card.gear.fireRepeat-cd004254.mp3",
+      "text": "机括未歇，再来！",
+      "duration": 1.92,
+      "sha256": "cd0042548e3c988f4f2b254326172f5ca8b4a151008c38ba6ea46a360582e903",
+      "bytes": 19964
+    },
+    "gear.earthHammer": {
+      "file": "aries.card.gear.earthHammer-5a1a9e57.mp3",
+      "text": "接住咯，这一锤！",
+      "duration": 2.88,
+      "sha256": "5a1a9e571e25354abe0e19036947859c7d6aeabe6103222dd34d5dc68cee211c",
+      "bytes": 29564
+    },
+    "gear.fireArmor": {
+      "file": "aries.card.gear.fireArmor-a61504d2.mp3",
+      "text": "余火，留给你。",
+      "duration": 1.92,
+      "sha256": "a61504d206345af5bc62ace6e23351d68ca14004249f9c7c2eee895b50823d26",
+      "bytes": 19964
+    },
+    "gear.waterArmor": {
+      "file": "aries.card.gear.waterArmor-ea9f1893.mp3",
+      "text": "此处，休再进。",
+      "duration": 2,
+      "sha256": "ea9f1893fa75380dec0f83954d0a6500e25bfff3f07325546d83025837ab1e60",
+      "bytes": 20924
+    },
+    "gear.airArmor": {
+      "file": "aries.card.gear.airArmor-90963a07.mp3",
+      "text": "风过，留下一物。",
+      "duration": 2.32,
+      "sha256": "90963a07463326f2650f0cb69df3030257700a85f6610fe65d6a68542a1ba2ba",
+      "bytes": 24044
+    },
+    "gear.earthArmor": {
+      "file": "aries.card.gear.earthArmor-40e3320e.mp3",
+      "text": "这一击，止步于此。",
+      "duration": 2.8,
+      "sha256": "40e3320e71a5f25199ad3405057cff8195b723c685af420229f92835b5f44fc2",
+      "bytes": 28844
+    },
+    "gear.earthArmorLeave": {
+      "file": "aries.card.gear.earthArmorLeave-9c1bf260.mp3",
+      "text": "岩壁虽去，生息仍在。",
+      "duration": 3.2,
+      "sha256": "9c1bf2605fff9e0a94e4ed026a6b93028bbbc7bed5bff057850cc196ea4a4328",
+      "bytes": 32924
+    }
+  },
+  "cardNames": {
+    "火普通攻击": {
+      "kind": "normalAttack",
+      "element": "fire"
+    },
+    "火状态攻击": {
+      "kind": "statusAttack",
+      "element": "fire"
+    },
+    "火星能": {
+      "kind": "energy",
+      "element": "fire"
+    },
+    "火AOE": {
+      "kind": "aoe",
+      "element": "fire"
+    },
+    "元素对决": {
+      "kind": "utility",
+      "element": "fire"
+    },
+    "流火机括": {
+      "kind": "weapon",
+      "element": "fire"
+    },
+    "烈焰披风": {
+      "kind": "armor",
+      "element": "fire"
+    },
+    "水普通攻击": {
+      "kind": "normalAttack",
+      "element": "water"
+    },
+    "水状态攻击": {
+      "kind": "statusAttack",
+      "element": "water"
+    },
+    "水星能": {
+      "kind": "energy",
+      "element": "water"
+    },
+    "水AOE": {
+      "kind": "aoe",
+      "element": "water"
+    },
+    "潮汐窃取": {
+      "kind": "utility",
+      "element": "water"
+    },
+    "潮汐法典": {
+      "kind": "weapon",
+      "element": "water"
+    },
+    "寒冰护甲": {
+      "kind": "armor",
+      "element": "water"
+    },
+    "风普通攻击": {
+      "kind": "normalAttack",
+      "element": "air"
+    },
+    "风状态攻击": {
+      "kind": "statusAttack",
+      "element": "air"
+    },
+    "风星能": {
+      "kind": "energy",
+      "element": "air"
+    },
+    "风AOE": {
+      "kind": "aoe",
+      "element": "air"
+    },
+    "风之制裁": {
+      "kind": "utility",
+      "element": "air"
+    },
+    "命运罗盘": {
+      "kind": "weapon",
+      "element": "air"
+    },
+    "飓风斗篷": {
+      "kind": "armor",
+      "element": "air"
+    },
+    "土普通攻击": {
+      "kind": "normalAttack",
+      "element": "earth"
+    },
+    "土状态攻击": {
+      "kind": "statusAttack",
+      "element": "earth"
+    },
+    "土星能": {
+      "kind": "energy",
+      "element": "earth"
+    },
+    "土AOE": {
+      "kind": "aoe",
+      "element": "earth"
+    },
+    "石之宝藏": {
+      "kind": "utility",
+      "element": "earth"
+    },
+    "撼岳锤": {
+      "kind": "weapon",
+      "element": "earth"
+    },
+    "磐石壁垒": {
+      "kind": "armor",
+      "element": "earth"
+    },
+    "太阳": {
+      "kind": "sun"
+    },
+    "月亮": {
+      "kind": "moon"
+    },
+    "火净化仪式": {
+      "kind": "ritual",
+      "element": "fire"
+    },
+    "水净化仪式": {
+      "kind": "ritual",
+      "element": "water"
+    },
+    "风净化仪式": {
+      "kind": "ritual",
+      "element": "air"
+    },
+    "土净化仪式": {
+      "kind": "ritual",
+      "element": "earth"
+    }
+  },
+  "music": {
+    "file": "../mix-bed-v1.mp3",
+    "description": "原创氛围循环，用于首轮混音验证"
+  },
+  "voiceBytes": 1393528
+}

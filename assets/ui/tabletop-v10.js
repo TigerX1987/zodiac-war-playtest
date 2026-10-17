@@ -298,10 +298,27 @@ window.TabletopV10 = {
       (this.exitMenuOpen ? '<div class="v10-exit-menu"><button onclick="TabletopV10.requestNavigation(\'exit\')">' + this.icon('exit') + '退出游戏</button>' +
       '<button class="v10-surrender" ' + (setupPaused || state.winnerTeamId ? 'disabled' : '') + ' onclick="TabletopV10.requestNavigation(\'surrender\')">' +
       this.icon('surrender') + '投降本局</button></div>' : '') +
-      (this.settingsOpen ? '<div class="v10-settings-menu">' + (window.GameI18n?.selector('battle-language-select') || '') + renderEntrustButton() +
-        (this.inLandscapeFrame() ? '<button onclick="TabletopV10.leaveLandscape()">恢复普通显示</button>' : '') +
-        '<span>本地试玩 · 当前席位 ' + safeText(labels[localHumanPlayer()?.characterId] || '') + '</span></div>' : '') +
       '</nav></header>';
+  },
+  syncSettingsPanel() {
+    let root = document.getElementById('v10-settings-root');
+    if (lobbyOpen || !this.settingsOpen) {
+      if (root) { root.hidden = true; root.innerHTML = ''; }
+      return;
+    }
+    if (!root) {
+      root = document.createElement('div'); root.id = 'v10-settings-root';
+      document.body.appendChild(root);
+    }
+    root.hidden = false;
+    // Keep range inputs connected during AI/poll renders and touch dragging.
+    if (!root.firstElementChild) root.innerHTML = this.settingsMenu();
+  },
+  settingsMenu() {
+    return '<div class="v10-settings-menu">' +
+      (window.GameI18n?.selector('battle-language-select') || '') + (window.ZodiacAudio?.settingsMarkup() || '') + renderEntrustButton() +
+      (this.inLandscapeFrame() ? '<button onclick="TabletopV10.leaveLandscape()">恢复普通显示</button>' : '') +
+      '<span>本地试玩 · 当前席位 ' + safeText(labels[localHumanPlayer()?.characterId] || '') + '</span></div>';
   },
   toggleMenu() { this.exitMenuOpen = !this.exitMenuOpen; this.settingsOpen = false; this.hideHover(); render(); },
   requestNavigation(kind) {
@@ -371,6 +388,7 @@ window.TabletopV10 = {
   },
   renderBattleStage(active, opponent, source, target, controls, handFocus) {
     this.syncNavigationDialog();
+    this.syncSettingsPanel();
     const focus = handFocus || localHumanPlayer() || active || state.players[0];
     const skillPanel = state.pendingRescue ? '' : renderPendingSkillDecisionPanel(focus) || renderActiveSkillPanel(focus);
     const skillPanelKey = clientMatchId + ':' + focus.id + ':' + (state.pendingSkillDecisions?.length ? skillDecisionKey(state.pendingSkillDecisions[0]) : selectedSkills[focus.id]);

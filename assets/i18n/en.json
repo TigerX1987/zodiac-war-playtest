@@ -895,5 +895,17 @@
   "蟹护需要恰好 1 张水牌": "Crab Guard requires exactly 1 Water card.",
   "烈焰披风：每回合首次受到伤害后，伤害来源获得灼烧。": "Flame Cloak: after your first damage each turn, Burn the damage source.",
   "${p0} 的烈焰披风令 ${p1} 获得灼烧": "${p0}'s Flame Cloak Burns ${p1}.",
-  "先选择 1 张任意手牌作为费用，再点击一名可回复生命的受伤角色；可以选择自己。": "Choose any 1 hand card as payment, then click a wounded character who can recover HP. You may choose yourself."
+  "先选择 1 张任意手牌作为费用，再点击一名可回复生命的受伤角色；可以选择自己。": "Choose any 1 hand card as payment, then click a wounded character who can recover HP. You may choose yourself.",
+  "声音设置": "Sound settings",
+  "语音模式": "Voice mode",
+  "精简（推荐）": "Compact (recommended)",
+  "完整": "Full",
+  "关闭语音": "Voice off",
+  "角色语音": "Character voices",
+  "战斗音效": "Battle effects",
+  "背景音乐": "Background music",
+  "角色语音音量": "Character voice volume",
+  "战斗音效音量": "Battle effects volume",
+  "背景音乐音量": "Background music volume",
+  "精简语音优先技能、濒死和急救。十二角色均使用各自中文声线。": "Compact mode prioritizes skills and rescue. All twelve characters use their own Chinese voices."
 }

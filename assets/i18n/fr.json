@@ -895,5 +895,17 @@
   "蟹护需要恰好 1 张水牌": "Garde du crabe nécessite exactement 1 carte Eau.",
   "烈焰披风：每回合首次受到伤害后，伤害来源获得灼烧。": "Cape de flammes : après vos premiers dégâts du tour, infligez Brûlure à la source.",
   "${p0} 的烈焰披风令 ${p1} 获得灼烧": "La Cape de flammes de ${p0} inflige Brûlure à ${p1}.",
-  "先选择 1 张任意手牌作为费用，再点击一名可回复生命的受伤角色；可以选择自己。": "Choisissez 1 carte en main comme coût, puis un personnage blessé pouvant récupérer des PV. Vous pouvez vous choisir."
+  "先选择 1 张任意手牌作为费用，再点击一名可回复生命的受伤角色；可以选择自己。": "Choisissez 1 carte en main comme coût, puis un personnage blessé pouvant récupérer des PV. Vous pouvez vous choisir.",
+  "声音设置": "Réglages audio",
+  "语音模式": "Voix",
+  "精简（推荐）": "Réduites (conseillé)",
+  "完整": "Complètes",
+  "关闭语音": "Sans voix",
+  "角色语音": "Voix des personnages",
+  "战斗音效": "Effets de combat",
+  "背景音乐": "Musique",
+  "角色语音音量": "Volume des voix",
+  "战斗音效音量": "Volume des effets",
+  "背景音乐音量": "Volume de la musique",
+  "精简语音优先技能、濒死和急救。十二角色均使用各自中文声线。": "Les voix réduites privilégient compétences et sauvetages. Les douze personnages ont chacun leur voix chinoise."
 }
