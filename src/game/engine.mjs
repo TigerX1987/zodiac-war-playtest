@@ -1,10 +1,10 @@
-import { createBaseDeck, createInfectionDeck, effectiveRitualCard, ELEMENT_LABELS, statusForElement } from '../content/cards.mjs?v=web-8e7b16a5f17a9f66';
+import { createBaseDeck, createInfectionDeck, effectiveRitualCard, ELEMENT_LABELS, statusForElement } from '../content/cards.mjs?v=web-3562333f2f8ac93a';
 import {
   CHARACTERS,
   DEFAULT_CHARACTER_PAIR,
   DEFAULT_DEMO_CHARACTERS,
   zodiacSeatIndices,
-} from '../content/characters.mjs?v=web-8e7b16a5f17a9f66';
+} from '../content/characters.mjs?v=web-3562333f2f8ac93a';
              
          
        
@@ -16,13 +16,14 @@ import {
             
                         
                 
+               
                        
               
            
               
             
                      
-import { randomFloat, shuffleWithSeed } from './random.mjs?v=web-8e7b16a5f17a9f66';
+import { randomFloat, shuffleWithSeed } from './random.mjs?v=web-3562333f2f8ac93a';
 
 const STATUS_LABELS                           = {
   burn: '灼烧',
@@ -726,6 +727,12 @@ function continueAfterInfectionInterruption(
   endTurnAfterResolution = false,
 ) {
   if (state.phase === 'gameOver') return;
+  if (state.pendingSkillDecisions?.length) {
+    state.phase = resumePhase;
+    if (state.pendingAttack) state.pendingSkillResume ??= 'finishAttack';
+    else if (endTurnAfterResolution) state.pendingSkillResume ??= 'endTurnAfterRescue';
+    return;
+  }
   if (state.pendingSkillResume) {
     state.phase = resumePhase;
     resumeAfterSkillDecisions(state);
@@ -1055,9 +1062,9 @@ function resumeAfterSkillDecisions(state           ) {
     resolveUnavoidableAttack(state);
     return;
   }
-  if (resume === 'endTurn') {
+  if (resume === 'endTurn' || resume === 'endTurnAfterRescue') {
     const active = findPlayer(state, state.activePlayerId);
-    endTurn(state, active);
+    endTurn(state, active, resume === 'endTurnAfterRescue');
   }
   resolveUnavoidableAttack(state);
 }
@@ -1250,6 +1257,63 @@ function resolveSkillDecision(
   resumeAfterSkillDecisions(state);
 }
 
+function triggerHpLossSkills(state           , target             , damage                                           ) {
+  if (!isAlive(target) || damage.hpLost <= 0) return;
+  const source = damage.sourceId ? findPlayer(state, damage.sourceId) : undefined;
+  if (source && source.id !== target.id) gainCapricornRage(state, target, 1, '承受实际伤害');
+  if (target.characterId === 'aries' && damage.outOfTurn) {
+    target.flags.ariesBloodRageReady = true;
+    triggerSkillMetric(state, 'aries.bloodRageReady');
+  }
+  if (target.characterId === 'gemini') {
+    drawCards(state, target, damage.hpLost, (card) => card.element === 'air');
+    triggerSkillMetric(state, 'gemini.windForm');
+    log(state, messageTemplate`${target.name} 因双生摸 ${damage.hpLost} 张风牌`, target.id, 'skill');
+  }
+  if (target.characterId === 'sagittarius' && damage.hadArmor) {
+    drawCards(state, target, 1);
+    triggerSkillMetric(state, 'sagittarius.sharpshot');
+    log(state, messageTemplate`${target.name} 的神射因装备防具并承受实际伤害，摸 1 张牌`, target.id, 'skill');
+  }
+}
+
+function triggerWoundedChoices(state           , target             , damage                                           ) {
+  if (!isAlive(target)) return;
+  const source = damage.sourceId ? findPlayer(state, damage.sourceId) : undefined;
+  if (damage.hpLost > 0 && target.characterId === 'virgo' && damage.cardDamage && !target.flags.usedVirgoDomainThisTurn) {
+    queueSkillDecision(state, { kind: 'virgoDomain', playerId: target.id });
+    log(state, messageTemplate`${target.name} 可以发动净域，免疫本回合后续卡牌伤害`, target.id, 'skill');
+  }
+  if (damage.hpLost > 0 && target.characterId === 'aquarius') {
+    drawCards(state, target, 2);
+    triggerSkillMetric(state, 'aquarius.stormEye');
+    log(state, messageTemplate`${target.name} 的倾杯触发，摸 2 张牌`, target.id, 'skill');
+    const others = state.players.filter((candidate) => candidate.id !== target.id && candidate.hp > 0);
+    if (others.length > 0 && target.hand.length > 0) {
+      queueSkillDecision(state, { kind: 'aquariusChalice', playerId: target.id });
+      log(state, messageTemplate`${target.name} 可以选择发动倾杯，与至多 2 名玩家交换至多 2 张等量手牌`, target.id, 'skill');
+    }
+  }
+  if (target.characterId === 'taurus' && (damage.armorLost || damage.hpLost > 0)) {
+    drawCards(state, target, 1);
+    triggerSkillMetric(state, 'taurus.thickSkin');
+    log(state, messageTemplate`${target.name} 因厚皮受伤后摸 1 张牌`, target.id, 'skill');
+    if (source && source.id !== target.id && isAlive(source) && target.hand.length > 0) {
+      queueSkillDecision(state, {kind:'taurusThickSkin',playerId:target.id,sourceId:source.id});
+      log(state, messageTemplate`${target.name} 可以弃 1 张牌发动厚皮，${source.statuses.silence ? '对已沉默的来源造成 1 点伤害' : '令伤害来源沉默'}`, target.id, 'skill');
+    }
+  }
+}
+
+function resolveRescuedDamageSkills(state           , pending              ) {
+  const damage = pending.damageSkills;
+  delete pending.damageSkills;
+  if (!damage) return;
+  const target = findPlayer(state, pending.targetId);
+  triggerHpLossSkills(state, target, damage);
+  triggerWoundedChoices(state, target, damage);
+}
+
 function applyDamage(
   state           ,
   target             ,
@@ -1304,6 +1368,15 @@ function applyDamage(
     log(state, messageTemplate`${target.name} 的护甲抵消 ${blocked} 点伤害`, target.id, 'armor');
   }
 
+  const damageSkills                                            = {
+    sourceId: source?.id,
+    hpLost: Math.max(0, damage),
+    armorLost: armorBefore > target.armor,
+    hadArmor: Boolean(armorCard),
+    cardDamage: Boolean(options.cardDamage),
+    outOfTurn: state.activePlayerId !== target.id,
+  };
+
   if (damage > 0) {
     target.hp -= damage;
     state.metrics.damageTaken[target.id] = (state.metrics.damageTaken[target.id] ?? 0) + damage;
@@ -1311,22 +1384,8 @@ function applyDamage(
       state.metrics.damageBySource[source.id] = (state.metrics.damageBySource[source.id] ?? 0) + damage;
       if (source.id !== target.id) gainCapricornRage(state, source, 1, sacredDamage ? '造成神圣伤害' : '造成实际伤害');
     }
-    if (source && source.id !== target.id && !sacredDamage) gainCapricornRage(state, target, 1, '承受实际伤害');
     log(state, messageTemplate`${target.name} 受到 ${damage} 点${sacredDamage ? '神圣' : options.trueDamage ? '真实' : ''}伤害`, target.id, 'damage');
-    if (target.characterId === 'aries' && !sacredDamage && state.activePlayerId !== target.id) {
-      target.flags.ariesBloodRageReady = true;
-      triggerSkillMetric(state, 'aries.bloodRageReady');
-    }
-    if (target.characterId === 'gemini' && !sacredDamage) {
-      drawCards(state, target, damage, (card) => card.element === 'air');
-      triggerSkillMetric(state, 'gemini.windForm');
-      log(state, messageTemplate`${target.name} 因双生摸 ${damage} 张风牌`, target.id, 'skill');
-    }
-    if (target.characterId === 'sagittarius' && target.equipment.armor && !sacredDamage) {
-      drawCards(state, target, 1);
-      triggerSkillMetric(state, 'sagittarius.sharpshot');
-      log(state, messageTemplate`${target.name} 的神射因装备防具并承受实际伤害，摸 1 张牌`, target.id, 'skill');
-    }
+    if (!sacredDamage) triggerHpLossSkills(state, target, damageSkills);
     if (
       isInfectionMode(state) &&
       source &&
@@ -1354,38 +1413,8 @@ function applyDamage(
     ) {
       applyInfection(state, target, source);
     }
-    if (
-      target.characterId === 'virgo' &&
-      options.cardDamage &&
-      !sacredDamage &&
-      !target.flags.usedVirgoDomainThisTurn &&
-      target.hp > 0
-    ) {
-      queueSkillDecision(state, { kind: 'virgoDomain', playerId: target.id });
-      log(state, messageTemplate`${target.name} 可以发动净域，免疫本回合后续卡牌伤害`, target.id, 'skill');
-    }
-    if (target.characterId === 'aquarius' && !sacredDamage && target.hp > 0) {
-      // 倾杯（被动）：水瓶受到非神圣的实际伤害后，摸 2 张牌，并可选择换牌。
-      drawCards(state, target, 2);
-      triggerSkillMetric(state, 'aquarius.stormEye');
-      log(state, messageTemplate`${target.name} 的倾杯触发，摸 2 张牌`, target.id, 'skill');
-      const others = state.players.filter((candidate) => candidate.id !== target.id && candidate.hp > 0);
-      if (others.length > 0 && target.hand.length > 0) {
-        queueSkillDecision(state, { kind: 'aquariusChalice', playerId: target.id });
-        log(state, messageTemplate`${target.name} 可以选择发动倾杯，与至多 2 名玩家交换至多 2 张等量手牌`, target.id, 'skill');
-      }
-    }
   }
-
-  if (!sacredDamage && target.characterId === 'taurus' && isAlive(target) && (armorBefore > target.armor || damage > 0)) {
-    drawCards(state, target, 1);
-    triggerSkillMetric(state, 'taurus.thickSkin');
-    log(state, messageTemplate`${target.name} 因厚皮受伤后摸 1 张牌`, target.id, 'skill');
-    if (source && source.id !== target.id && isAlive(source) && target.hand.length > 0) {
-      queueSkillDecision(state, {kind:'taurusThickSkin',playerId:target.id,sourceId:source.id});
-      log(state, messageTemplate`${target.name} 可以弃 1 张牌发动厚皮，${source.statuses.silence ? '对已沉默的来源造成 1 点伤害' : '令伤害来源沉默'}`, target.id, 'skill');
-    }
-  }
+  if (!sacredDamage) triggerWoundedChoices(state, target, damageSkills);
 
   if (options.status) addStatus(state, target, options.status, 1);
 
@@ -1395,6 +1424,8 @@ function applyDamage(
   } else {
     checkDefeat(state);
   }
+  const dying = state.pendingRescue ?? state.infection?.pendingDying;
+  if (!sacredDamage && dying?.targetId === target.id && !isAlive(target)) dying.damageSkills = damageSkills;
 }
 
 function triggerArmorAfterDamage(state           , target             , source             ) {
@@ -1438,6 +1469,14 @@ function finishStandardRescue(state           ) {
   delete state.pendingRescue;
   state.phase = pending.resumePhase;
   const target = findPlayer(state, pending.targetId);
+  resolveRescuedDamageSkills(state, pending);
+  if (state.pendingSkillDecisions?.length) {
+    if (state.pendingAttack && state.pendingAttack.sourceId !== target.id && ['response', 'hammerBreak'].includes(pending.resumePhase)) {
+      state.pendingSkillResume ??= 'finishAttack';
+    } else if (pending.resumePhase === 'discard' && target.id === state.activePlayerId) {
+      state.pendingSkillResume ??= 'endTurnAfterRescue';
+    }
+  }
   if (state.pendingSkillResume) {
     resumeAfterSkillDecisions(state);
   } else if (state.pendingAttack && ['response', 'hammerBreak'].includes(pending.resumePhase)) {
@@ -2160,6 +2199,7 @@ function resolveInfectionRescueWithSun(
   addStatus(state, target, 'shield');
   delete state.infection .pendingDying;
   log(state, messageTemplate`${player.name} 使用太阳急救 ${target.name}`, player.id, 'sun');
+  resolveRescuedDamageSkills(state, pending);
   continueAfterInfectionInterruption(
     state,
     pending.resumePhase,
@@ -2404,6 +2444,7 @@ function handleCancerRescue(state           , action                            
   if (state.pendingRescue) return finishStandardRescue(state);
   if (isInfectionMode(state) && infectionPending) {
     delete state.infection .pendingDying;
+    resolveRescuedDamageSkills(state, infectionPending);
     continueAfterInfectionInterruption(
       state,
       infectionPending.resumePhase,
