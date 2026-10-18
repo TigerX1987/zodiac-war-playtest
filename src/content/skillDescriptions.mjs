@@ -38,7 +38,7 @@ export const SKILL_DESCRIPTIONS                                   = {
   },
   'sagittarius.sharpshot': {
     name: '神射',
-    text: '被动。装备武器时，你每回合第一次火属性普通攻击伤害 +1；装备防具时，每次承受非神圣的实际生命伤害后摸 1 张牌。',
+    text: '被动。装备任意武器时，你每次使用火属性普通攻击或状态攻击伤害 +1，不限每回合首次，不强化 AOE；装备防具时，每次承受非神圣的实际生命伤害后摸 1 张牌。',
   },
   'gemini.windForm': {
     name: '双生',

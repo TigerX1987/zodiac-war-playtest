@@ -1,10 +1,10 @@
-import { createBaseDeck, createInfectionDeck, effectiveRitualCard, ELEMENT_LABELS, statusForElement } from '../content/cards.mjs?v=web-769300c190b6e3de';
+import { createBaseDeck, createInfectionDeck, effectiveRitualCard, ELEMENT_LABELS, statusForElement } from '../content/cards.mjs?v=web-6a4b85347b8d9d4b';
 import {
   CHARACTERS,
   DEFAULT_CHARACTER_PAIR,
   DEFAULT_DEMO_CHARACTERS,
   zodiacSeatIndices,
-} from '../content/characters.mjs?v=web-769300c190b6e3de';
+} from '../content/characters.mjs?v=web-6a4b85347b8d9d4b';
              
          
        
@@ -23,7 +23,7 @@ import {
               
             
                      
-import { randomFloat, shuffleWithSeed } from './random.mjs?v=web-769300c190b6e3de';
+import { randomFloat, shuffleWithSeed } from './random.mjs?v=web-6a4b85347b8d9d4b';
 
 const STATUS_LABELS                           = {
   burn: '灼烧',
@@ -76,7 +76,6 @@ function freshFlags()            {
     usedAriesBurnSoul: false,
     usedCapricornChargeThisRound: false,
     usedSagittariusSeek: false,
-    usedSagittariusFirstFireAttack: false,
     usedVirgoPurify: false,
     virgoDomainActive: false,
     usedVirgoDomainThisTurn: false,
@@ -1641,10 +1640,10 @@ function consumeBasicAttackAllowance(player             ) {
   player.flags.basicAttackCount += 1;
 }
 
-function consumeMatchingEnergyCharge(player             , card      ) {
+function consumeEnergyCharge(player             , card      ) {
   const charged =
     (card.kind === 'normalAttack' || card.kind === 'statusAttack') &&
-    card.element === player.flags.energyChargeElement;
+    Boolean(player.flags.energyChargeElement);
   if (charged) player.flags.energyChargeElement = undefined;
   return charged;
 }
@@ -2526,7 +2525,7 @@ function handlePlayCard(state           , action                                
     clearCenterPlayedCards(state);
     state.discard.push(card);
     player.flags.energyChargeElement = card.element;
-    log(state, messageTemplate`${player.name} 使用${card.name}蓄能：下一张同属性普通攻击或状态攻击伤害 +1`, player.id, 'card');
+    log(state, messageTemplate`${player.name} 使用${card.name}蓄能：本回合下一张任意属性的普通攻击或状态攻击伤害 +1`, player.id, 'card');
     return;
   }
 
@@ -2654,19 +2653,17 @@ function handlePlayCard(state           , action                                
         if (state.phase === 'gameOver') return;
       }
     }
-    const energyCharged = consumeMatchingEnergyCharge(player, card);
+    const energyCharged = consumeEnergyCharge(player, card);
     let attackDamage = energyCharged ? 2 : 1;
     if (
       player.characterId === 'sagittarius' &&
       player.equipment.weapon &&
-      card.kind === 'normalAttack' &&
-      card.element === 'fire' &&
-      !player.flags.usedSagittariusFirstFireAttack
+      (card.kind === 'normalAttack' || card.kind === 'statusAttack') &&
+      card.element === 'fire'
     ) {
-      player.flags.usedSagittariusFirstFireAttack = true;
       attackDamage += 1;
       triggerSkillMetric(state, 'sagittarius.sharpshot');
-      log(state, messageTemplate`${player.name} 的神射令本回合首次火属性普通攻击伤害 +1`, player.id, 'skill');
+      log(state, messageTemplate`${player.name} 的神射令本次火属性普通攻击或状态攻击伤害 +1`, player.id, 'skill');
     }
     const usesStoredSureHit = card.kind === 'normalAttack' && Boolean(player.statuses.sureHit);
     if (usesStoredSureHit) delete player.statuses.sureHit;
@@ -4312,7 +4309,7 @@ export function chooseAiAction(state           )                     {
     !player.flags.energyChargeElement &&
     player.hand.some((candidate) =>
       (candidate.kind === 'normalAttack' || candidate.kind === 'statusAttack') &&
-      candidate.element === card.element,
+      canUseHandCard(player, candidate) && canUseBasicAttack(player),
     ),
   );
   if (energy) return { type: 'playCard', playerId: player.id, cardId: energy.id };
