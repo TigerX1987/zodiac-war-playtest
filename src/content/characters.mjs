@@ -97,7 +97,7 @@ export const CHARACTERS                                 = {
     element: 'water',
     maxHp: 3,
     role: '冰冻压制 / 资源拆解 / 牌堆运营',
-    skills: ['蝎毒', '毒刺', '伏击'],
+    skills: ['蝎毒', '缴械', '伏击'],
   },
   pisces: {
     id: 'pisces',
@@ -121,7 +121,7 @@ export const CHARACTERS                                 = {
     id: 'virgo',
     name: '处女座',
     element: 'earth',
-    maxHp: 3,
+    maxHp: 4,
     role: '净化 / 拒战 / 多目标反制',
     skills: ['净化', '净域', '戒律'],
   },

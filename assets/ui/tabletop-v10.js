@@ -1,4 +1,4 @@
-/* Approved round-table v10 presentation. Rules and card payment flows stay in the existing client/engine. */
+/* Approved round-table r5 presentation. Rules and card payment flows stay in the existing client/engine. */
 window.TabletopV10 = {
   exitMenuOpen: false,
   settingsOpen: false,
@@ -19,10 +19,7 @@ window.TabletopV10 = {
     if (this.inLandscapeFrame()) window.parent.location.replace('/zodiac-war-playtest/');
   },
   orientationPrompt() {
-    return '<div class="v10-orientation-message" role="status"><strong>请横屏进行游戏</strong>' +
-      '<span>请将手机横放。若页面没有跟随旋转，可点击下方按钮。<br>兼容横屏会保留当前对局。</span>' +
-      '<button onclick="TabletopV10.enterLandscape()">进入兼容横屏</button>' +
-      '<small>也可以从右上角菜单选择在系统浏览器中打开。</small></div>';
+    return '';
   },
   icon(name, label = '', className = '') {
     return '<img class="v10-icon ' + className + '" src="/zodiac-war-playtest/assets/icons-v10/' + name + '.svg" alt="' + safeText(label) + '"' + (label ? '' : ' aria-hidden="true"') + '>';
@@ -32,7 +29,7 @@ window.TabletopV10 = {
     const eyePosition = { aries: 30, taurus: 24, gemini: 34, cancer: 26, leo: 24, virgo: 23, libra: 22, scorpio: 33, sagittarius: 29, capricorn: 31, aquarius: 26, pisces: 27 }[name] ?? 30;
     const base = '/zodiac-war-playtest/assets/portraits-v11/' + name;
     const size = self ? 640 : 320;
-    const responsive = self ? '' : ' srcset="' + base + '-320.webp 320w, ' + base + '-640.webp 640w" sizes="(max-height: 600px) 13vw, (min-width: 1678px) 235px, (max-width: 885px) 124px, 14vw"';
+    const responsive = self ? '' : ' srcset="' + base + '-320.webp 320w, ' + base + '-640.webp 640w" sizes="(orientation: portrait) 26vw, (max-height: 600px) 12vw, 11vw"';
     return '<img class="v10-person-image" style="--v11-portrait-eye:' + eyePosition + '%" src="' + base + '-' + size + '.webp"' + responsive +
       ' width="' + size + '" height="' + size + '" alt="' + safeText(labels[name]) + '" decoding="async" loading="eager" fetchpriority="' + (self ? 'high' : 'auto') + '">';
   },
@@ -127,11 +124,22 @@ window.TabletopV10 = {
     return '<nav class="v10-own-skills" aria-label="角色技能">' + characterSkillEntries(player).filter(item => !item.id.startsWith('infection.')).map(item => {
       const passive = infoOnlySkills.has(item.id);
       const available = !passive && isSkillUsable(player, item.id, canAct);
-      return '<button class="v10-skill ' + (available ? 'ready' : '') + (selectedSkills[player.id] === item.id ? ' selected' : '') +
+      return '<button class="v10-skill ' + (passive ? 'is-passive' : 'is-active') + (available ? ' ready' : '') + (selectedSkills[player.id] === item.id ? ' selected' : '') +
         '" onclick="event.stopPropagation();skill(state.players.find(p=>p.id===\'' + player.id + '\'),\'' + item.id + '\',event)" aria-label="' +
         safeText(item.label + (passive ? '，被动技能，查看说明' : available ? '，可以发动' : '，当前不可发动，查看说明')) + '" title="' + safeText(item.description) + '">' +
         this.icon(this.skillArtwork(item.id)) + '<span>' + safeText(item.label) + '</span>' + (passive ? '<small>被动</small>' : '') + '</button>';
-    }).join('') + '</nav>';
+    }).join('') + this.equipmentSkill(player, 'weapon') + this.equipmentSkill(player, 'armor') + '</nav>';
+  },
+  equipmentSkill(player, slot) {
+    const card = player.equipment[slot];
+    const id = slot === 'weapon' && card?.element === 'water' ? 'weapon.waterCodex' :
+      slot === 'weapon' && card?.element === 'air' ? 'weapon.airCompass' : '';
+    const ready = Boolean(id && canActivateEquipmentSkill(player, id));
+    const label = card?.name || (slot === 'weapon' ? '武器技能' : '防具技能');
+    return '<button class="v10-skill v10-equipment-skill ' + (id ? 'is-active' : 'is-passive') + (ready ? ' ready' : '') + (card ? '' : ' empty') + '" ' +
+      (card ? 'onclick="event.stopPropagation();TabletopV10.clickEquipment(\'' + player.id + '\',\'' + slot + '\')"' : 'disabled') +
+      ' aria-label="' + safeText(label + (card ? id ? ready ? '，可以发动' : '，当前不可发动，查看说明' : '，被动装备，查看说明' : '，未装备')) +
+      '" title="' + safeText(card ? equipmentEffectText(card) + ' ' + this.equipmentReason(player, id) : '装备后显示对应技能') + '"><span>' + safeText(label) + '</span></button>';
   },
   playerCard(player, active, focus, self = false) {
     const canTarget = canReleaseSelectedCardOnSeat(player.id);
@@ -151,7 +159,7 @@ window.TabletopV10 = {
       '<div class="v10-statuses">' + this.statuses(player) + '</div>' +
       (shouldShowRage(player) ? '<span class="v10-rage" title="怒气">' + this.icon('power') + player.rage + '</span>' : '') +
       '</div>' + this.vitals(player) + '<div class="v10-equipment-row">' + this.equipment(player, 'weapon') + this.equipment(player, 'armor') + '</div>' +
-      (self ? this.ownSkills(player) : '') + feedback.markup + renderActionCountdown(player) + '</article>';
+      feedback.markup + renderActionCountdown(player) + '</article>';
   },
   orderedOthers(focus) {
     const ordered = [...state.players].sort((a, b) => a.seatIndex - b.seatIndex || a.id.localeCompare(b.id));
@@ -160,13 +168,10 @@ window.TabletopV10 = {
   },
   seats(active, focus) {
     const others = this.orderedOthers(focus);
-    const left = others[0];
-    const right = others[others.length - 1];
-    const top = others.slice(1, -1);
-    return '<div class="v10-seat-layer" aria-label="按黄道顺序排列的席位">' +
-      '<div class="v10-top-seats" style="--top-count:' + top.length + '">' + top.map(player => this.playerCard(player, active, focus)).join('') + '</div>' +
-      '<div class="v10-left-seat">' + this.playerCard(left, active, focus) + '</div>' +
-      '<div class="v10-right-seat">' + this.playerCard(right, active, focus) + '</div>' + '</div>';
+    // Rotate around the local seat without duplicating or shrinking any player card.
+    const slots = others.length <= 3 ? [1,3,5] : others.length === 4 ? [1,2,4,5] : others.length === 5 ? [1,2,3,4,5] : others.length === 6 ? [0,1,2,3,4,5] : [0,1,2,3,4,5,6];
+    return '<div class="v10-seat-layer" aria-label="按黄道顺序排列的席位">' + others.map((player,index) =>
+      '<div class="v10-seat-position" data-seat-slot="' + slots[index] + '" style="--seat-order:' + index + '">' + this.playerCard(player, active, focus) + '</div>').join('') + '</div>';
   },
   compass() {
     const present = new Set(state.players.map(player => player.characterId));
@@ -318,6 +323,7 @@ window.TabletopV10 = {
     return '<div class="v10-settings-menu">' +
       (window.GameI18n?.selector('battle-language-select') || '') + (window.ZodiacAudio?.settingsMarkup() || '') + renderEntrustButton() +
       (this.inLandscapeFrame() ? '<button onclick="TabletopV10.leaveLandscape()">恢复普通显示</button>' : '') +
+      (!this.inLandscapeFrame() ? '<button onclick="TabletopV10.enterLandscape()">进入兼容横屏</button>' : '') +
       '<span>本地试玩 · 当前席位 ' + safeText(labels[localHumanPlayer()?.characterId] || '') + '</span></div>';
   },
   toggleMenu() { this.exitMenuOpen = !this.exitMenuOpen; this.settingsOpen = false; this.hideHover(); render(); },
@@ -393,13 +399,13 @@ window.TabletopV10 = {
     const skillPanel = state.pendingRescue ? '' : renderPendingSkillDecisionPanel(focus) || renderActiveSkillPanel(focus);
     const skillPanelKey = clientMatchId + ':' + focus.id + ':' + (state.pendingSkillDecisions?.length ? skillDecisionKey(state.pendingSkillDecisions[0]) : selectedSkills[focus.id]);
     const prompt = active ? actionPrompt(active, opponent, source, target) : '等待牌局开始';
-    return '<section class="arena v10-arena mode' + state.players.length + '">' + this.header() +
+    return '<section class="arena v10-arena mode' + state.players.length + '" data-ui-layout="round-table-r5">' + this.header() +
       '<div class="v10-table">' + this.seats(active, focus) + this.compass() +
       '<div class="v10-center">' + renderSetupPause(active) + renderMulliganCountdown() + renderPlayedCards() + '</div>' +
       (skillPanel ? '<div class="v10-skill-action-overlay" data-skill-panel-key="' + safeText(skillPanelKey) + '">' + skillPanel + '</div>' : '') +
       '<div class="v10-self-dock">' + this.playerCard(focus, active, focus, true) + '</div>' +
       '<section class="v10-hand-dock" aria-label="自己的手牌"><div class="v10-phase"><span>' + safeText(formatLogMessage(prompt)) +
-      '</span><b id="v10-round-clock"></b></div>' + renderFocusedHand(focus, '') + '</section>' + this.controls(focus, controls) + '</div>' +
+      '</span><b id="v10-round-clock"></b></div>' + this.ownSkills(focus) + renderFocusedHand(focus, '') + '</section>' + this.controls(focus, controls) + '</div>' +
       '<svg id="actionGuideLayer" aria-hidden="true"><g id="actionGuideBeams"></g></svg>' +
       '<aside id="v10-skill-hover" class="v10-skill-hover" role="tooltip" hidden></aside>' +
       renderPlayerInspector() + renderSeatSkillTip() + this.report() +
