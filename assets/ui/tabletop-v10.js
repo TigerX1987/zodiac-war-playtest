@@ -277,6 +277,8 @@ window.TabletopV10 = {
     return '已选目标：' + targets.join('、') + '。' + (this.canConfirmCard() ? '点击「确认出牌」释放。' : '请选择另一名高亮角色，再确认出牌。');
   },
   controls(handFocus, controls) {
+    const teachingControls = window.ZodiacTutorial?.controls();
+    if (teachingControls !== undefined) return teachingControls;
     if (state.pendingSkillDecisions?.length) return '';
     const main = !setupPaused && state.phase === 'main' && state.activePlayerId === handFocus.id && handFocus.control === 'human';
     const draft = main ? activeSkillCostDraft(handFocus) : null;
@@ -291,7 +293,7 @@ window.TabletopV10 = {
       controls.replace('结束出牌', '结束回合').replace('自动弃至体力', '自动弃牌') + '</div>';
   },
   header() {
-    const name = state.mode === 'infection' ? '月蚀' : currentMode() === 'standard' ? '标准' : '测试';
+    const name = tutorial ? '入门教学' : state.mode === 'infection' ? '月蚀' : currentMode() === 'standard' ? '标准' : '测试';
     return '<header class="v10-header"><button class="v10-report-button" onclick="TabletopV10.logOpen=true;render()">' + this.icon('report') + '战报</button>' +
       '<div class="v10-title"><strong><span class="v10-title-full">十二星座·四象战争</span><span class="v10-title-short">十二星座</span></strong>' +
       '<span>' + name + ' · ' + state.players.length + ' 人局</span><span>第 ' + state.round + ' 轮</span>' +

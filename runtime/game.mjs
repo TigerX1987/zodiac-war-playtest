@@ -1,13 +1,14 @@
-import { SKILL_DESCRIPTIONS } from '../src/content/skillDescriptions.mjs?v=web-38e2afbdd23abe38';
+import { SKILL_DESCRIPTIONS } from '../src/content/skillDescriptions.mjs?v=web-9495dc839832ae23';
+import { applyTutorialAction, createTutorialCheckpoint, nextTutorialCheckpoint } from '../src/game/tutorial.mjs?v=web-9495dc839832ae23';
 import {
   applyAction,
   applySingleAiAction,
   autoDiscardToHp,
   createGame,
   createInfectionGame,
-} from '../src/game/engine.mjs?v=web-38e2afbdd23abe38';
+} from '../src/game/engine.mjs?v=web-9495dc839832ae23';
 
-const SERVER_VERSION = "web-38e2afbdd23abe38";
+const SERVER_VERSION = "web-9495dc839832ae23";
 const MULLIGAN_SECONDS = 8;
 const MAIN_TOTAL_SECONDS = 65;
 const MAIN_IDLE_SECONDS = 20;
@@ -162,8 +163,55 @@ let actionStartedAt = null;
 let lastError = '';
 let matchSerial = 0;
 let matchId = SERVER_VERSION + ':0';
+let tutorial = null;
+
+function runTutorialCommand(command, lobbyConfig) {
+  if (command === 'start') {
+    if (!lobbyOpen || tutorial) throw new Error('请先返回大厅再开始教学');
+    tutorial = { step: 'welcome', returnState: { seed, mode, characters, controls, playerCount, game, setupPaused, setupFateDrawn } };
+    if (lobbyConfig) {
+      const returnMode = normalizeMode(lobbyConfig.mode);
+      const returnCount = normalizePlayerCount(returnMode, lobbyConfig.playerCount);
+      Object.assign(tutorial.returnState, { mode: returnMode, playerCount: returnCount,
+        characters: Array.from({length:returnCount}, (_, index) => characterLabels[lobbyConfig.characters?.[index]] ? lobbyConfig.characters[index] : GAME_MODES[returnMode].characters[index]),
+        controls: Array.from({length:returnCount}, (_, index) => lobbyConfig.controls?.[index] === 'human' ? 'human' : 'ai') });
+    }
+    game = createTutorialCheckpoint('welcome');
+    mode = 'test';
+    characters = game.players.map(player => player.characterId);
+    controls = game.players.map(player => player.control);
+    playerCount = 4;
+    lobbyOpen = false;
+    localPlayerId = 'p1';
+    setupPaused = false;
+    setupFateDrawn = true;
+    matchId = SERVER_VERSION + ':tutorial:' + (++matchSerial);
+  } else if (command === 'next' && tutorial) {
+    const next = nextTutorialCheckpoint(tutorial);
+    tutorial.step = next.progress.step;
+    game = next.state;
+    matchId = SERVER_VERSION + ':tutorial:' + (++matchSerial);
+  } else if ((command === 'skip' || command === 'finish' || command === 'practice') && tutorial) {
+    if (command !== 'skip' && tutorial.step !== 'finish') throw new Error('请先完成教学，或选择跳过');
+    ({ seed, mode, characters, controls, playerCount, game, setupPaused, setupFateDrawn } = tutorial.returnState);
+    tutorial = null;
+    lobbyOpen = true;
+    localPlayerId = game.players.find(player => player.control === 'human')?.id || game.players[0].id;
+    matchId = SERVER_VERSION + ':' + (++matchSerial);
+    if (command === 'practice') {
+      mode = 'test';
+      characters = [...GAME_MODES.test.characters];
+      controls = [...GAME_MODES.test.controls];
+      playerCount = 4;
+      resetCurrentGame(freshSeed(), false);
+    }
+  } else throw new Error('当前教学操作不可用');
+  mulliganDeadline = actionDeadline = actionDeadlineKey = actionStartedAt = null;
+  lastError = '';
+}
 
 function resetCurrentGame(nextSeed = seed, toLobby = false) {
+  tutorial = null;
   matchId = SERVER_VERSION + ':' + (++matchSerial);
   seed = normalizeSeed(nextSeed);
   game = createModeGame(mode, seed, characters, controls, playerCount);
@@ -230,6 +278,7 @@ function finishExpiredMulligan() {
 }
 
 function actionTimeoutTargetIdFor(state) {
+  if (tutorial) return '';
   if (setupPaused || state.pendingSkillDecisions?.length) return '';
   if (state.phase === 'main') return state.activePlayerId;
   if (state.phase === 'response' && state.pendingAttack) return state.pendingAttack.currentTargetId;
@@ -298,6 +347,7 @@ function hasLegalDefenseResponse(gameState, player) {
 }
 
 function finishDefenselessResponses() {
+  if (tutorial) return;
   if (game.pendingSkillDecisions?.length) return;
   let guard = 0;
   while (game.phase === 'response' && game.pendingAttack && !game.pendingSkillDecisions?.length && guard < 12) {
@@ -409,6 +459,7 @@ function sendState(res, httpStatus = 200) {
     actionDeadline,
     actionStartedAt,
     matchId,
+    tutorial: tutorial ? { step: tutorial.step } : null,
     config: { mode, characters, controls, playerCount },
   }, httpStatus);
   lastError = '';
@@ -458,7 +509,11 @@ export async function handleRequest(req, res) {
         if (setupPaused) throw new Error('请先确认星盘，再开始换牌或行动');
         finishExpiredMulligan();
         finishExpiredActionTimeout();
-        game = applyAction(game, body).state;
+        if (tutorial) {
+          const result = applyTutorialAction(game, tutorial, body);
+          game = result.state;
+          tutorial.step = result.progress.step;
+        } else game = applyAction(game, body).state;
         actionDeadline = null;
         actionDeadlineKey = null;
         actionStartedAt = null;
@@ -466,6 +521,20 @@ export async function handleRequest(req, res) {
       } catch (error) {
         lastError = error instanceof Error ? error.message : String(error);
       }
+      sendState(res);
+      return;
+    }
+
+    if (req.method === 'POST' && req.url === '/api/tutorial') {
+      const body = await readBody(req);
+      try { runTutorialCommand(body.command, body.lobbyConfig); }
+      catch (error) { lastError = error instanceof Error ? error.message : String(error); }
+      sendState(res);
+      return;
+    }
+
+    if (tutorial && req.method === 'POST' && req.url !== '/api/exit') {
+      lastError = '教学不计时，也无需托管；请按提示操作或跳过教学';
       sendState(res);
       return;
     }
@@ -533,7 +602,8 @@ export async function handleRequest(req, res) {
       const body = await readBody(req);
       try {
         validateMatchNavigation(body);
-        resetCurrentGame(freshSeed(), true);
+        if (tutorial) runTutorialCommand('skip');
+        else resetCurrentGame(freshSeed(), true);
         sendState(res);
       } catch (error) {
         lastError = error instanceof Error ? error.message : String(error);
@@ -629,11 +699,12 @@ export async function handleRequest(req, res) {
 }
 
 export function snapshot() {
-  return {version: SERVER_VERSION, seed, mode, characters, controls, playerCount, game, lobbyOpen, localPlayerId, setupPaused, setupFateDrawn, mulliganDeadline, actionDeadline, actionDeadlineKey, actionStartedAt, matchSerial, matchId};
+  return {version: SERVER_VERSION, seed, mode, characters, controls, playerCount, game, lobbyOpen, localPlayerId, setupPaused, setupFateDrawn, mulliganDeadline, actionDeadline, actionDeadlineKey, actionStartedAt, matchSerial, matchId, tutorial};
 }
 export function restoreSnapshot(saved) {
   if (saved?.version !== SERVER_VERSION || !Array.isArray(saved.game?.players) || !GAME_MODES[saved.mode]) return false;
   ({seed, mode, characters, controls, playerCount, game, lobbyOpen, localPlayerId, setupPaused, setupFateDrawn, mulliganDeadline, actionDeadline, actionDeadlineKey, actionStartedAt, matchSerial, matchId} = saved);
+  tutorial = saved.tutorial || null;
   return true;
 }
 let requestQueue = Promise.resolve();

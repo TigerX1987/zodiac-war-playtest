@@ -4170,7 +4170,8 @@
       }
     }
   </style>
-  <link rel="stylesheet" href="/zodiac-war-playtest/assets/ui/tabletop-v10.css?v=web-38e2afbdd23abe38" />
+  <link rel="stylesheet" href="/zodiac-war-playtest/assets/ui/tabletop-v10.css?v=web-9495dc839832ae23" />
+  <link rel="stylesheet" href="/zodiac-war-playtest/assets/ui/tutorial.css?v=web-9495dc839832ae23" />
 </head>
 <body>
 <main>
@@ -4188,6 +4189,7 @@
         <h2>选择对局模式</h2>
         <p>确定模式与席位后再进入牌桌，游戏内仅保留托管和退出。</p>
       </div>
+      <button class="tutorial-entry" onclick="tutorialCommand('start')"><strong>5分钟上手</strong><span>基础攻防 · 羊角冲 · 队友急救</span><small>可跳过 · 可重看</small></button>
       <div class="modeChoice" role="group" aria-label="游戏模式">
         <button class="modeCard" id="startModeTest" onclick="setMode('test')">
           <img class="modeCardIcon" src="/zodiac-war-playtest/assets/ui/mode-test.png" alt="" aria-hidden="true" />
@@ -4236,10 +4238,11 @@
   <svg id="dragGuideLayer" aria-hidden="true"><line id="dragGuideLine" x1="0" y1="0" x2="0" y2="0"></line><circle id="dragGuideHalo" cx="0" cy="0" r="9"></circle></svg>
   <section class="board" id="board"></section>
 </main>
-<script src="/zodiac-war-playtest/assets/i18n/game-i18n.js?v=web-38e2afbdd23abe38"></script>
-<script src="/zodiac-war-playtest/assets/audio/battle-audio.js?v=web-38e2afbdd23abe38"></script>
-<script src="/zodiac-war-playtest/assets/ui/tabletop-v10.js?v=web-38e2afbdd23abe38"></script>
+<script src="/zodiac-war-playtest/assets/i18n/game-i18n.js?v=web-9495dc839832ae23"></script>
+<script src="/zodiac-war-playtest/assets/audio/battle-audio.js?v=web-9495dc839832ae23"></script>
+<script src="/zodiac-war-playtest/assets/ui/tabletop-v10.js?v=web-9495dc839832ae23"></script>
+<script src="/zodiac-war-playtest/assets/ui/tutorial.js?v=web-9495dc839832ae23"></script>
 <p id="web-load-status" role="status" style="position:fixed;left:12px;bottom:0;color:#e8d5a6">正在载入试玩…</p>
-<script type="module" src="/zodiac-war-playtest/runtime/bootstrap.mjs?v=web-38e2afbdd23abe38"></script>
+<script type="module" src="/zodiac-war-playtest/runtime/bootstrap.mjs?v=web-9495dc839832ae23"></script>
 </body>
 </html>
