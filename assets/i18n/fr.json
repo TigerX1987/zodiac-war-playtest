@@ -949,5 +949,19 @@
   "防具技能": "Compétence d’armure",
   "装备后显示对应技能": "Équipez un objet pour afficher sa compétence",
   "，未装备": ", non équipé",
-  "，被动装备，查看说明": ", équipement passif, voir les détails"
+  "，被动装备，查看说明": ", équipement passif, voir les détails",
+  "标准对战": "Combat standard",
+  "自定义练习": "Entraînement libre",
+  "开始对局": "Lancer la partie",
+  "人数": "Joueurs",
+  "对局模式": "Mode de jeu",
+  "4/6人 · 队伍对抗": "4 / 6 joueurs · Combat en équipe",
+  "4–8人 · 幸存者与感染者": "4–8 joueurs · Survivants et infectés",
+  "4人 · 自定义角色与控制": "4 joueurs · Personnages et commandes",
+  "保存设置": "Enregistrer",
+  "星座由系统随机分配。可调整每个席位的控制方式。": "Les signes sont attribués au hasard. Choisissez le contrôle de chaque place.",
+  "可逐席位指定星座，并选择真人或AI。": "Choisissez chaque personnage, puis un humain ou une IA.",
+  "界面语言": "Langue de l’interface",
+  "四象战争": "Guerre des éléments",
+  "5分钟上手": "Tutoriel · 5 min"
 }

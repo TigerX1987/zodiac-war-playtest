@@ -949,5 +949,19 @@
   "防具技能": "Armor skill",
   "装备后显示对应技能": "Equip an item to display its skill",
   "，未装备": ", not equipped",
-  "，被动装备，查看说明": ", passive equipment, view details"
+  "，被动装备，查看说明": ", passive equipment, view details",
+  "标准对战": "Standard Battle",
+  "自定义练习": "Custom Practice",
+  "开始对局": "Start Battle",
+  "人数": "Players",
+  "对局模式": "Game mode",
+  "4/6人 · 队伍对抗": "4 / 6 players · Team battle",
+  "4–8人 · 幸存者与感染者": "4–8 players · Survivors vs Infected",
+  "4人 · 自定义角色与控制": "4 players · Custom characters and controls",
+  "保存设置": "Save settings",
+  "星座由系统随机分配。可调整每个席位的控制方式。": "Signs are assigned randomly. Choose who controls each seat.",
+  "可逐席位指定星座，并选择真人或AI。": "Choose each character and assign a human or AI.",
+  "界面语言": "Interface language",
+  "四象战争": "Elemental War",
+  "5分钟上手": "5-min Tutorial"
 }
