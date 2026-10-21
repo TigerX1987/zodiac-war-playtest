@@ -1,10 +1,10 @@
-import { createBaseDeck, createInfectionDeck, effectiveRitualCard, ELEMENT_LABELS, statusForElement } from '../content/cards.mjs?v=web-d6f2300c49c7f11f';
+import { createBaseDeck, createInfectionDeck, effectiveRitualCard, ELEMENT_LABELS, statusForElement } from '../content/cards.mjs?v=web-7f2e2487a0c949f8';
 import {
   CHARACTERS,
   DEFAULT_CHARACTER_PAIR,
   DEFAULT_DEMO_CHARACTERS,
   zodiacSeatIndices,
-} from '../content/characters.mjs?v=web-d6f2300c49c7f11f';
+} from '../content/characters.mjs?v=web-7f2e2487a0c949f8';
              
          
        
@@ -23,7 +23,7 @@ import {
               
             
                      
-import { randomFloat, shuffleWithSeed } from './random.mjs?v=web-d6f2300c49c7f11f';
+import { randomFloat, shuffleWithSeed } from './random.mjs?v=web-7f2e2487a0c949f8';
 
 const STATUS_LABELS                           = {
   burn: '灼烧',
@@ -558,7 +558,8 @@ function addStatus(state           , player             , status          , turn
     return;
   }
 
-  player.statuses[status] = { id: status, turns };
+  const retainThroughTurn = status === 'silence' ? player.statuses.silence?.retainThroughTurn : undefined;
+  player.statuses[status] = { id: status, turns, ...(retainThroughTurn !== undefined ? {retainThroughTurn} : {}) };
   if (isAbnormal) state.metrics.statusesApplied += 1;
   log(state, messageTemplate`${player.name} 获得 ${STATUS_LABELS[status]}`, player.id, 'status');
 }
@@ -566,6 +567,8 @@ function addStatus(state           , player             , status          , turn
 function removeOneRoundStatuses(state           , player             ) {
   for (const status of ['burn', 'frozen', 'silence']              ) {
     if (player.statuses[status]) {
+      if (status === 'silence' && player.statuses.silence?.retainThroughTurn !== undefined &&
+          state.metrics.turns <= player.statuses.silence.retainThroughTurn) continue;
       delete player.statuses[status];
       log(state, messageTemplate`${player.name} 的 ${STATUS_LABELS[status]} 消失`, player.id, 'status');
     }
@@ -753,6 +756,10 @@ function continueAfterInfectionInterruption(
   }
   if (state.pendingAttack) {
     state.phase = 'response';
+    if (endTurnAfterResolution && interruptedPlayerId === state.activePlayerId) {
+      const interrupted = findPlayer(state, interruptedPlayerId);
+      if (moveTurnAfterDyingActivePlayer(state, interrupted)) return;
+    }
     clearPendingOrNextTarget(state);
     return;
   }
@@ -1103,15 +1110,15 @@ function resolveSkillDecision(
     }
   }
 
-  if (decision.kind === 'scorpioPoisonOffer') {
-    if (!source) throw new Error('蝎毒发动者不存在');
-    if (!action.activate) throw new Error('蝎毒必须交出 1 张手牌');
-    const ids = action.cardIds ?? [];
-    const given = ids.length === 1 ? player.hand.find(card => card.id === ids[0]) : undefined;
-    if (!given) throw new Error('蝎毒必须选择自己的 1 张手牌');
-    source.hand.push(takeCard(player, given.id));
-    log(state, messageTemplate`${player.name} 因蝎毒交给 ${source.name} 一张 ${given.name}`, player.id, 'skill');
-    if (given.element !== 'water') applyDamage(state, player, source, 1);
+  if (decision.kind === 'scorpioPoisonTake') {
+    const target = decision.targetId ? findPlayer(state, decision.targetId) : undefined;
+    if (player.characterId !== 'scorpio' || !isAlive(player) || !target || !isAlive(target)) throw new Error('蝎毒夺牌目标已失效');
+    if (!action.activate) throw new Error('蝎毒必须获得目标的 1 张手牌');
+    const selectedId = action.selectedCardId ?? (action.cardIds?.length === 1 ? action.cardIds[0] : undefined);
+    const selected = target.hand.find(card => card.id === selectedId);
+    if (!selected) throw new Error('蝎毒只能选择目标的 1 张手牌，不能选择装备');
+    player.hand.push(takeCard(target, selected.id));
+    log(state, messageTemplate`${player.name} 因蝎毒获得 ${target.name} 的手牌 ${selected.name}`, player.id, 'skill');
   }
 
   if (decision.kind === 'taurusGuardSetup') {
@@ -1156,6 +1163,7 @@ function resolveSkillDecision(
       log(state, messageTemplate`${player.name} 弃置 ${discarded.name} 发动厚皮，对已沉默的 ${source.name} 造成 1 点伤害`, player.id, 'skill');
     } else {
       addStatus(state, source, 'silence', 1);
+      if (source.statuses.silence) source.statuses.silence.retainThroughTurn = state.metrics.turns;
       log(state, messageTemplate`${player.name} 弃置 ${discarded.name} 发动厚皮，令 ${source.name} 沉默`, player.id, 'skill');
     }
   }
@@ -1577,7 +1585,7 @@ function moveTurnAfterDyingActivePlayer(state           , player             ) {
 }
 
 function settleDyingActivePlayer(state           ) {
-  if (state.phase === 'gameOver' || state.pendingRescue) return;
+  if (state.phase === 'gameOver' || resolutionIsPending(state) || state.pendingSkillDecisions?.length) return;
   const active = findPlayer(state, state.activePlayerId);
   moveTurnAfterDyingActivePlayer(state, active);
 }
@@ -3053,7 +3061,7 @@ function handleSkill(state           , action                                   
     if (state.phase === 'gameOver') return;
     if (stolen) {
       player.hand.push(stolen);
-      if (stolen.element !== 'air') applyDamage(state, target, player, 1, { status: 'blind' });
+      if (stolen.element !== 'air') applyDamage(state, target, player, 1);
     }
     player.flags.usedGeminiSteal = true;
     triggerSkillMetric(state, action.skillId);
@@ -3274,14 +3282,16 @@ function handleSkill(state           , action                                   
     if (!action.targetId || target.id === player.id || target.hp <= 0 || target.eliminated) throw new Error('蝎毒需要指定一名其他存活角色');
     assertNotIceArmorBlocked(player, target);
     const ids = action.cardIds ?? [];
-    const cost = ids.length === 1 ? player.hand.find(card => card.id === ids[0] && card.element === 'water') : undefined;
-    if (!cost) throw new Error('蝎毒需要弃置 1 张水属性手牌');
-    state.discard.push(takeCard(player, cost.id));
+    const costs = ids.map(id => player.hand.find(card => card.id === id));
+    if (ids.length !== 2 || new Set(ids).size !== 2 || costs.some(card => !card) || !costs.some(card => card?.element === 'water')) {
+      throw new Error('蝎毒需要弃置两张不同手牌：1 张水牌和 1 张任意牌');
+    }
+    for (const id of ids) state.discard.push(takeCard(player, id));
     player.flags.usedScorpioPoison = true;
     triggerSkillMetric(state, action.skillId);
-    log(state, messageTemplate`${player.name} 弃置 ${cost.name} 对 ${target.name} 发动蝎毒`, player.id, 'skill');
+    log(state, messageTemplate`${player.name} 弃置 ${costs.map(card => card .name).join('、')} 对 ${target.name} 发动蝎毒`, player.id, 'skill');
     addStatus(state, target, 'frozen', 1);
-    if (target.hand.length) queueSkillDecision(state, {kind:'scorpioPoisonOffer',playerId:target.id,sourceId:player.id});
+    if (target.hand.length) queueSkillDecision(state, {kind:'scorpioPoisonTake',playerId:player.id,sourceId:player.id,targetId:target.id});
     else applyDamage(state, target, player, 1);
     return;
   }
@@ -3671,7 +3681,7 @@ export function applyAction(input           , action        )                   
     }
     resolveSkillDecision(state, action);
     if (isInfectionMode(state)) checkInfectionVictory(state);
-    else settleDyingActivePlayer(state);
+    settleDyingActivePlayer(state);
     return { state, events: state.log.slice(0, state.log.length - beforeLogLength) };
   }
   if (action.type === 'resolveSkillDecision') throw new Error('当前没有待处理的技能选择');
@@ -3752,7 +3762,7 @@ export function applyAction(input           , action        )                   
   if (action.type === 'useSkill') handleSkill(state, action);
 
   if (isInfectionMode(state)) checkInfectionVictory(state);
-  else settleDyingActivePlayer(state);
+  settleDyingActivePlayer(state);
 
   return { state, events: state.log.slice(0, state.log.length - beforeLogLength) };
 }
@@ -4100,11 +4110,14 @@ export function chooseAiAction(state           )                     {
     if (skillDecision.kind === 'scorpioEndPeek') {
       return { type: 'resolveSkillDecision', playerId: player.id, activate: true, ...scorpioWaterPeekOrder(state) };
     }
-    if (skillDecision.kind === 'scorpioPoisonOffer') {
-      const eligible = player.hand.filter(card => card.element === 'water');
-      const costs = eligible.length ? {...player,hand:eligible} : player;
-      const given = scorpioAiSkillCost(costs, false) ?? costs.hand[0];
-      return {type:'resolveSkillDecision',playerId:player.id,activate:true,cardIds:given ? [given.id] : []};
+    if (skillDecision.kind === 'scorpioPoisonTake') {
+      const target = findPlayer(state, skillDecision.targetId );
+      const value = (card      ) => card.kind === 'sun' ? 100 : card.kind === 'moon' ? 95 :
+        card.kind === 'weapon' ? (player.equipment.weapon ? 55 : 85) :
+        card.kind === 'armor' ? (player.equipment.armor ? 55 : 85) :
+        card.element === 'water' ? 75 : card.kind === 'aoe' ? 65 : card.kind === 'utility' ? 60 : 30;
+      const selected = [...target.hand].sort((a,b) => value(b)-value(a))[0];
+      return {type:'resolveSkillDecision',playerId:player.id,activate:true,selectedCardId:selected?.id};
     }
     const preferredTarget = aiHostilePlayers(state, player)
       .find((candidate) => !isIceArmorBlocked(player, candidate));
@@ -4333,13 +4346,14 @@ export function chooseAiAction(state           )                     {
 
   if (canUseActiveSkill && player.characterId === 'scorpio' && !player.flags.usedScorpioPoison && outputEnemy) {
     const water = scorpioAiSkillCost(player, true);
+    const extra = water && scorpioAiSkillCost(player, false, [water.id]);
     const target = aiHostilePlayers(state, player)
       .filter(candidate => !isIceArmorBlocked(player, candidate) && scorpioPoisonHasEffect(candidate))
       .sort((first, second) => first.hp - second.hp || first.hand.length - second.hand.length)[0];
-    if (water && target) {
-      const opening = target.statuses.shield && scorpioAiDisarm(state, player, target, [water.id]);
+    if (water && extra && target) {
+      const opening = target.statuses.shield && scorpioAiDisarm(state, player, target, [water.id, extra.id]);
       if (opening) return opening;
-      return {type:'useSkill',playerId:player.id,skillId:'scorpio.freezeAoe',targetId:target.id,cardIds:[water.id]};
+      return {type:'useSkill',playerId:player.id,skillId:'scorpio.freezeAoe',targetId:target.id,cardIds:[water.id, extra.id]};
     }
   }
 

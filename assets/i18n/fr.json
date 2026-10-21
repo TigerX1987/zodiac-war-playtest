@@ -963,5 +963,15 @@
   "可逐席位指定星座，并选择真人或AI。": "Choisissez chaque personnage, puis un humain ou une IA.",
   "界面语言": "Langue de l’interface",
   "四象战争": "Guerre des éléments",
-  "5分钟上手": "Tutoriel · 5 min"
+  "5分钟上手": "Tutoriel · 5 min",
+  "每回合一次。弃 2 张牌，或弃 1 张牌并失去 1 点生命；查看目标手牌和装备并选择获得其中 1 张。若获得的牌不是风属性，对目标造成 1 点伤害，不附加致盲；仅当发动前目标没有手牌和装备时，改为造成 2 点伤害并附加致盲。换影无距离限制。": "Une fois par tour, défaussez 2 cartes, ou 1 carte et perdez 1 PV. Regardez la main et l’équipement d’une cible et prenez 1 carte. Si elle n’est pas Air, infligez 1 dégât, sans Aveuglement. Seulement si la cible n’avait ni carte en main ni équipement avant l’activation, infligez à la place 2 dégâts et Aveuglement. Sans limite de portée.",
+  "蝎毒：查看并获得 1 张手牌": "Venin : révéler et prendre 1 carte en main",
+  "确认获得": "Confirmer la prise",
+  "冰冻已先行结算。查看目标手牌并选择获得 1 张；不能选择装备，夺牌不追加伤害。": "Le Gel a été résolu. Regardez la main et prenez 1 carte. L’équipement porté ne peut pas être choisi ; aucun dégât supplémentaire.",
+  " 尚未沉默；弃牌后令其沉默，持续至其下一个主动回合结束。": " n’est pas réduit au Silence ; défaussez pour le faire jusqu’à la fin de son prochain tour actif.",
+  "${p0} 因蝎毒获得 ${p1} 的手牌 ${p2}": "${p0} prend ${p2} dans la main de ${p1} avec Venin",
+  "出牌阶段每回合一次。弃置 1 张水属性手牌，令一名其他存活角色冰冻，然后查看其手牌并选择获得 1 张，不追加伤害，也不能选择装备；仅当目标没有手牌时，改为对其造成 1 点普通伤害。付费并结算冰冻后才能查看手牌，夺牌不解除冰冻，费用牌不按普通出牌结算。": "Une fois pendant votre phase de jeu, défaussez 1 carte Eau de votre main pour Geler un autre personnage vivant, puis regardez sa main et prenez 1 carte au choix. Ce vol n’ajoute aucun dégât et ne peut viser l’équipement porté. Si sa main est vide, infligez à la place 1 dégât normal. Le paiement et le Gel précèdent la révélation. Le vol ne retire pas le Gel ; l’effet normal de la carte payée ne se déclenche pas.",
+  "被动。受到非神圣伤害、损失护甲或生命后摸 1 张牌；同一次伤害同时损失护甲和生命也只摸 1 张。之后可以弃 1 张手牌，令其他存活的伤害来源沉默，持续至其下一个主动回合结束；若来源已沉默，改为对其造成 1 点普通伤害。": "Passif. Après qu’un dégât non sacré a retiré de l’armure ou des PV, piochez 1 carte, même si le même coup retire les deux. Vous pouvez ensuite défausser 1 carte de votre main pour réduire au Silence l’autre source vivante des dégâts jusqu’à la fin de son prochain tour actif. Si elle est déjà réduite au Silence, infligez à la place 1 dégât normal.",
+  "出牌阶段每回合一次。弃置两张不同手牌：1 张水牌和 1 张任意牌（可以是另一张水牌），令一名其他存活角色冰冻，然后查看其手牌并选择获得 1 张，不追加伤害，也不能选择装备；仅当目标没有手牌时，改为对其造成 1 点普通伤害。付费并结算冰冻后才能查看手牌，夺牌不解除冰冻，费用牌不按普通出牌结算。": "Une fois pendant votre phase de jeu, défaussez 2 cartes distinctes de votre main : 1 carte Eau et 1 carte quelconque (une seconde Eau est autorisée) pour Geler un autre personnage vivant, puis regardez sa main et prenez 1 carte au choix. Ce vol n’ajoute aucun dégât et ne peut viser l’équipement porté. Si sa main est vide, infligez à la place 1 dégât normal. Le paiement et le Gel précèdent la révélation. Le vol ne retire pas le Gel ; les effets normaux des deux cartes payées ne se déclenchent pas.",
+  "选择两张不同手牌：1 张水牌和 1 张任意牌（可再选水牌），再点击其他角色发动蝎毒。费用牌不会按普通出牌结算。": "Choisissez 2 cartes distinctes, dont au moins 1 Eau, puis un autre personnage pour utiliser Venin. Aucune des deux cartes payées ne produit son effet normal."
 }

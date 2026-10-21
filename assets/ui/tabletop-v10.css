@@ -130,6 +130,9 @@ body.tabletopV10.matchOpen #board .v10-hand-dock .stackedHand .card:first-child 
 .tabletopV10 .v10-hand-dock .stackedHand .cardBottom { display: none; }
 .tabletopV10 .v10-hand-dock .handInteractionOverlay { position: absolute; left: 0; right: 0; top: auto; bottom: calc(100% + var(--v10-skill-height) + 62px); width: 100%; max-height: min(180px,36dvh); flex-direction: column; align-items: stretch; overflow-x: hidden; overflow-y: auto; transform: none; z-index: 100; }
 .tabletopV10 .v10-hand-dock .handInteractionOverlay > * { width: 100%; max-width: 100%; min-width: 0; box-sizing: border-box; white-space: normal; }
+.tabletopV10 .v10-hand-dock .handInteractionOverlay,
+.tabletopV10 .v10-hand-dock .handInteractionOverlay > * { pointer-events: none; }
+.tabletopV10 .v10-hand-dock .handInteractionOverlay :is(button,select,input) { pointer-events: auto; }
 .tabletopV10 .v10-hand-dock .skillCostBar { align-items: flex-start; }
 .tabletopV10 .v10-hand-dock .skillCostBar.leoRoarCost { flex-direction: row; gap: 8px; }
 .tabletopV10 .v10-hand-dock .skillCostBar > span { min-width: 0; flex: 1 1 auto; overflow-wrap: anywhere; }

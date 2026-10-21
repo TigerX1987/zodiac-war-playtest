@@ -963,5 +963,15 @@
   "可逐席位指定星座，并选择真人或AI。": "Elige cada personaje y asigna una persona o IA.",
   "界面语言": "Idioma de la interfaz",
   "四象战争": "Guerra elemental",
-  "5分钟上手": "Tutorial · 5 min"
+  "5分钟上手": "Tutorial · 5 min",
+  "每回合一次。弃 2 张牌，或弃 1 张牌并失去 1 点生命；查看目标手牌和装备并选择获得其中 1 张。若获得的牌不是风属性，对目标造成 1 点伤害，不附加致盲；仅当发动前目标没有手牌和装备时，改为造成 2 点伤害并附加致盲。换影无距离限制。": "Una vez por turno, descarta 2 cartas, o descarta 1 y pierde 1 PV. Mira la mano y el equipo del objetivo y toma 1 carta. Si no es de Aire, inflige 1 de daño, sin Ceguera. Solo si el objetivo no tenía cartas en mano ni equipo antes de la activación, inflige en su lugar 2 de daño y Ceguera. Sin límite de alcance.",
+  "蝎毒：查看并获得 1 张手牌": "Veneno: mira la mano y toma 1 carta",
+  "确认获得": "Confirmar toma",
+  "冰冻已先行结算。查看目标手牌并选择获得 1 张；不能选择装备，夺牌不追加伤害。": "La Congelación ya se resolvió. Mira la mano del objetivo y toma 1 carta. No puedes elegir equipo equipado; no hay daño adicional.",
+  " 尚未沉默；弃牌后令其沉默，持续至其下一个主动回合结束。": " no está Silenciado; descarta para Silenciarlo hasta el final de su próximo turno activo.",
+  "${p0} 因蝎毒获得 ${p1} 的手牌 ${p2}": "${p0} toma ${p2} de la mano de ${p1} con Veneno",
+  "出牌阶段每回合一次。弃置 1 张水属性手牌，令一名其他存活角色冰冻，然后查看其手牌并选择获得 1 张，不追加伤害，也不能选择装备；仅当目标没有手牌时，改为对其造成 1 点普通伤害。付费并结算冰冻后才能查看手牌，夺牌不解除冰冻，费用牌不按普通出牌结算。": "Una vez durante tu fase de juego, descarta 1 carta de Agua de tu mano para Congelar a otro personaje vivo; después mira su mano y elige 1 carta para tomar. No causa daño adicional ni permite tomar equipo equipado. Solo si no tiene cartas en mano recibe en su lugar 1 de daño normal. Paga y resuelve la Congelación antes de revelar la mano. Tomar la carta no elimina la Congelación; el efecto normal de la carta pagada no se activa.",
+  "被动。受到非神圣伤害、损失护甲或生命后摸 1 张牌；同一次伤害同时损失护甲和生命也只摸 1 张。之后可以弃 1 张手牌，令其他存活的伤害来源沉默，持续至其下一个主动回合结束；若来源已沉默，改为对其造成 1 点普通伤害。": "Pasiva. Tras perder armadura o PV por daño no sagrado, roba 1 carta. Un golpe que quite ambos solo permite robar 1. Después puedes descartar 1 carta de tu mano para Silenciar a la otra fuente de daño viva hasta el final de su próximo turno activo. Si ya está Silenciada, inflige en su lugar 1 de daño normal.",
+  "出牌阶段每回合一次。弃置两张不同手牌：1 张水牌和 1 张任意牌（可以是另一张水牌），令一名其他存活角色冰冻，然后查看其手牌并选择获得 1 张，不追加伤害，也不能选择装备；仅当目标没有手牌时，改为对其造成 1 点普通伤害。付费并结算冰冻后才能查看手牌，夺牌不解除冰冻，费用牌不按普通出牌结算。": "Una vez durante tu fase de juego, descarta 2 cartas distintas de tu mano: 1 de Agua y 1 de cualquier tipo (puede ser otra de Agua) para Congelar a otro personaje vivo; después mira su mano y elige 1 carta para tomar. No causa daño adicional ni permite tomar equipo equipado. Solo si no tiene cartas en mano recibe en su lugar 1 de daño normal. Paga y resuelve la Congelación antes de revelar la mano. Tomar la carta no elimina la Congelación; los efectos normales de ambas cartas pagadas no se activan.",
+  "选择两张不同手牌：1 张水牌和 1 张任意牌（可再选水牌），再点击其他角色发动蝎毒。费用牌不会按普通出牌结算。": "Elige 2 cartas distintas de tu mano, incluida al menos 1 de Agua, y luego otro personaje para usar Veneno. Las cartas de coste no activan sus efectos normales."
 }
