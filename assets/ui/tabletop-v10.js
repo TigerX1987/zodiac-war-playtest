@@ -52,7 +52,7 @@ window.TabletopV10 = {
     const guardian = state.players.find(candidate => candidate.characterId === 'taurus' && candidate.id !== player.id && candidate.hp > 0 && !candidate.eliminated && candidate.flags.taurusGuardTargetId === player.id);
     if (guardian) {
       ids.push('taurusGuard');
-      names.taurusGuard = '牛守：由金牛座守护，可选择代承攻击';
+      names.taurusGuard = '护渡：由金牛座守护，可选择代承攻击';
       artwork.taurusGuard = 'guard';
     }
     const unique = [...new Set(ids)];
@@ -211,18 +211,20 @@ window.TabletopV10 = {
     if (canReleaseSelectedCardOnSeat(id)) return releaseSelectedCardOnSeat(id);
     const active = state.players.find(player => player.id === state.activePlayerId);
     if (active && canReleaseSkillCostOnSeat(active.id, id)) return releaseSkillCostOnSeat(active.id, id);
-    if (window.matchMedia('(hover: none), (pointer: coarse)').matches) openPlayerInspector(id);
+    openPlayerInspector(id);
   },
   hoverPlayer(id, event) {
     const active = state.players.find(candidate => candidate.id === state.activePlayerId);
-    if (!window.matchMedia('(hover: hover) and (pointer: fine)').matches || selectedCard || seatSkillTip ||
+    const mouseHover = event?.pointerType === 'mouse' || window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+    if (event?.pointerType === 'touch' || !mouseHover || selectedCard || seatSkillTip ||
       state.pendingSkillDecisions?.length || (active && selectedSkills[active.id] && !isReadOnlySkillSelection(active)) ||
       inspectedPlayerId || this.logOpen || this.confirmation) return this.hideHover();
     const player = state.players.find(candidate => candidate.id === id);
     const panel = document.getElementById('v10-skill-hover');
     if (!player || !panel) return;
     panel.innerHTML = '<strong>' + safeText(labels[player.characterId]) + ' · 技能</strong>' + characterSkillEntries(player).map(item =>
-      '<div><b>' + safeText(item.label) + '</b><span>' + safeText(item.description) + '</span></div>').join('');
+      '<div><b>' + safeText(item.label) + '</b>' + renderSkillCopy(item.id, false, true) + '</div>').join('') +
+      '<small class="skillCopyHint">点击角色查看细则</small>';
     panel.hidden = false;
     panel.classList.toggle('v10-hover-wide', characterSkillEntries(player).length > 3 && window.innerHeight < 620);
     const rect = event.currentTarget.getBoundingClientRect();

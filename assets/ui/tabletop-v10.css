@@ -389,3 +389,13 @@ html:not([lang^="zh"]) .tabletopV10 .cardName { overflow-wrap: anywhere; hyphens
 }
 
 html:not([lang^="zh"]) .tabletopV10 .v10-hand-dock .cardBottom { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; max-height: 2.3em; line-height: 1.15; text-align: center; }
+
+/* Concise approved skill copy; full rules remain available without resizing portraits. */
+.tabletopV10 .skillCopy { min-width: 0; overflow-wrap: anywhere; }
+.tabletopV10 .skillCopyTag { display: block; color: #bba778; font-size: 11px; line-height: 1.5; }
+.tabletopV10 .skillCopySummary { margin: 3px 0 6px; color: #d7dfeb; font-size: 13px; line-height: 1.6; }
+.tabletopV10 .skillCopyDetails { margin: 4px 0 8px; font-size: 12px; line-height: 1.6; color: #bfcbd9; }
+.tabletopV10 .skillCopyDetails summary { cursor: pointer; color: #e1c384; padding: 5px 0; width: fit-content; }
+.tabletopV10 .skillCopyDetails p { margin: 5px 0; }
+.tabletopV10 .skillCopyHint { display: block; color: #bba778; padding-top: 6px; }
+.tabletopV10 .seatSkillPopover button { padding: 5px 10px; margin-top: 6px; font-size: 12px; pointer-events: auto; }

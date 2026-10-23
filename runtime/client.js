@@ -1,7 +1,7 @@
 
 const labels = {"aries":"白羊座","leo":"狮子座","sagittarius":"射手座","gemini":"双子座","libra":"天秤座","aquarius":"水瓶座","cancer":"巨蟹座","scorpio":"天蝎座","pisces":"双鱼座","taurus":"金牛座","virgo":"处女座","capricorn":"摩羯座"};
-const skillDescriptions = {"aries.bloodRage":{"name":"血怒","text":"被动。从上个主动回合结束到当前主动回合开始前，若白羊因非神圣伤害减少过生命，则本回合下一次羊角冲伤害 +1；触发后消失，每个主动回合最多触发一次。"},"aries.ram":{"name":"羊角冲","text":"每回合一次。消耗 1 张火属性普通攻击或状态攻击牌，对一名角色造成 1 点不可防御技能伤害；若消耗的是火属性状态攻击牌，则目标同时获得灼烧。羊角冲不计入基础攻击次数，可被圣盾抵消，也会因致盲落空。"},"aries.burnSoul":{"name":"燃魂","text":"每回合限一次。你的非火普通攻击或状态攻击手牌可以视为火属性牌支付羊角冲费用；该牌只作为费用被消耗，不改变原本属性、类型和牌面效果。AOE、装备、功能、星能、太阳、月亮不能通过燃魂支付。"},"leo.aura":{"name":"狮威","text":"被动。狮子存活时，所有灼烧角色不能通过普通回复恢复生命。太阳不属于普通回复，不受狮威限制。"},"leo.roar":{"name":"狮吼","text":"每回合一次。弃 1 张火牌，指定最多 3 名角色，使其获得 1 轮灼烧；若目标已经灼烧，则不刷新持续时间。"},"leo.order":{"name":"王令","text":"弃 1 张任意牌指定一名角色。直到狮子下个回合开始前，该角色对狮子使用牌时，必须交给狮子 1 张牌，否则该牌失效。"},"sagittarius.bowcraft":{"name":"整弓","text":"被动。当你的装备被拆除、被替换或被其他角色获得时，摸 2 张牌。"},"sagittarius.seekEquipment":{"name":"寻器","text":"每回合一次。弃 1 张火属性牌和 1 张任意手牌，随机获得牌库中的 1 张武器或防具；若牌库没有装备，返还费用。"},"sagittarius.sharpshot":{"name":"神射","text":"被动。装备武器后，每个自己的回合可额外使用 N 张普通攻击或状态攻击，N 为当前装备数量；仅这些额外攻击中的火属性牌不可防御，其他属性可以防御；AOE 不享受该效果。不可防御仍受致盲、圣盾、护甲和净域影响。装备防具时，每次承受非神圣的实际生命伤害并存活后，可指定一名存活角色，将其手牌补至生命上限且最多 4 张；已有手牌超过上限不弃牌。不限触发次数，濒死时先完成急救，存活后才可补牌。"},"gemini.windForm":{"name":"双生","text":"被动。双子每减少 1 点生命，摸 1 张风牌；神圣伤害造成的生命减少不触发。"},"gemini.steal":{"name":"换影","text":"每回合一次。弃 2 张牌，或弃 1 张牌并失去 1 点生命；查看目标手牌和装备并选择获得其中 1 张。若获得的牌不是风属性，对目标造成 1 点伤害，不附加致盲；仅当发动前目标没有手牌和装备时，改为造成 1 点伤害并附加致盲。换影无距离限制。"},"gemini.extraTurn":{"name":"连星","text":"被动。本回合使用第 3 张风属性牌后，获得 1 个额外回合；换影消耗的风牌可以计入。每轮最多触发一次。"},"libra.elementSense":{"name":"衡感","text":"被动。仅统计自己主动回合内正式使用的属性牌：每轮每种属性首次使用后摸 1 张牌，最多 4 次。回合外防御不触发摸牌，也不占用自己回合该属性的触发资格。太阳/月亮视为全属性，使用时为衡感选择一种基础属性。"},"libra.judgment":{"name":"审判","text":"被动。主动回合内，本回合首次正式使用第 3 种不同属性牌时，令一名角色获得致盲；首次正式使用第 4 种不同属性牌时触发完美审判，可选择抽取目标 1 张手牌或造成 1 点普通伤害。每项每回合最多一次。"},"libra.harmony":{"name":"裁衡","text":"每回合一次。选择两名其他存活角色，计算手牌差 D；若 D 小于 2 不能发动。天秤弃置 floor(D/2) 张风牌，并从多牌者的手牌或装备中选择等量牌交给少牌者。"},"aquarius.stormEye":{"name":"倾杯","text":"被动。水瓶受到非神圣的实际伤害后，摸 2 张牌，并可与至多 2 名其他存活角色交换至多 2 张等量手牌。友方手牌明牌任选；敌方只显示卡背，确认后随机取回。每张交出须对应取回一张。神酿献祭的 1 点生命会触发本被动；若因此濒死，须急救存活后再触发。"},"aquarius.massHeal":{"name":"神酿","text":"每回合一次。弃置 1 张风属性牌和 1 张任意牌；若两张均为风牌，先额外回复自己 1 点生命。随后献祭 1 点生命，再令所有存活角色回复 1 点生命。所有回复均遵守普通恢复限制和生命上限。"},"aquarius.windCut":{"name":"断流","text":"被动，每轮一次。弃牌阶段一次弃置至少 2 张牌后，可以选择是否发动；若发动，选择一名其他存活角色并指定弃置其 2 张手牌，不足 2 张则弃置全部，然后对其造成 1 点伤害。"},"cancer.tideBond":{"name":"共潮","text":"被动。任意角色成功回复生命后，巨蟹摸 1 张牌；每轮最多触发 3 次。"},"cancer.heal":{"name":"疗潮","text":"每回合一次。弃 1 张任意手牌，令一名角色回复 1 点生命。"},"cancer.rescue":{"name":"蟹护","text":"每轮一次。回合外弃 1 张水牌，急救一名其他濒死角色，使其回复 1 点生命。"},"scorpio.freezeAoe":{"name":"蝎毒","text":"出牌阶段每回合一次。弃置两张不同手牌：1 张水牌和 1 张任意牌（可以是另一张水牌），令一名其他存活角色冰冻，然后查看其手牌并选择获得 1 张，不追加伤害，也不能选择装备；仅当目标没有手牌时，改为对其造成 1 点普通伤害。付费并结算冰冻后才能查看手牌，夺牌不解除冰冻，费用牌不按普通出牌结算。"},"scorpio.peek":{"name":"伏击","text":"锁定技（开局部分）。每个自己的回合摸牌前强制发动，不受沉默影响：查看牌堆顶部若干张牌，按任意顺序放回牌顶或牌底，确认后才能摸牌。5 人及以上看 5 张，4 人看 4 张，少于 4 人看 3 张，不足时只看现有牌。若开局查看的牌中没有水牌，本回合结束时可额外发动一次，仍只排序、不额外摸牌。"},"scorpio.spoils":{"name":"缴械","text":"出牌阶段每回合一次。弃置 1 张任意手牌，指定一名其他存活角色，选择将其 1 点护甲、圣盾或一件装备转移给自己。每次只转移一项；自身护甲已满时不能选择护甲，装备直接装备并正常替换。目标没有护甲、圣盾和装备时，改为对其造成 1 点普通伤害。无需冰冻前置。"},"pisces.observeTide":{"name":"观潮","text":"出牌阶段每回合一次，自行选择任意数量的手牌弃置，再摸等量牌。没有牌数上限，确认前可调整或取消选择。"},"pisces.balance":{"name":"平潮","text":"选择两名角色，弃等同生命差的水牌，双方生命调整为平均值向下取整；造成生命损耗会影响回梦补牌。"},"pisces.dream":{"name":"回梦","text":"被动。弃牌阶段结束后摸 1 张牌；若本回合平潮造成过生命变化，则改为摸 2 张牌。"},"taurus.guard":{"name":"牛守","text":"每个自己的回合开始时，可以弃 1 张手牌，选择或更换一名其他存活角色作为守护对象，最多同时守护一人；不重新选择则延续原守护。守护对象每次成为普通攻击、状态攻击或 AOE 的目标时，你可免费替代其成为攻击目标，并正常防御，不限次数。技能的直接伤害不触发代承。"},"taurus.thickSkin":{"name":"厚皮","text":"被动。受到非神圣伤害、损失护甲或生命后摸 1 张牌；同一次伤害同时损失护甲和生命也只摸 1 张。之后可以弃 1 张手牌，令其他存活的伤害来源沉默，持续至其下一个主动回合结束；若来源已沉默，改为对其造成 1 点普通伤害。"},"taurus.armor":{"name":"筑甲","text":"每回合一次。弃 1 张土牌，令自己获得 1 点护甲，不能超过护甲上限。"},"virgo.purify":{"name":"净化","text":"主动回合限一次。弃 1 张土牌指定角色：移除其全部普通异常；若其没有普通异常，则获得一次异常免疫。感染模式中可改为只移除感染。"},"virgo.domain":{"name":"净域","text":"锁定技。每回合首次受到非神圣伤害（损失生命或护甲）并存活后自动发动：本回合免疫后续卡牌、技能的非神圣伤害及新增负面状态（含感染）；神圣伤害仍可穿透且不触发净域。已有负面状态不清除，生命调整和失去生命的费用不受保护。致命伤害先急救，存活后才生效。"},"virgo.discipline":{"name":"戒律","text":"被动。其他角色使用 AOE 或多目标牌/技能且你成为目标时，你可以对来源造成 1 点普通伤害。每次符合条件的结算均可选择发动，不设每回合次数限制。"},"infection.bossDrain":{"name":"月蚀汲取","text":"被动。Boss 主动回合首次对其他角色造成实际生命伤害后，回复 1 点生命并摸 1 张牌；满血时仍摸牌并消耗本回合触发次数。"},"infection.bossCommand":{"name":"蚀月战令","text":"Boss 开局额外摸 2 张牌。每个主动回合限一次，选择一项：本回合可额外使用 1 张基础攻击牌；或令本回合 1 张基础攻击牌额外指定 1 个目标。"},"infection.bossNoDistance":{"name":"月蚀领域","text":"被动。Boss 使用卡牌和技能无距离限制，不需要支付跨距离费用。"},"weapon.waterCodex":{"name":"潮汐法典","text":"每回合限一次，将任意 2 张手牌合成为 1 张本角色属性牌。攻击素材决定打击次数；武器素材令攻击必中且不可防御；防具素材令使用者获得 1 点护甲。"},"weapon.airCompass":{"name":"命运罗盘","text":"主动回合限一次。正式使用过 2 张不同属性牌后，选择一种属性，获得牌库中的 1 张该属性牌。"},"capricorn.unyielding":{"name":"蓄怒","text":"被动。摩羯每次对其他角色造成实际伤害（包括神圣伤害），或承受来自其他角色的非神圣实际伤害时，获得 1 点怒气；怒气没有上限。被圣盾抵消的伤害和自伤不增长怒气。"},"capricorn.wushuang":{"name":"重压","text":"被动。摩羯使用土属性普通攻击或土属性状态攻击时，目标需要 2 张有效防御牌才能抵消。非土牌、AOE、技能伤害、装备与功能牌伤害不触发。"},"capricorn.charge":{"name":"山崩","text":"每轮一次，不需要土牌，消耗全部怒气（至少 1 点）。1–2 怒令一名目标沉默；3–4 怒再造成 1 点神圣伤害，摩羯弃全部手牌；5 怒及以上可选单体重击（2 点神圣伤害）或分散打击（1 至 3 名目标各 1 点神圣伤害），令所选目标沉默，摩羯与所选目标弃全部手牌和装备。跨距离仍额外弃 1 张牌，多目标只付一次。"}};
-const serverVersion = "web-e8166760e8cc72a3";
+const skillDescriptions = {"aries.bloodRage":{"name":"金绒战意","tag":"被动","summary":"回合外因非神圣伤害掉血后，下个主动回合首次金角冲伤害＋1。","details":["本回合只能增伤一次；没有在本回合用掉，不延续到以后回合。"],"text":"被动。回合外因非神圣伤害掉血后，下个主动回合首次金角冲伤害＋1。 本回合只能增伤一次；没有在本回合用掉，不延续到以后回合。"},"aries.ram":{"name":"金角冲","tag":"主动·每回合1次","summary":"消耗1张火基础攻击，令目标受到1点不可防御伤害；用火状态攻击支付时，附加灼烧。","details":["不占基础攻击次数；圣盾可抵消，致盲会使其落空。遵守现有距离费用；标准模式不能指定队友。","与燃魂共用金角冲的每回合次数。"],"text":"主动·每回合1次。消耗1张火基础攻击，令目标受到1点不可防御伤害；用火状态攻击支付时，附加灼烧。 不占基础攻击次数；圣盾可抵消，致盲会使其落空。遵守现有距离费用；标准模式不能指定队友。 与燃魂共用金角冲的每回合次数。"},"aries.burnSoul":{"name":"燃魂","tag":"主动·每回合1次","summary":"可用1张非火基础攻击支付金角冲的费用。","details":["不改变费用牌的属性和牌面效果；非火状态攻击不因此附加灼烧。AOE及其他类型牌不能支付；仍消耗金角冲次数。"],"text":"主动·每回合1次。可用1张非火基础攻击支付金角冲的费用。 不改变费用牌的属性和牌面效果；非火状态攻击不因此附加灼烧。AOE及其他类型牌不能支付；仍消耗金角冲次数。"},"leo.aura":{"name":"狮威","tag":"被动","summary":"你存活时，灼烧中的角色不能普通回复；太阳仍可回复。","details":["限制同时影响友方和敌方。"],"text":"被动。你存活时，灼烧中的角色不能普通回复；太阳仍可回复。 限制同时影响友方和敌方。"},"leo.roar":{"name":"狮吼","tag":"主动·每回合1次","summary":"弃1张火牌，令1至3名其他角色灼烧1轮。","details":["已灼烧的目标不叠层、不刷新持续时间。"],"text":"主动·每回合1次。弃1张火牌，令1至3名其他角色灼烧1轮。 已灼烧的目标不叠层、不刷新持续时间。"},"leo.order":{"name":"兽王令","tag":"主动·每回合1次","summary":"弃1牌指定另一名角色；至你下回合开始前，其对你用牌须交给你1牌，否则该牌失效。","details":["指定对象须存活；交牌属于发动后的响应费用。"],"text":"主动·每回合1次。弃1牌指定另一名角色；至你下回合开始前，其对你用牌须交给你1牌，否则该牌失效。 指定对象须存活；交牌属于发动后的响应费用。"},"sagittarius.bowcraft":{"name":"整弓","tag":"被动","summary":"你的装备被拆、被替换或被夺走时，摸2牌。","details":[],"text":"被动。你的装备被拆、被替换或被夺走时，摸2牌。"},"sagittarius.seekEquipment":{"name":"寻器","tag":"主动·每回合1次","summary":"弃1张火牌＋1张任意牌，随机获得牌库1件武器或防具；没有装备则返还费用。","details":["两张费用必须不同。"],"text":"主动·每回合1次。弃1张火牌＋1张任意牌，随机获得牌库1件武器或防具；没有装备则返还费用。 两张费用必须不同。"},"sagittarius.sharpshot":{"name":"缪斯之弦","tag":"被动","summary":"有武器：每回合额外攻击次数＋装备数，仅额外火攻击不可防御。有防具：非神圣掉血存活后，可令一人补牌至生命上限，手牌最多4张。","details":["额外次数仅用于普通、状态攻击，各属性共用；AOE不享受。更换装备不重置已用次数；额外次数之外的火牌照常防御。","不可防御不等于必中，仍受致盲、圣盾、护甲、净域影响。非火额外攻击可正常防御。","补牌只由非神圣的实际生命损失触发，可选择自己或其他存活角色，不限次数、可放弃；先急救，存活后再选。已有手牌超过上限不弃牌。"],"text":"被动。有武器：每回合额外攻击次数＋装备数，仅额外火攻击不可防御。有防具：非神圣掉血存活后，可令一人补牌至生命上限，手牌最多4张。 额外次数仅用于普通、状态攻击，各属性共用；AOE不享受。更换装备不重置已用次数；额外次数之外的火牌照常防御。 不可防御不等于必中，仍受致盲、圣盾、护甲、净域影响。非火额外攻击可正常防御。 补牌只由非神圣的实际生命损失触发，可选择自己或其他存活角色，不限次数、可放弃；先急救，存活后再选。已有手牌超过上限不弃牌。"},"gemini.windForm":{"name":"双生","tag":"被动","summary":"每因非神圣伤害失去1点生命，摸1张风牌。","details":["仅减少护甲不触发。濒死先急救，存活后再摸牌；不能先摸牌找急救。"],"text":"被动。每因非神圣伤害失去1点生命，摸1张风牌。 仅减少护甲不触发。濒死先急救，存活后再摸牌；不能先摸牌找急救。"},"gemini.steal":{"name":"换影","tag":"主动·每回合1次","summary":"弃2牌，或弃1牌并失去1血；查看并获得目标1张手牌或装备，非风牌则造成1点普通伤害。目标原本无牌无装备时，改为造成1伤并致盲。","details":["只能指定另一名存活角色，无距离限制。取牌分支不致盲；空手但仍有装备时，须走取装备分支。"],"text":"主动·每回合1次。弃2牌，或弃1牌并失去1血；查看并获得目标1张手牌或装备，非风牌则造成1点普通伤害。目标原本无牌无装备时，改为造成1伤并致盲。 只能指定另一名存活角色，无距离限制。取牌分支不致盲；空手但仍有装备时，须走取装备分支。"},"gemini.extraTurn":{"name":"连星","tag":"被动·每轮1次","summary":"本回合使用第3张风牌后，获得1个额外回合。","details":["换影消耗的风牌也计入；每轮最多触发一次。"],"text":"被动·每轮1次。本回合使用第3张风牌后，获得1个额外回合。 换影消耗的风牌也计入；每轮最多触发一次。"},"libra.elementSense":{"name":"衡感","tag":"被动·每轮每种属性1次","summary":"自己的主动回合内，首次正式使用一种属性牌时，摸1牌。","details":["回合外防御不触发，也不占用资格；每轮最多四种。太阳、月亮使用时选一种属性。弃牌和支付技能费用不算正式使用；额外回合沿用本轮记录。"],"text":"被动·每轮每种属性1次。自己的主动回合内，首次正式使用一种属性牌时，摸1牌。 回合外防御不触发，也不占用资格；每轮最多四种。太阳、月亮使用时选一种属性。弃牌和支付技能费用不算正式使用；额外回合沿用本轮记录。"},"libra.judgment":{"name":"审判","tag":"被动·每项每回合1次","summary":"主动回合用到第3种属性：令一人致盲；第4种：选一人，获得其1张手牌或造成1点普通伤害。","details":["须正式使用不同属性牌；两项效果各触发一次，不按牌张数累计，也不提供额外回合。"],"text":"被动·每项每回合1次。主动回合用到第3种属性：令一人致盲；第4种：选一人，获得其1张手牌或造成1点普通伤害。 须正式使用不同属性牌；两项效果各触发一次，不按牌张数累计，也不提供额外回合。"},"libra.harmony":{"name":"裁衡","tag":"主动·每回合1次","summary":"选另两人，牌差须≥2。弃牌差一半（向下取整）的风牌，将多牌者等量手牌或装备交给少牌者。","details":["两名对象须不同且存活；牌差仅按手牌数计算，费用与转移数量相同。"],"text":"主动·每回合1次。选另两人，牌差须≥2。弃牌差一半（向下取整）的风牌，将多牌者等量手牌或装备交给少牌者。 两名对象须不同且存活；牌差仅按手牌数计算，费用与转移数量相同。"},"aquarius.stormEye":{"name":"倾杯","tag":"被动","summary":"非神圣掉血并存活后，摸2牌；可与最多2人交换合计最多2张手牌。友方明选，敌方随机。","details":["交出、取回须等量；仅交换手牌，不能选自己。敌方手牌只显示卡背，不能指定取牌；从交换前手牌随机抽取。","神酿献祭也会触发；濒死先急救，存活再摸牌。只损失护甲不触发。"],"text":"被动。非神圣掉血并存活后，摸2牌；可与最多2人交换合计最多2张手牌。友方明选，敌方随机。 交出、取回须等量；仅交换手牌，不能选自己。敌方手牌只显示卡背，不能指定取牌；从交换前手牌随机抽取。 神酿献祭也会触发；濒死先急救，存活再摸牌。只损失护甲不触发。"},"aquarius.massHeal":{"name":"神酿","tag":"主动·每回合1次","summary":"弃2牌（至少1风）；双风先自回1血。随后你失去1血，所有存活角色回复1血。","details":["两张费用必须不同。全部回复遵守生命上限、狮威与月蚀感染等普通恢复限制；献祭会触发倾杯，濒死先急救。"],"text":"主动·每回合1次。弃2牌（至少1风）；双风先自回1血。随后你失去1血，所有存活角色回复1血。 两张费用必须不同。全部回复遵守生命上限、狮威与月蚀感染等普通恢复限制；献祭会触发倾杯，濒死先急救。"},"aquarius.windCut":{"name":"断流","tag":"弃牌后·每轮1次·可选","summary":"弃牌阶段一次弃至少2牌后，可弃另一人2张手牌，再对其造成1点普通伤害。","details":["目标须存活，手牌不足2张则全弃；选定其手牌，先弃牌后伤害。"],"text":"弃牌后·每轮1次·可选。弃牌阶段一次弃至少2牌后，可弃另一人2张手牌，再对其造成1点普通伤害。 目标须存活，手牌不足2张则全弃；选定其手牌，先弃牌后伤害。"},"cancer.tideBond":{"name":"共潮","tag":"被动·每轮最多3次","summary":"任意角色成功回复生命后，你摸1牌。","details":["满血而未实际回复不触发。"],"text":"被动·每轮最多3次。任意角色成功回复生命后，你摸1牌。 满血而未实际回复不触发。"},"cancer.heal":{"name":"疗潮","tag":"主动·每回合1次","summary":"弃1牌，令一名存活角色回复1点生命。","details":["可选择自己；普通回复限制照常生效，不能用来急救濒死角色。"],"text":"主动·每回合1次。弃1牌，令一名存活角色回复1点生命。 可选择自己；普通回复限制照常生效，不能用来急救濒死角色。"},"cancer.rescue":{"name":"赫拉之护","tag":"回合外·每轮1次","summary":"弃1张水牌，将另一名濒死角色救至1血。","details":["不能自救；遵守现有普通急救限制。"],"text":"回合外·每轮1次。弃1张水牌，将另一名濒死角色救至1血。 不能自救；遵守现有普通急救限制。"},"scorpio.freezeAoe":{"name":"蝎毒","tag":"主动·每回合1次","summary":"弃1张水牌＋1张任意牌，冰冻另一人，再查看并获得其1张手牌；仅当其没有手牌时，改为造成1点普通伤害。","details":["两张费用必须不同，允许双水。先付费、结算冰冻，再查看手牌；只能取手牌，不能取装备，夺牌不追加伤害、不解除冰冻。"],"text":"主动·每回合1次。弃1张水牌＋1张任意牌，冰冻另一人，再查看并获得其1张手牌；仅当其没有手牌时，改为造成1点普通伤害。 两张费用必须不同，允许双水。先付费、结算冰冻，再查看手牌；只能取手牌，不能取装备，夺牌不追加伤害、不解除冰冻。"},"scorpio.peek":{"name":"窥星","tag":"摸牌前锁定·回合末可选","summary":"摸牌前查看牌顶3／4／5张，任意排至牌顶或牌底。未见水牌时，回合末可再排一次。","details":["少于4人看3张、4人看4张、5人及以上看5张；不足时看现有牌。开局排序强制且不受沉默影响；回合末保底只排序，不额外摸牌。"],"text":"摸牌前锁定·回合末可选。摸牌前查看牌顶3／4／5张，任意排至牌顶或牌底。未见水牌时，回合末可再排一次。 少于4人看3张、4人看4张、5人及以上看5张；不足时看现有牌。开局排序强制且不受沉默影响；回合末保底只排序，不额外摸牌。"},"scorpio.spoils":{"name":"缴械","tag":"主动·每回合1次","summary":"弃1牌，夺取另一人1点护甲、圣盾或一件装备；三者皆无，改为造成1点普通伤害。","details":["每次只选一项；自身护甲已满不能选护甲，装备正常替换。无需先冰冻。"],"text":"主动·每回合1次。弃1牌，夺取另一人1点护甲、圣盾或一件装备；三者皆无，改为造成1点普通伤害。 每次只选一项；自身护甲已满不能选护甲，装备正常替换。无需先冰冻。"},"pisces.observeTide":{"name":"观潮","tag":"主动·每回合1次","summary":"弃任意张手牌，再摸等量牌。","details":["无牌数上限；确认前可调整或取消。"],"text":"主动·每回合1次。弃任意张手牌，再摸等量牌。 无牌数上限；确认前可调整或取消。"},"pisces.balance":{"name":"双鱼之绊","tag":"主动·每回合1次","summary":"选两名角色，弃等同生命差的水牌，使双方生命调整至平均值（向下取整）。","details":["两人须不同且存活，可包含自己；生命增加仍受普通回复限制。生命减少属于调整生命，不视为伤害。"],"text":"主动·每回合1次。选两名角色，弃等同生命差的水牌，使双方生命调整至平均值（向下取整）。 两人须不同且存活，可包含自己；生命增加仍受普通回复限制。生命减少属于调整生命，不视为伤害。"},"pisces.dream":{"name":"归潮","tag":"被动","summary":"弃牌阶段结束后摸1牌；本回合双鱼之绊改变过生命，则改摸2牌。","details":["以实际生命变化为准；因恢复限制没有改变生命时，不视作已经回复。"],"text":"被动。弃牌阶段结束后摸1牌；本回合双鱼之绊改变过生命，则改摸2牌。 以实际生命变化为准；因恢复限制没有改变生命时，不视作已经回复。"},"taurus.guard":{"name":"护渡","tag":"回合开始·可选","summary":"弃1牌设定或更换一名守护对象；其成为攻击牌目标时，你可免费代承并正常防御。不更换则延续。","details":["同时仅守护一名其他存活角色；普通攻击、状态攻击、AOE均可代承，次数不限。直接技能伤害不触发；拒绝一次不解除守护。"],"text":"回合开始·可选。弃1牌设定或更换一名守护对象；其成为攻击牌目标时，你可免费代承并正常防御。不更换则延续。 同时仅守护一名其他存活角色；普通攻击、状态攻击、AOE均可代承，次数不限。直接技能伤害不触发；拒绝一次不解除守护。"},"taurus.thickSkin":{"name":"神躯","tag":"被动","summary":"受非神圣伤害并损失护甲或生命后，摸1牌；可再弃1牌，沉默来源至其下个主动回合结束。已沉默则改为造成1点普通伤害。","details":["同一击只摸一次；完全被圣盾抵消时不触发。反击来源须为其他存活角色；已沉默时不刷新持续时间。濒死先急救，存活再触发。"],"text":"被动。受非神圣伤害并损失护甲或生命后，摸1牌；可再弃1牌，沉默来源至其下个主动回合结束。已沉默则改为造成1点普通伤害。 同一击只摸一次；完全被圣盾抵消时不触发。反击来源须为其他存活角色；已沉默时不刷新持续时间。濒死先急救，存活再触发。"},"taurus.armor":{"name":"筑甲","tag":"主动·每回合1次","summary":"弃1张土牌，自己获得1点护甲。","details":["不能超过护甲上限。"],"text":"主动·每回合1次。弃1张土牌，自己获得1点护甲。 不能超过护甲上限。"},"virgo.purify":{"name":"净化","tag":"主动·每回合1次","summary":"弃1张土牌，清除目标全部普通异常；没有普通异常则获得一次异常免疫。月蚀中可改为仅清除感染。","details":["普通异常与感染二选一；不能借此改变已经转化的阵营身份。"],"text":"主动·每回合1次。弃1张土牌，清除目标全部普通异常；没有普通异常则获得一次异常免疫。月蚀中可改为仅清除感染。 普通异常与感染二选一；不能借此改变已经转化的阵营身份。"},"virgo.domain":{"name":"净域","tag":"锁定","summary":"每回合首次受非神圣伤害并存活后，本回合免疫后续非神圣伤害和新增负面状态。","details":["损失护甲也可触发，首击照常结算；已有负面不清除。神圣伤害、生命调整和失去生命的费用仍可穿透。濒死先急救，存活再生效。"],"text":"锁定。每回合首次受非神圣伤害并存活后，本回合免疫后续非神圣伤害和新增负面状态。 损失护甲也可触发，首击照常结算；已有负面不清除。神圣伤害、生命调整和失去生命的费用仍可穿透。濒死先急救，存活再生效。"},"virgo.discipline":{"name":"星律","tag":"被动·可选","summary":"其他角色以AOE或多目标牌、技能指定你，结算后你可对来源造成1点普通伤害。","details":["每次符合条件均可选择发动，不限制每回合次数；只能反击施放者。"],"text":"被动·可选。其他角色以AOE或多目标牌、技能指定你，结算后你可对来源造成1点普通伤害。 每次符合条件均可选择发动，不限制每回合次数；只能反击施放者。"},"infection.bossDrain":{"name":"月蚀汲取","text":"被动。Boss 主动回合首次对其他角色造成实际生命伤害后，回复 1 点生命并摸 1 张牌；满血时仍摸牌并消耗本回合触发次数。"},"infection.bossCommand":{"name":"蚀月战令","text":"Boss 开局额外摸 2 张牌。每个主动回合限一次，选择一项：本回合可额外使用 1 张基础攻击牌；或令本回合 1 张基础攻击牌额外指定 1 个目标。"},"infection.bossNoDistance":{"name":"月蚀领域","text":"被动。Boss 使用卡牌和技能无距离限制，不需要支付跨距离费用。"},"weapon.waterCodex":{"name":"潮汐法典","text":"每回合限一次，将任意 2 张手牌合成为 1 张本角色属性牌。攻击素材决定打击次数；武器素材令攻击必中且不可防御；防具素材令使用者获得 1 点护甲。"},"weapon.airCompass":{"name":"命运罗盘","text":"主动回合限一次。正式使用过 2 张不同属性牌后，选择一种属性，获得牌库中的 1 张该属性牌。"},"capricorn.unyielding":{"name":"牧神怒","tag":"被动","summary":"每次对他人造成实际伤害，或承受他人非神圣实际伤害，获得1点怒气。","details":["造成神圣伤害也能蓄怒；受神圣伤害、自伤或伤害完全被圣盾抵消时不增加。怒气没有上限。"],"text":"被动。每次对他人造成实际伤害，或承受他人非神圣实际伤害，获得1点怒气。 造成神圣伤害也能蓄怒；受神圣伤害、自伤或伤害完全被圣盾抵消时不增加。怒气没有上限。"},"capricorn.wushuang":{"name":"重压","tag":"被动","summary":"你的土基础攻击，需要目标用2张有效防御牌抵消。","details":["仅普通、状态攻击生效；非土牌、AOE、技能及装备伤害不触发。"],"text":"被动。你的土基础攻击，需要目标用2张有效防御牌抵消。 仅普通、状态攻击生效；非土牌、AOE、技能及装备伤害不触发。"},"capricorn.charge":{"name":"山崩","tag":"主动·每轮1次","summary":"耗尽怒气：1–2怒令一人沉默；3–4怒再造成1点神圣伤害；≥5怒可单体2伤，或1至3人各1点神圣伤害。","details":["至少1怒，无需土牌；所选目标均受沉默。3–4怒后，你弃全部手牌；≥5怒后，你和目标弃全部手牌、装备。","跨距离额外弃1牌，多目标合计只付一次；遇急救、月蚀奖励时暂停，处理后继续剩余目标。"],"text":"主动·每轮1次。耗尽怒气：1–2怒令一人沉默；3–4怒再造成1点神圣伤害；≥5怒可单体2伤，或1至3人各1点神圣伤害。 至少1怒，无需土牌；所选目标均受沉默。3–4怒后，你弃全部手牌；≥5怒后，你和目标弃全部手牌、装备。 跨距离额外弃1牌，多目标合计只付一次；遇急救、月蚀奖励时暂停，处理后继续剩余目标。"}};
+const serverVersion = "web-cffa0b26a543c114";
 const clientGameModes = {"test":{"seatCount":4,"playerCounts":[4],"randomCharacters":false,"characters":["aries","cancer","gemini","capricorn"],"controls":["human","ai","ai","ai"],"playerNames":["A队前锋","A队辅助","B队前锋","B队终结"]},"standard":{"seatCount":4,"playerCounts":[4,6],"randomCharacters":true,"characters":["aries","cancer","gemini","capricorn","taurus","aquarius"],"controls":["human","ai","ai","ai","ai","ai"],"playerNames":["A队前锋","A队辅助","B队前锋","B队终结"]},"infection":{"seatCount":4,"playerCounts":[4,5,6,7,8],"randomCharacters":true,"characters":["aries","cancer","aquarius","taurus","virgo","sagittarius","libra","pisces"],"controls":["human","ai","ai","ai","ai","ai","ai","ai"],"playerNames":["1号位","2号位","3号位","4号位","5号位","6号位","7号位","8号位"]}};
 const allSeatIds = ['1', '2', '3', '4', '5', '6', '7', '8'];
 const infoOnlySkills = new Set([
@@ -578,7 +578,7 @@ function beginLeoOrderPaymentDraft(player, card, targetId, extraCostCardId = '',
   const reservedCardIds = [card.id, extraCostCardId].filter(Boolean);
   const candidates = leoOrderPaymentCandidates(player, reservedCardIds);
   if (candidates.length === 0) {
-    error = '王令要求先交给狮子 1 张牌，但当前没有可支付的手牌。';
+    error = '兽王令要求先交给狮子 1 张牌，但当前没有可支付的手牌。';
     clearSelectedCard();
     render();
     return true;
@@ -976,7 +976,7 @@ function actionPrompt(active, activeOpponent, attackSource, defenseTarget) {
   if (boardHint) return boardHint;
   const skillDecision = state.pendingSkillDecisions?.[0];
   if (skillDecision) {
-    if (sagittariusResupplySelection()) return '神射：点击角色选择补牌目标，再点确定。';
+    if (sagittariusResupplySelection()) return '缪斯之弦：点击角色选择补牌目标，再点确定。';
     const owner = state.players.find(player => player.id === skillDecision.playerId);
     return (owner?.name || '角色') + ' 正在进行技能选择，请先完成上方选择。';
   }
@@ -1483,27 +1483,42 @@ function formatLogMessage(message) {
 
 function characterSkillEntries(player) {
   const map = {
-    aries: [['aries.bloodRage', '血怒'], ['aries.ram', '羊角冲'], ['aries.burnSoul', '燃魂']],
-    leo: [['leo.aura', '狮威'], ['leo.roar', '狮吼'], ['leo.order', '王令']],
+    aries: [['aries.bloodRage', '金绒战意'], ['aries.ram', '金角冲'], ['aries.burnSoul', '燃魂']],
+    leo: [['leo.aura', '狮威'], ['leo.roar', '狮吼'], ['leo.order', '兽王令']],
     gemini: [['gemini.windForm', '双生'], ['gemini.steal', '换影'], ['gemini.extraTurn', '连星']],
     libra: [['libra.elementSense', '衡感'], ['libra.judgment', '审判'], ['libra.harmony', '裁衡']],
     aquarius: [['aquarius.stormEye', '倾杯'], ['aquarius.massHeal', '神酿'], ['aquarius.windCut', '断流']],
-    cancer: [['cancer.tideBond', '共潮'], ['cancer.heal', '疗潮'], ['cancer.rescue', '蟹护']],
-    scorpio: [['scorpio.freezeAoe', '蝎毒'], ['scorpio.spoils', '缴械'], ['scorpio.peek', '伏击']],
-    pisces: [['pisces.observeTide', '观潮'], ['pisces.balance', '平潮'], ['pisces.dream', '回梦']],
-    taurus: [['taurus.guard', '牛守'], ['taurus.thickSkin', '厚皮'], ['taurus.armor', '筑甲']],
-    capricorn: [['capricorn.unyielding', '蓄怒'], ['capricorn.wushuang', '重压'], ['capricorn.charge', '山崩']],
-    sagittarius: [['sagittarius.bowcraft', '整弓'], ['sagittarius.seekEquipment', '寻器'], ['sagittarius.sharpshot', '神射']],
-    virgo: [['virgo.purify', '净化'], ['virgo.domain', '净域'], ['virgo.discipline', '戒律']]
+    cancer: [['cancer.tideBond', '共潮'], ['cancer.heal', '疗潮'], ['cancer.rescue', '赫拉之护']],
+    scorpio: [['scorpio.freezeAoe', '蝎毒'], ['scorpio.spoils', '缴械'], ['scorpio.peek', '窥星']],
+    pisces: [['pisces.observeTide', '观潮'], ['pisces.balance', '双鱼之绊'], ['pisces.dream', '归潮']],
+    taurus: [['taurus.guard', '护渡'], ['taurus.thickSkin', '神躯'], ['taurus.armor', '筑甲']],
+    capricorn: [['capricorn.unyielding', '牧神怒'], ['capricorn.wushuang', '重压'], ['capricorn.charge', '山崩']],
+    sagittarius: [['sagittarius.bowcraft', '整弓'], ['sagittarius.seekEquipment', '寻器'], ['sagittarius.sharpshot', '缪斯之弦']],
+    virgo: [['virgo.purify', '净化'], ['virgo.domain', '净域'], ['virgo.discipline', '星律']]
   };
   const bossSkills = isInitialInfectionBoss(player)
     ? [['infection.bossDrain', '月蚀汲取'], ['infection.bossCommand', '蚀月战令'], ['infection.bossNoDistance', '月蚀领域']]
     : [];
   return [...(map[player.characterId] || []), ...bossSkills].map(([id, label]) => ({
     id,
-    label,
-    description: skillDescriptions[id]?.text || '该技能尚未配置介绍。'
+    label: skillDescriptions[id]?.name || label,
+    description: skillDescriptions[id]?.summary || skillDescriptions[id]?.text || '该技能尚未配置介绍。'
   }));
+}
+
+const skillRulesOpen = {};
+
+function renderSkillCopy(skillId, expanded = false, compact = false) {
+  const item = skillDescriptions[skillId];
+  if (!item) return '';
+  if (!item.summary) return '<p class="skillCopySummary">' + safeText(item.text) + '</p>';
+  const details = [...item.details];
+  if (item.text.includes('基础攻击')) details.push('基础攻击指普通攻击和状态攻击，不含AOE。');
+  return '<div class="skillCopy"><small class="skillCopyTag">' + safeText(item.tag) + '</small>' +
+    '<p class="skillCopySummary">' + safeText(item.summary) + '</p>' +
+    (compact || !details.length ? '' : '<details class="skillCopyDetails" data-skill-rules="' + safeText(skillId) + '"' +
+      (expanded || skillRulesOpen[skillId] ? ' open' : '') + ' ontoggle="skillRulesOpen[this.dataset.skillRules]=this.open">' +
+      '<summary>必要细则</summary>' + details.map(text => '<p>' + safeText(text) + '</p>').join('') + '</details>') + '</div>';
 }
 
 function showSeatSkillTip(playerId, skillId, event, preferredPlacement = '') {
@@ -1558,12 +1573,15 @@ function renderSeatSkillTip() {
     : '';
   return '<aside class="seatSkillPopover ' + seatSkillTip.placement + '" style="left:' + Math.round(seatSkillTip.x) + 'px;top:' + Math.round(seatSkillTip.y) + 'px;width:' + Math.round(seatSkillTip.width || 360) + 'px" role="status">' +
     '<strong>' + safeText(seatSkillTip.label) + '</strong>' +
-    '<span>' + safeText(seatSkillTip.description) + '</span>' +
+    renderSkillCopy(seatSkillTip.skillId, false, true) +
+    '<button type="button" onclick="openPlayerInspector(\'' + seatSkillTip.playerId + '\')">查看细则</button>' +
     (senseHint ? '<span class="skillHint">' + safeText(senseHint) + '</span>' : '') +
   '</aside>';
 }
 
 function openPlayerInspector(playerId, section = 'skills') {
+  if (seatSkillTipTimer) clearTimeout(seatSkillTipTimer);
+  seatSkillTip = null;
   inspectedPlayerId = playerId;
   inspectedSection = section === 'equipment' ? 'equipment' : 'skills';
   render();
@@ -1591,7 +1609,7 @@ function renderPlayerInspector() {
   if (!player) return '';
   const visual = characterVisual(player);
   const skillItems = characterSkillEntries(player).map(item =>
-    '<article class="playerInspectorItem"><strong>' + safeText(item.label) + '</strong><span>' + safeText(item.description) + '</span>' +
+    '<article class="playerInspectorItem"><strong>' + safeText(item.label) + '</strong>' + renderSkillCopy(item.id) +
     (player.id === localHumanPlayer()?.id && !infoOnlySkills.has(item.id)
       ? '<button class="v10-inspector-action" ' + (!setupPaused && player.control === 'human' && isSkillUsable(player, item.id, state.activePlayerId === player.id && state.phase === 'main') ? '' : 'disabled') +
         ' onclick="inspectedPlayerId=\'\';skill(state.players.find(p=>p.id===\'' + player.id + '\'),\'' + item.id + '\',event)">发动' + safeText(item.label) + '</button>'
@@ -1711,10 +1729,11 @@ function renderFocusCard(player) {
 }
 
 function renderSkillChoiceContent(title, description, choices, actions, playerId = '') {
+  const describedSkillId = description && Object.keys(skillDescriptions).find(id => skillDescriptions[id].text === description);
   return '<div class="skillInfo"><header class="skillChoiceHeader"><strong>' + safeText(title) + '</strong>' +
     (playerId ? '<button type="button" aria-label="取消' + safeText(title) + '" onclick="cancelActiveSkillCost(\'' + playerId + '\')">取消</button>' : '') +
     '</header><div class="skillChoiceBody">' +
-    (description ? '<p class="skillChoiceDescription">' + safeText(description) + '</p>' : '') + choices +
+    (describedSkillId ? renderSkillCopy(describedSkillId) : description ? '<p class="skillChoiceDescription">' + safeText(description) + '</p>' : '') + choices +
     '</div>' + (actions ? '<footer class="skillChoiceActions">' +
       (choices.includes('choiceCard') ? '<span class="skillChoiceSummary" role="status"></span>' : '') + actions + '</footer>' : '') + '</div>';
 }
@@ -1783,7 +1802,7 @@ function boardSkillSelection() {
   const decision = state.pendingSkillDecisions?.[0];
   const player = state.players.find(candidate => candidate.id === (decision?.playerId || state.activePlayerId));
   if (!player || player.control !== 'human' || player.hp <= 0 || player.eliminated) return null;
-  const pendingNames = {taurusGuardSetup:'牛守',taurusGuard:'牛守',taurusThickSkin:'厚皮',virgoDiscipline:'戒律',aquariusWindCut:'断流',aquariusChalice:'倾杯',libraJudgment:'审判',libraPerfectJudgment:'完美审判'};
+  const pendingNames = {taurusGuardSetup:'护渡',taurusGuard:'护渡',taurusThickSkin:'神躯',virgoDiscipline:'星律',aquariusWindCut:'断流',aquariusChalice:'倾杯',libraJudgment:'审判',libraPerfectJudgment:'完美审判'};
   const kind = decision?.kind || selectedSkills[player.id];
   const cost = decision ? null : activeSkillCostDraft(player);
   const complex = ['capricorn.charge','gemini.steal','scorpio.spoils','libra.harmony','pisces.balance'];
@@ -2058,14 +2077,14 @@ function renderPendingSkillDecisionPanel(player, onBoard = false) {
   if (!decision || !player || decision.playerId !== player.id || player.control !== 'human') return '';
   if (decision.kind === 'sagittariusResupply') {
     if (sagittariusResupplySelection() || sagittariusResupplyInFlight) return '';
-    return '<section class="activeSkillPanel sagittariusResupplyPrompt" role="dialog" aria-label="是否发动神射？">' +
-      '<strong>是否发动神射？</strong><div class="sagittariusResupplyChoices">' +
+    return '<section class="activeSkillPanel sagittariusResupplyPrompt" role="dialog" aria-label="是否发动缪斯之弦？">' +
+      '<strong>是否发动缪斯之弦？</strong><div class="sagittariusResupplyChoices">' +
       '<button onclick="beginSagittariusResupply()">是</button>' +
       '<button onclick="resolvePendingSkillDecision(false)">否</button></div></section>';
   }
   if (decision.kind === 'scorpioEndPeek') {
     const content = scorpioPeekChoices(player, true);
-    return '<section class="activeSkillPanel" role="dialog" aria-label="回合结束伏击">' + renderSkillChoiceContent('伏击', skillDescriptions['scorpio.peek'].text, content.chooser, content.actions) + '</section>';
+    return '<section class="activeSkillPanel" role="dialog" aria-label="回合结束窥星">' + renderSkillChoiceContent('窥星', skillDescriptions['scorpio.peek'].text, content.chooser, content.actions) + '</section>';
   }
   const draft = skillDecisionDraft(decision);
   const optionalKinds = new Set(['taurusGuardSetup', 'taurusGuard', 'taurusThickSkin', 'virgoDiscipline', 'aquariusWindCut', 'aquariusChalice']);
@@ -2074,10 +2093,10 @@ function renderPendingSkillDecisionPanel(player, onBoard = false) {
   const currentGuard = state.players.find(candidate => candidate.id === player.flags.taurusGuardTargetId && candidate.hp > 0 && !candidate.eliminated);
   const titles = {
     scorpioPoisonTake: '蝎毒：查看并获得 1 张手牌',
-    taurusGuardSetup: '牛守：设置或更换守护',
-    taurusGuard: '牛守：是否代承攻击',
-    taurusThickSkin: '厚皮：是否弃牌反击',
-    virgoDiscipline: '是否发动戒律',
+    taurusGuardSetup: '护渡：设置或更换守护',
+    taurusGuard: '护渡：是否代承攻击',
+    taurusThickSkin: '神躯：是否弃牌反击',
+    virgoDiscipline: '是否发动星律',
     aquariusWindCut: '是否发动断流',
     aquariusChalice: '倾杯触发：摸 2 牌（可选换牌）',
     libraJudgment: '审判：选择致盲目标',
@@ -2212,7 +2231,7 @@ function renderPendingSkillDecisionPanel(player, onBoard = false) {
     taurusGuardSetup: '弃牌并确认守护',
     taurusGuard: '代承攻击',
     taurusThickSkin: taurusSource?.statuses.silence ? '弃牌并造成 1 点伤害' : '弃牌并沉默来源',
-    virgoDiscipline: '发动戒律',
+    virgoDiscipline: '发动星律',
     aquariusWindCut: '发动断流',
     aquariusChalice: '确认换牌',
     libraJudgment: '确认审判',
@@ -2405,7 +2424,7 @@ function renderFocusedHand(player, tableControls = '') {
   const response = canRespondInfection
     ? '<div class="response"><span>可用太阳或净化仪式抵消感染牌；响应牌会完整结算自身效果。</span><button onclick="respondInfection(\'' + player.id + '\')">不抵消感染</button></div>'
     : canRescue
-      ? '<div class="response"><span>' + (state.mode === 'infection' ? '可用太阳急救，恢复至 1 点生命并移除感染。' : '可用太阳、星能或水牌蟹护急救，恢复至 1 点生命；太阳额外给予圣盾。') + '</span><button onclick="skipInfectionRescue(\'' + player.id + '\')">放弃急救</button></div>'
+      ? '<div class="response"><span>' + (state.mode === 'infection' ? '可用太阳急救，恢复至 1 点生命并移除感染。' : '可用太阳、星能或水牌赫拉之护急救，恢复至 1 点生命；太阳额外给予圣盾。') + '</span><button onclick="skipInfectionRescue(\'' + player.id + '\')">放弃急救</button></div>'
     : canRespond
     ? '<div class="response"><span>' + (state.pendingAttack.scorpioPoisonStep ? '蝎毒：交给天蝎 1 张牌；水牌免冰冻，非水牌会冰冻' : '需要响应：' + safeText(state.pendingAttack.card.name)) + '</span><button onclick="skipDefense(\'' + player.id + '\')">' + (state.pendingAttack.scorpioPoisonStep ? '不交牌' : '不出牌') + '</button></div>'
     : canHammerBreak
@@ -2429,7 +2448,7 @@ function renderFocusedHand(player, tableControls = '') {
 
 function operationHintForFocusedHand(player, canAct, canRespond, canHammerBreak, canRespondInfection = false, canRescue = false) {
   if (distanceCostDraft?.playerId === player.id) return '<div class="operationHint">跨距离需要额外弃 1 张手牌：点击一张高亮手牌支付距离费用。</div>';
-  if (leoOrderPaymentDraft?.playerId === player.id) return '<div class="operationHint">王令触发：点击一张高亮手牌交给狮子，然后继续结算当前出牌。</div>';
+  if (leoOrderPaymentDraft?.playerId === player.id) return '<div class="operationHint">兽王令触发：点击一张高亮手牌交给狮子，然后继续结算当前出牌。</div>';
   if (waterStealDraft?.playerId === player.id) return '<div class="operationHint">潮汐窃取目标已选：点击一个目标手牌卡背，选择具体偷哪一张。</div>';
   if (airDismantleDraft?.playerId === player.id) return '<div class="operationHint">风拆目标已选：点击目标手牌卡背或装备，选择具体拆哪一张。</div>';
   const skillCostDraft = activeSkillCostDraft(player);
@@ -2481,7 +2500,7 @@ function renderDistanceCostBar(player) {
     : draft.skillId === 'gemini.steal'
       ? '换影'
       : draft.skillId === 'aries.ram'
-        ? '羊角冲'
+        ? '金角冲'
         : draft.skillId === 'capricorn.charge'
           ? '山崩'
           : '技能';
@@ -2497,7 +2516,7 @@ function renderLeoOrderPaymentBar(player) {
   const receiver = state.players.find(candidate => candidate.id === draft.receiverId);
   const card = player.hand.find(candidate => candidate.id === draft.cardId);
   return '<div class="skillCostBar leoOrderPaymentBar">' +
-    '<span><strong>王令</strong>：' + safeText(card?.name || '当前牌') + ' 会影响 ' + safeText(receiver?.name || '狮子') + '，先点击 1 张高亮手牌交给狮子。</span>' +
+    '<span><strong>兽王令</strong>：' + safeText(card?.name || '当前牌') + ' 会影响 ' + safeText(receiver?.name || '狮子') + '，先点击 1 张高亮手牌交给狮子。</span>' +
     '<div class="skillCostActions"><button onclick="cancelLeoOrderPayment()">取消</button></div>' +
     '</div>';
 }
@@ -2813,7 +2832,7 @@ function renderTableControls(active, activeOpponent, activeAlly, attackSource, d
   }
   if (state.phase === 'draw' && isFocusedActionPlayer) {
     phaseButtons.push(isScorpioAmbushPending(active)
-      ? '<button disabled>请先确认伏击</button>'
+      ? '<button disabled>请先确认窥星</button>'
       : '<button onclick="drawPhase()">摸牌阶段</button>');
   }
   if (state.phase === 'main' && isFocusedActionPlayer) {
@@ -3018,15 +3037,15 @@ function activeSkillCostDraft(player) {
       .map(card => card.id);
     return {
       skillId: id,
-      skillName: id === 'aries.burnSoul' ? '燃魂' : '羊角冲',
+      skillName: id === 'aries.burnSoul' ? '燃魂' : '金角冲',
       costCardIds,
       validCardIds,
       ready: costCardIds.length === 1,
       requiresTarget: true,
       autoConfirm: false,
       hint: id === 'aries.burnSoul'
-        ? '点击 1 张非火普通攻击或状态攻击作为燃魂费用；选好后点击战场上的发光敌方目标释放。AOE、装备、功能、星能、太阳和月亮不能支付羊角冲。'
-        : '点击 1 张火普通攻击或状态攻击作为羊角冲费用；选好后点击战场上的发光敌方目标释放。AOE、装备、功能、星能、太阳和月亮不能支付羊角冲。'
+        ? '点击 1 张非火普通攻击或状态攻击作为燃魂费用；选好后点击战场上的发光敌方目标释放。AOE、装备、功能、星能、太阳和月亮不能支付金角冲。'
+        : '点击 1 张火普通攻击或状态攻击作为金角冲费用；选好后点击战场上的发光敌方目标释放。AOE、装备、功能、星能、太阳和月亮不能支付金角冲。'
     };
   }
   if (id === 'aquarius.massHeal') {
@@ -3092,13 +3111,13 @@ function activeSkillCostDraft(player) {
     leoOrderDrafts[player.id] = { costCardIds };
     return {
       skillId: id,
-      skillName: '王令',
+      skillName: '兽王令',
       costCardIds,
       validCardIds: player.hand.map(card => card.id),
       ready: costCardIds.length === 1,
       requiresTarget: true,
       autoConfirm: false,
-      hint: '点击 1 张任意手牌作为王令费用；选好后点击战场上的目标角色。'
+      hint: '点击 1 张任意手牌作为兽王令费用；选好后点击战场上的目标角色。'
     };
   }
   if (id === 'taurus.armor') {
@@ -4432,12 +4451,12 @@ function scorpioPeekChoices(player, ending = false) {
   const bottomCards = draft.bottomCardIds.length > 0
     ? draft.bottomCardIds.map(cardId => renderPeekCard(cardId, 'bottom')).join('')
     : '<div class="skillHint">暂无放入牌底的牌。</div>';
-  const chooser = (ending ? '<div class="skillHint">回合结束保底伏击：只调整牌堆，不额外摸牌。</div>' : '') + '<div class="skillChooser">' +
+  const chooser = (ending ? '<div class="skillHint">回合结束保底窥星：只调整牌堆，不额外摸牌。</div>' : '') + '<div class="skillChooser">' +
     '<div class="skillHint">本次查看 ' + peeked.length + ' 张牌。' + (peeked.length === 0 ? (ending ? '牌堆为空，可直接确认结束回合。' : '牌堆为空，可直接确认后摸牌。') : '') + '</div>' +
     '<div><div class="chooserLabel">牌顶顺序</div><div class="choiceGrid">' + topCards + '</div></div>' +
     '<div><div class="chooserLabel">牌底顺序</div><div class="choiceGrid">' + bottomCards + '</div></div>' +
     '</div>';
-  const actions = (ending ? '<button ' + (scorpioPeekInFlight ? 'disabled' : '') + ' onclick="resolvePendingSkillDecision(false)">不发动</button>' : '') + '<button ' + (scorpioPeekInFlight ? 'disabled' : '') + ' onclick="confirmScorpioPeek(\'' + player.id + '\')">确认伏击</button>';
+  const actions = (ending ? '<button ' + (scorpioPeekInFlight ? 'disabled' : '') + ' onclick="resolvePendingSkillDecision(false)">不发动</button>' : '') + '<button ' + (scorpioPeekInFlight ? 'disabled' : '') + ' onclick="confirmScorpioPeek(\'' + player.id + '\')">确认窥星</button>';
   return {chooser, actions};
 }
 
@@ -4567,18 +4586,18 @@ function isSkillUsable(player, id, canAct) {
 
 function skillButtons(player, canAct) {
   const map = {
-    aries: [['aries.bloodRage', '血怒'], ['aries.ram', '羊角冲'], ['aries.burnSoul', '燃魂']],
-    leo: [['leo.aura', '狮威'], ['leo.roar', '狮吼'], ['leo.order', '王令']],
+    aries: [['aries.bloodRage', '金绒战意'], ['aries.ram', '金角冲'], ['aries.burnSoul', '燃魂']],
+    leo: [['leo.aura', '狮威'], ['leo.roar', '狮吼'], ['leo.order', '兽王令']],
     gemini: [['gemini.windForm', '双生'], ['gemini.steal', '换影'], ['gemini.extraTurn', '连星']],
     libra: [['libra.elementSense', '衡感'], ['libra.judgment', '审判'], ['libra.harmony', '裁衡']],
     aquarius: [['aquarius.stormEye', '倾杯'], ['aquarius.massHeal', '神酿'], ['aquarius.windCut', '断流']],
-    cancer: [['cancer.tideBond', '共潮'], ['cancer.heal', '疗潮'], ['cancer.rescue', '蟹护']],
-    scorpio: [['scorpio.freezeAoe', '蝎毒'], ['scorpio.spoils', '缴械'], ['scorpio.peek', '伏击']],
-    pisces: [['pisces.observeTide', '观潮'], ['pisces.balance', '平潮'], ['pisces.dream', '回梦']],
-    taurus: [['taurus.guard', '牛守'], ['taurus.thickSkin', '厚皮'], ['taurus.armor', '筑甲']],
-    capricorn: [['capricorn.unyielding', '蓄怒'], ['capricorn.wushuang', '重压'], ['capricorn.charge', '山崩']],
-    sagittarius: [['sagittarius.bowcraft', '整弓'], ['sagittarius.seekEquipment', '寻器'], ['sagittarius.sharpshot', '神射']],
-    virgo: [['virgo.purify', '净化'], ['virgo.domain', '净域'], ['virgo.discipline', '戒律']]
+    cancer: [['cancer.tideBond', '共潮'], ['cancer.heal', '疗潮'], ['cancer.rescue', '赫拉之护']],
+    scorpio: [['scorpio.freezeAoe', '蝎毒'], ['scorpio.spoils', '缴械'], ['scorpio.peek', '窥星']],
+    pisces: [['pisces.observeTide', '观潮'], ['pisces.balance', '双鱼之绊'], ['pisces.dream', '归潮']],
+    taurus: [['taurus.guard', '护渡'], ['taurus.thickSkin', '神躯'], ['taurus.armor', '筑甲']],
+    capricorn: [['capricorn.unyielding', '牧神怒'], ['capricorn.wushuang', '重压'], ['capricorn.charge', '山崩']],
+    sagittarius: [['sagittarius.bowcraft', '整弓'], ['sagittarius.seekEquipment', '寻器'], ['sagittarius.sharpshot', '缪斯之弦']],
+    virgo: [['virgo.purify', '净化'], ['virgo.domain', '净域'], ['virgo.discipline', '星律']]
   };
   const bossSkills = isInitialInfectionBoss(player)
     ? [['infection.bossDrain', '月蚀汲取'], ['infection.bossCommand', '蚀月战令'], ['infection.bossNoDistance', '月蚀领域']]
@@ -4841,7 +4860,7 @@ function skillInfo(player, onBoard = false) {
       '<div class="chooserLabel">选择任意两名存活角色</div><div class="choiceGrid">' + targetOptions + '</div>' +
       (requirement.targets.length === 2 ? '<div class="chooserLabel">弃置 ' + requirement.required + ' 张水牌</div><div class="choiceGrid">' + (requirement.required ? (costOptions || '<div class="skillHint">没有足够水牌。</div>') : '<div class="skillHint">生命相同，无需弃牌。</div>') + '</div>' : '') +
       '</div>';
-    actions = '<button ' + (!ready ? 'disabled' : '') + ' onclick="confirmPiscesBalance(\'' + player.id + '\')">发动平潮</button>';
+    actions = '<button ' + (!ready ? 'disabled' : '') + ' onclick="confirmPiscesBalance(\'' + player.id + '\')">发动双鱼之绊</button>';
   }
   if (id === 'weapon.airCompass' && state.activePlayerId === player.id && state.phase === 'main') {
     const options = [

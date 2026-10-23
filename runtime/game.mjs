@@ -1,14 +1,14 @@
-import { SKILL_DESCRIPTIONS } from '../src/content/skillDescriptions.mjs?v=web-e8166760e8cc72a3';
-import { applyTutorialAction, createTutorialCheckpoint, nextTutorialCheckpoint } from '../src/game/tutorial.mjs?v=web-e8166760e8cc72a3';
+import { SKILL_DESCRIPTIONS } from '../src/content/skillDescriptions.mjs?v=web-cffa0b26a543c114';
+import { applyTutorialAction, createTutorialCheckpoint, nextTutorialCheckpoint } from '../src/game/tutorial.mjs?v=web-cffa0b26a543c114';
 import {
   applyAction,
   applySingleAiAction,
   autoDiscardToHp,
   createGame,
   createInfectionGame,
-} from '../src/game/engine.mjs?v=web-e8166760e8cc72a3';
+} from '../src/game/engine.mjs?v=web-cffa0b26a543c114';
 
-const SERVER_VERSION = "web-e8166760e8cc72a3";
+const SERVER_VERSION = "web-cffa0b26a543c114";
 const MULLIGAN_SECONDS = 8;
 const MAIN_TOTAL_SECONDS = 65;
 const MAIN_IDLE_SECONDS = 20;

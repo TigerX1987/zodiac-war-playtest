@@ -6,6 +6,9 @@
     ['ja', '日本語'], ['fr', 'Français'], ['ru', 'Русский'], ['es', 'Español']
   ];
   const storageKey = 'zodiac-war-language-v1';
+  // Historical events keep their original keys for saves and voice triggers.
+  const skillNameAliases = {'血怒':'金绒战意','羊角冲':'金角冲','牛守':'护渡','厚皮':'神躯','蟹护':'赫拉之护','王令':'兽王令','戒律':'星律','伏击':'窥星','神射':'缪斯之弦','蓄怒':'牧神怒','平潮':'双鱼之绊','回梦':'归潮'};
+  const renameSkillText = text => text.replace(/兽王令|血怒|羊角冲|牛守|厚皮|蟹护|王令|戒律|伏击|神射|蓄怒|平潮|回梦/g, name => skillNameAliases[name] || name);
   const canonicalMessages = {
     '${p0} pays ${p1} to ${p2} for Leo order': '${p0} 因王令将 ${p1} 交给 ${p2}',
     '${p0} is burning and cannot recover because Leo aura is active': '${p0} 因灼烧和狮威不能普通回复',
@@ -52,11 +55,12 @@
   function t(source, params) {
     const text = String(source ?? '');
     if (params) {
-      const template = dictionary()[text] || (language === 'zh-CN' ? text : dictionaries.get('en')?.[text] || text);
-      return template.replace(/\$\{([^}]+)\}|\{(\d+)\}/g, (token, named, index) => Object.hasOwn(params, named ?? index) ? t(params[named ?? index]) : token);
+      const template = dictionary()[text] || (language === 'zh-CN' ? text : dictionaries.get('en')?.[text] || t(text));
+      const displayTemplate = language === 'zh-CN' ? renameSkillText(template) : template;
+      return displayTemplate.replace(/\$\{([^}]+)\}|\{(\d+)\}/g, (token, named, index) => Object.hasOwn(params, named ?? index) ? t(params[named ?? index]) : token);
     }
     if (!text) return text;
-    if (language === 'zh-CN') return dictionary()[text] || text;
+    if (language === 'zh-CN') return renameSkillText(dictionary()[text] || text);
     if (Object.hasOwn(dictionary(), text)) return dictionary()[text];
     if (Object.hasOwn(dictionaries.get('en') || {}, text)) return dictionaries.get('en')[text];
     const trimmed = text.trim();

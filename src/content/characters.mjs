@@ -41,7 +41,7 @@ export const CHARACTERS                                 = {
     element: 'fire',
     maxHp: 3,
     role: '强攻 / 点杀 / 灼烧',
-    skills: ['血怒', '羊角冲', '燃魂'],
+    skills: ['金绒战意', '金角冲', '燃魂'],
   },
   leo: {
     id: 'leo',
@@ -49,7 +49,7 @@ export const CHARACTERS                                 = {
     element: 'fire',
     maxHp: 3,
     role: '灼烧压制 / 禁疗 / 群体施压',
-    skills: ['狮威', '狮吼', '王令'],
+    skills: ['狮威', '狮吼', '兽王令'],
   },
   sagittarius: {
     id: 'sagittarius',
@@ -57,7 +57,7 @@ export const CHARACTERS                                 = {
     element: 'fire',
     maxHp: 4,
     role: '装备成长 / 持续输出 / 残局收割',
-    skills: ['整弓', '寻器', '神射'],
+    skills: ['整弓', '寻器', '缪斯之弦'],
   },
   gemini: {
     id: 'gemini',
@@ -89,7 +89,7 @@ export const CHARACTERS                                 = {
     element: 'water',
     maxHp: 3,
     role: '治疗 / 急救 / 团队续航',
-    skills: ['共潮', '疗潮', '蟹护'],
+    skills: ['共潮', '疗潮', '赫拉之护'],
   },
   scorpio: {
     id: 'scorpio',
@@ -97,7 +97,7 @@ export const CHARACTERS                                 = {
     element: 'water',
     maxHp: 3,
     role: '冰冻压制 / 资源拆解 / 牌堆运营',
-    skills: ['蝎毒', '缴械', '伏击'],
+    skills: ['蝎毒', '缴械', '窥星'],
   },
   pisces: {
     id: 'pisces',
@@ -105,7 +105,7 @@ export const CHARACTERS                                 = {
     element: 'water',
     maxHp: 3,
     role: '滤牌 / 生命平衡 / 弃牌后补牌',
-    skills: ['观潮', '平潮', '回梦'],
+    skills: ['观潮', '双鱼之绊', '归潮'],
   },
   taurus: {
     id: 'taurus',
@@ -115,7 +115,7 @@ export const CHARACTERS                                 = {
     initialArmor: 1,
     maxArmor: 2,
     role: '承伤 / 护卫 / 筑甲',
-    skills: ['牛守', '厚皮', '筑甲'],
+    skills: ['护渡', '神躯', '筑甲'],
   },
   virgo: {
     id: 'virgo',
@@ -123,7 +123,7 @@ export const CHARACTERS                                 = {
     element: 'earth',
     maxHp: 4,
     role: '净化 / 拒战 / 多目标反制',
-    skills: ['净化', '净域', '戒律'],
+    skills: ['净化', '净域', '星律'],
   },
   capricorn: {
     id: 'capricorn',
@@ -131,7 +131,7 @@ export const CHARACTERS                                 = {
     element: 'earth',
     maxHp: 4,
     role: '怒气 / 双防御需求 / 终局压制',
-    skills: ['蓄怒', '重压', '山崩'],
+    skills: ['牧神怒', '重压', '山崩'],
   },
 };
 
