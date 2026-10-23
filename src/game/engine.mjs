@@ -1,10 +1,10 @@
-import { createBaseDeck, createInfectionDeck, effectiveRitualCard, ELEMENT_LABELS, statusForElement } from '../content/cards.mjs?v=web-7f2e2487a0c949f8';
+import { createBaseDeck, createInfectionDeck, effectiveRitualCard, ELEMENT_LABELS, statusForElement } from '../content/cards.mjs?v=web-e8166760e8cc72a3';
 import {
   CHARACTERS,
   DEFAULT_CHARACTER_PAIR,
   DEFAULT_DEMO_CHARACTERS,
   zodiacSeatIndices,
-} from '../content/characters.mjs?v=web-7f2e2487a0c949f8';
+} from '../content/characters.mjs?v=web-e8166760e8cc72a3';
              
          
        
@@ -23,7 +23,7 @@ import {
               
             
                      
-import { randomFloat, shuffleWithSeed } from './random.mjs?v=web-7f2e2487a0c949f8';
+import { randomFloat, shuffleWithSeed } from './random.mjs?v=web-e8166760e8cc72a3';
 
 const STATUS_LABELS                           = {
   burn: '灼烧',
@@ -1100,6 +1100,17 @@ function resolveSkillDecision(
   const player = findPlayer(state, decision.playerId);
   const source = decision.sourceId ? findPlayer(state, decision.sourceId) : undefined;
 
+  if (decision.kind === 'sagittariusResupply' && action.activate) {
+    const target = state.players.find(candidate => candidate.id === action.targetId);
+    if (!isAlive(player) || !target || !isAlive(target)) throw new Error('补给需要存活的射手和目标');
+    const count = Math.max(0, Math.min(4, target.maxHp) - target.hand.length);
+    const before = target.hand.length;
+    drawCards(state, target, count);
+    triggerSkillMetric(state, 'sagittarius.resupply');
+    for (let n = before; n < target.hand.length; n++) triggerSkillMetric(state, 'sagittarius.resupplyCards');
+    log(state, messageTemplate`${player.name} 为 ${target.name} 补给 ${target.hand.length - before} 张牌`, player.id, 'skill');
+  }
+
   if (decision.kind === 'scorpioEndPeek') {
     if (player.characterId !== 'scorpio' || !isAlive(player) || state.activePlayerId !== player.id || state.phase !== 'discard') {
       throw new Error('当前不能结算回合结束伏击');
@@ -1295,9 +1306,8 @@ function triggerHpLossSkills(state           , target             , damage      
     log(state, messageTemplate`${target.name} 因双生摸 ${damage.hpLost} 张风牌`, target.id, 'skill');
   }
   if (target.characterId === 'sagittarius' && damage.hadArmor) {
-    drawCards(state, target, 1);
-    triggerSkillMetric(state, 'sagittarius.sharpshot');
-    log(state, messageTemplate`${target.name} 的神射因装备防具并承受实际伤害，摸 1 张牌`, target.id, 'skill');
+    queueSkillDecision(state, {kind: 'sagittariusResupply', playerId: target.id});
+    triggerSkillMetric(state, 'sagittarius.resupplyOffer');
   }
 }
 
@@ -1616,7 +1626,7 @@ function recordCardElement(state           , player             , card      , ch
     player.flags.usedCardElements.push(element);
   }
 
-  if (player.characterId === 'libra' && !player.flags.libraRoundElements.includes(element)) {
+  if (player.characterId === 'libra' && state.activePlayerId === player.id && !player.flags.libraRoundElements.includes(element)) {
     player.flags.libraRoundElements.push(element);
     drawCards(state, player, 1);
     triggerSkillMetric(state, 'libra.elementSense');
@@ -1650,7 +1660,10 @@ function canUseBasicAttack(player             ) {
   const limit = player.equipment.weapon?.element === 'fire'
     ? Number.POSITIVE_INFINITY
     : 1 + commandBonus;
-  return player.flags.basicAttackCount < limit;
+  const equipmentCount = Number(Boolean(player.equipment.weapon)) + Number(Boolean(player.equipment.armor));
+  const extraAvailable = player.characterId === 'sagittarius' && Boolean(player.equipment.weapon) &&
+    (player.flags.usedSagittariusExtraAttacks ?? 0) < equipmentCount;
+  return player.flags.basicAttackCount < limit || extraAvailable;
 }
 
 function isIceArmorBlocked(player             , target             ) {
@@ -1711,7 +1724,7 @@ function createWaterCodexFusion(state           , player             , materials
 
 function resolveUnavoidableAttack(state           ) {
   while (
-    state.pendingAttack?.unavoidable &&
+    (state.pendingAttack?.unavoidable || state.pendingAttack?.unblockable) &&
     !state.pendingSkillDecisions?.length &&
     !state.pendingAttack.scorpioPoisonStep &&
     state.phase !== 'gameOver' &&
@@ -1786,7 +1799,7 @@ function isCapricornWushuangAttack(source             , card      ) {
 
 function isValidDefense(pending               , defender             , defenseCard      ) {
   if (pending.scorpioPoisonStep) return true;
-  if (pending.unavoidable) return false;
+  if (pending.unavoidable || pending.unblockable) return false;
   if (defenseCard.kind === 'sun' || defenseCard.kind === 'moon') return true;
   if (defenseCard.kind !== 'normalAttack') return false;
   if (pending.card.kind === 'aoe') {
@@ -2047,6 +2060,7 @@ function endTurn(state           , player             , skipEndEffects = false) 
   }
 
   if (state.phase === 'gameOver') return;
+  if (state.pendingSkillDecisions?.some(decision => decision.kind === 'sagittariusResupply')) {state.pendingSkillResume = 'endTurnAfterRescue';return;}
   removeOneRoundStatuses(state, player);
 
   if (player.characterId === 'scorpio' && isAlive(player) && player.flags.usedScorpioPeek &&
@@ -2107,6 +2121,37 @@ function triggerEquipmentLeftOwner(
   drawCards(state, owner, 2);
   triggerSkillMetric(state, 'sagittarius.bowcraft');
   log(state, messageTemplate`${owner.name} 的整弓触发：${card.name} 离开装备区，摸 2 张牌`, owner.id, 'skill');
+}
+
+function continueCapricornSpread(state           ) {
+  const pending = state.pendingCapricornSpread;
+  if (!pending) return;
+  if (state.phase === 'gameOver') {
+    delete state.pendingCapricornSpread;
+    return;
+  }
+  if (resolutionIsPending(state) || state.pendingSkillDecisions?.length) return;
+  const source = findPlayer(state, pending.sourceId);
+  while (pending.targetIds.length) {
+    const target = findPlayer(state, pending.targetIds.shift() );
+    if (!isAlive(target)) continue;
+    applyDamage(state, target, source, 1, { sacredDamage: true, status: 'silence' });
+    const discardOwners = pending.discardSource ? [source, target] : [target];
+    pending.discardSource = false;
+    for (const owner of discardOwners) {
+      state.discard.push(...owner.hand.splice(0));
+      const equipment = Object.values(owner.equipment);
+      owner.equipment = {};
+      for (const card of equipment) {
+        state.discard.push(card);
+        triggerEquipmentLeftOwner(state, owner, card);
+      }
+    }
+    // A later hit must not replace the current rescue or Eclipse reward.
+    if (state.phase === 'gameOver') break;
+    if (resolutionIsPending(state) || state.pendingSkillDecisions?.length) return;
+  }
+  delete state.pendingCapricornSpread;
 }
 
 function playEquipment(state           , player             , card      ) {
@@ -2683,16 +2728,6 @@ function handlePlayCard(state           , action                                
     state.discard.push(card);
     const energyCharged = consumeEnergyCharge(player, card);
     let attackDamage = energyCharged ? 2 : 1;
-    if (
-      player.characterId === 'sagittarius' &&
-      player.equipment.weapon &&
-      (card.kind === 'normalAttack' || card.kind === 'statusAttack') &&
-      card.element === 'fire'
-    ) {
-      attackDamage += 1;
-      triggerSkillMetric(state, 'sagittarius.sharpshot');
-      log(state, messageTemplate`${player.name} 的神射令本次火属性普通攻击或状态攻击伤害 +1`, player.id, 'skill');
-    }
     const usesStoredSureHit = card.kind === 'normalAttack' && Boolean(player.statuses.sureHit);
     if (usesStoredSureHit) delete player.statuses.sureHit;
     state.pendingAttack = makePendingAttack(
@@ -2702,6 +2737,15 @@ function handlePlayCard(state           , action                                
       targets.map((candidate) => candidate.id),
       attackDamage,
     );
+    if (player.characterId === 'sagittarius' && player.equipment.weapon &&
+        (card.kind === 'normalAttack' || card.kind === 'statusAttack') &&
+        player.flags.basicAttackCount > 1 + (player.flags.infectionBossCommandMode === 'extraAttack' ? 1 : 0) &&
+        (player.flags.usedSagittariusExtraAttacks ?? 0) < Number(Boolean(player.equipment.weapon)) + Number(Boolean(player.equipment.armor))) {
+      player.flags.usedSagittariusExtraAttacks = (player.flags.usedSagittariusExtraAttacks ?? 0) + 1;
+      state.pendingAttack.unblockable = card.element === 'fire';
+      triggerSkillMetric(state, 'sagittarius.extraAttack');
+      log(state, messageTemplate`${player.name} 的神射发动额外攻击，${card.element === 'fire' ? '火牌不可防御但仍受致盲影响' : '非火牌可以防御'}`, player.id, 'skill');
+    }
     if (usesStoredSureHit) state.pendingAttack.unavoidable = true;
     if (isFirstNormalAttackThisTurn && player.equipment.weapon?.element === 'earth') {
       state.pendingAttack.earthHammerCostRequired = true;
@@ -2718,8 +2762,8 @@ function handlePlayCard(state           , action                                
     }
     state.phase = 'response';
     offerTaurusGuardInterception(state);
-    if (state.pendingAttack.unavoidable) {
-      log(state, messageTemplate`${card.name} 必中且不可防御，直接结算`, player.id, 'attack');
+    if (state.pendingAttack.unavoidable || state.pendingAttack.unblockable) {
+      log(state, messageTemplate`${card.name} 不可防御，直接结算`, player.id, 'attack');
       resolveUnavoidableAttack(state);
     } else {
       state.phase = 'response';
@@ -3014,10 +3058,10 @@ function handleSkill(state           , action                                   
       recordAirUse(state, player, costs.filter(card => card.element === 'air').length);
       if (costIds.length === 1) applyDamage(state, player, player, 1, { hpCost: true });
       if (state.phase === 'gameOver') return;
-      applyDamage(state, target, player, 2, { status: 'blind' });
+      applyDamage(state, target, player, 1, { status: 'blind' });
       player.flags.usedGeminiSteal = true;
       triggerSkillMetric(state, action.skillId);
-      log(state, messageTemplate`${player.name} 发动换影，${target.name} 没有手牌和装备，受到 2 点伤害并获得致盲`, player.id, 'skill');
+      log(state, messageTemplate`${player.name} 发动换影，${target.name} 没有手牌和装备，受到 1 点伤害并获得致盲`, player.id, 'skill');
       return;
     }
     if (!action.selectedCardId) throw new Error('换影需要选择目标手牌或装备中的 1 张');
@@ -3315,23 +3359,39 @@ function handleSkill(state           , action                                   
 
   if (action.skillId === 'capricorn.charge') {
     if (player.flags.usedCapricornChargeThisRound) throw new Error('山崩每轮一次');
-    assertNotIceArmorBlocked(player, target);
     if (player.rage <= 0) throw new Error('山崩至少需要 1 点怒气');
+    const option = action.option ?? 'single';
+    if (option !== 'single' && option !== 'spread') throw new Error('山崩需要选择单体重击或分散打击');
+    if (option === 'spread' && player.rage < 5) throw new Error('山崩分散打击至少需要 5 点怒气');
+    const targetIds = action.targetIds ?? (option === 'spread' ? (action.targetId ? [action.targetId] : []) : [target.id]);
+    const maxTargets = option === 'spread' ? 3 : 1;
+    if (targetIds.length < 1 || targetIds.length > maxTargets || new Set(targetIds).size !== targetIds.length) {
+      throw new Error(option === 'spread' ? '山崩分散打击需要选择 1 至 3 名不同目标' : '山崩单体重击只能选择 1 名目标');
+    }
+    if (action.targetId && action.targetId !== targetIds[0]) throw new Error('山崩首个目标与目标列表不一致');
+    const chargeTargets = targetIds.map(id => findPlayer(state, id));
+    for (const candidate of chargeTargets) {
+      if (candidate.id === player.id || !isAlive(candidate)) throw new Error('山崩需要选择其他存活角色');
+      assertNotIceArmorBlocked(player, candidate);
+    }
+    const distanceTarget = chargeTargets.find(candidate => skillNeedsDistanceCost(state, player, candidate, action.skillId));
     payDistanceCost(
       state,
       player,
-      target,
-      skillNeedsDistanceCost(state, player, target, action.skillId),
+      distanceTarget ?? chargeTargets[0],
+      Boolean(distanceTarget),
       action.extraCostCardId,
       [],
     );
     const spent = player.rage;
-    if (spent <= 0) throw new Error('山崩至少需要 1 点怒气');
     player.rage = 0;
     player.flags.usedCapricornChargeThisRound = true;
-    if (spent >= 5) {
-      applyDamage(state, target, player, 2, { sacredDamage: true, status:'silence' });
-      state.discard.push(...player.hand.splice(0), ...target.hand.splice(0));
+    const chargeTarget = chargeTargets[0];
+    if (option === 'spread') {
+      state.pendingCapricornSpread = {sourceId: player.id, targetIds: [...targetIds], discardSource: true};
+    } else if (spent >= 5) {
+      applyDamage(state, chargeTarget, player, 2, { sacredDamage: true, status:'silence' });
+      state.discard.push(...player.hand.splice(0), ...chargeTarget.hand.splice(0));
       if (player.equipment.weapon) {
         state.discard.push(player.equipment.weapon);
         triggerEquipmentLeftOwner(state, player, player.equipment.weapon);
@@ -3340,21 +3400,21 @@ function handleSkill(state           , action                                   
         state.discard.push(player.equipment.armor);
         triggerEquipmentLeftOwner(state, player, player.equipment.armor);
       }
-      if (target.equipment.weapon) {
-        state.discard.push(target.equipment.weapon);
-        triggerEquipmentLeftOwner(state, target, target.equipment.weapon);
+      if (chargeTarget.equipment.weapon) {
+        state.discard.push(chargeTarget.equipment.weapon);
+        triggerEquipmentLeftOwner(state, chargeTarget, chargeTarget.equipment.weapon);
       }
-      if (target.equipment.armor) {
-        state.discard.push(target.equipment.armor);
-        triggerEquipmentLeftOwner(state, target, target.equipment.armor);
+      if (chargeTarget.equipment.armor) {
+        state.discard.push(chargeTarget.equipment.armor);
+        triggerEquipmentLeftOwner(state, chargeTarget, chargeTarget.equipment.armor);
       }
       player.equipment = {};
-      target.equipment = {};
+      chargeTarget.equipment = {};
     } else if (spent >= 3) {
-      applyDamage(state, target, player, 1, { sacredDamage: true, status:'silence' });
+      applyDamage(state, chargeTarget, player, 1, { sacredDamage: true, status:'silence' });
       state.discard.push(...player.hand.splice(0));
     } else {
-      addStatus(state, target, 'silence', 1);
+      addStatus(state, chargeTarget, 'silence', 1);
     }
     triggerSkillMetric(state, action.skillId);
     log(state, messageTemplate`${player.name} 消耗 ${spent} 怒发动山崩`, player.id, 'skill');
@@ -3633,6 +3693,7 @@ export function applyAction(input           , action        )                   
     }
     delete state.pendingAttack;
     delete state.pendingRescue;
+    delete state.pendingCapricornSpread;
     delete state.pendingSkillDecisions;
     delete state.pendingSkillResume;
     state.mulliganPendingPlayerIds = [];
@@ -3673,6 +3734,7 @@ export function applyAction(input           , action        )                   
     } else if (action.type === 'useSkill' && action.skillId === 'cancer.rescue' && action.targetId === pending.targetId) {
       handleSkill(state, action);
     } else throw new Error('请使用急救牌或选择放弃急救');
+    continueCapricornSpread(state);
     return { state, events: state.log.slice(0, state.log.length - beforeLogLength) };
   }
   if (state.pendingSkillDecisions?.length) {
@@ -3680,6 +3742,7 @@ export function applyAction(input           , action        )                   
       throw new Error('请先完成当前技能选择');
     }
     resolveSkillDecision(state, action);
+    continueCapricornSpread(state);
     if (isInfectionMode(state)) checkInfectionVictory(state);
     settleDyingActivePlayer(state);
     return { state, events: state.log.slice(0, state.log.length - beforeLogLength) };
@@ -3761,6 +3824,7 @@ export function applyAction(input           , action        )                   
 
   if (action.type === 'useSkill') handleSkill(state, action);
 
+  continueCapricornSpread(state);
   if (isInfectionMode(state)) checkInfectionVictory(state);
   settleDyingActivePlayer(state);
 
@@ -3800,6 +3864,74 @@ function mostDamagedAlly(state           , player             ) {
 
 function firstCost(player             , predicate                         ) {
   return player.hand.find(predicate);
+}
+
+function aiSupportCosts(player             ) {
+  const value = (card      ) => {
+    if (card.kind === 'normalAttack' || card.kind === 'statusAttack') {
+      return (canUseHandCard(player, card) && canUseBasicAttack(player) ? 4 : 0)
+        + (card.kind === 'statusAttack' ? 1 : 0)
+        + (player.characterId === 'cancer' && card.element === 'water' ? 1 : 0);
+    }
+    if (card.kind === 'weapon' || card.kind === 'armor') return 2;
+    if (card.kind === 'energy') return 6;
+    if (card.kind === 'aoe') return 5;
+    return 4;
+  };
+  return player.hand.filter(card => card.kind !== 'sun' && card.kind !== 'moon'
+    && !(card.kind === 'weapon' && !player.equipment.weapon)
+    && !(card.kind === 'armor' && !player.equipment.armor))
+    .sort((a, b) => value(a) - value(b));
+}
+
+function aquariusAiBrewCosts(state           , player             ) {
+  const costs = aiSupportCosts(player);
+  const air = costs.find(card => card.element === 'air');
+  const other = costs.find(card => card.id !== air?.id && card.element === 'air')
+    ?? costs.find(card => card.id !== air?.id);
+  if (!air || !other) return undefined;
+  const canRecover = (target             ) => !isLeoHealingBlocked(state, target)
+    && !(isInfectionMode(state) && (target.infected || isInfectedFaction(target)));
+  const selfCanRecover = canRecover(player);
+  const beforeSacrifice = selfCanRecover && other.element === 'air' ? Math.min(player.maxHp, player.hp + 1) : player.hp;
+  if (beforeSacrifice <= 1) return undefined;
+  const afterSacrifice = beforeSacrifice - 1;
+  const afterBrew = selfCanRecover ? Math.min(player.maxHp, afterSacrifice + 1) : afterSacrifice;
+  // Compare visible health changes; a point of recovery at one HP has greater urgency.
+  let benefit = (afterBrew - player.hp) * (player.hp === 1 ? 2 : 1);
+  for (const target of state.players) {
+    if (target.id === player.id || !isAlive(target) || target.hp >= target.maxHp || !canRecover(target)) continue;
+    benefit += (sameFaction(state, player, target) ? 1 : -1) * (target.hp === 1 ? 2 : 1);
+  }
+  return benefit > 0 ? [air.id, other.id] : undefined;
+}
+
+function chooseAiCapricornCharge(state           , player             , lethalOnly         )                     {
+  if (player.rage < 3 || player.flags.usedCapricornChargeThisRound) return undefined;
+  const damage = player.rage >= 5 ? 2 : 1;
+  const targets = aiHostilePlayers(state, player)
+    .filter(target => !isIceArmorBlocked(player, target) && !target.statuses.shield)
+    .sort((a, b) => a.hp - b.hp);
+  for (const target of targets) {
+    const lethal = target.hp <= damage;
+    if (lethalOnly && !lethal) continue;
+    const needsCost = skillNeedsDistanceCost(state, player, target, 'capricorn.charge');
+    const extraCost = needsCost
+      ? aiSupportCosts(player)[0] ?? player.hand.find(card => card.kind !== 'sun' && card.kind !== 'moon') ?? (lethal ? player.hand[0] : undefined)
+      : undefined;
+    if (needsCost && !extraCost) continue;
+    const remainingHand = player.hand.filter(card => card.id !== extraCost?.id);
+    if (!lethal) {
+      if (remainingHand.some(card => card.kind === 'sun' || card.kind === 'moon')) continue;
+      if (player.rage < 5 && remainingHand.length > 0) continue;
+      const ownResources = remainingHand.length + Number(Boolean(player.equipment.weapon)) + Number(Boolean(player.equipment.armor));
+      const enemyResources = target.hand.length + Number(Boolean(target.equipment.weapon)) + Number(Boolean(target.equipment.armor));
+      if (player.rage >= 5 && ownResources > enemyResources) continue;
+    }
+    return { type: 'useSkill', playerId: player.id, skillId: 'capricorn.charge', targetId: target.id,
+      ...(extraCost ? { extraCostCardId: extraCost.id } : {}) };
+  }
+  return undefined;
 }
 
 function chooseAiAquariusChalice(state           , player             )                                                  {
@@ -4107,6 +4239,13 @@ export function chooseAiAction(state           )                     {
   if (skillDecision) {
     const player = findPlayer(state, skillDecision.playerId);
     if (player.control !== 'ai') return undefined;
+    if (skillDecision.kind === 'sagittariusResupply') {
+      const target = state.players.filter(candidate => isAlive(candidate) && sameFaction(state, player, candidate))
+        .sort((a, b) => Math.max(0, Math.min(4, b.maxHp) - b.hand.length) - Math.max(0, Math.min(4, a.maxHp) - a.hand.length) ||
+          Number(b.id === player.id) - Number(a.id === player.id) || a.hp / a.maxHp - b.hp / b.maxHp)[0];
+      const activate = isAlive(player) && Boolean(target && target.hand.length < Math.min(4, target.maxHp));
+      return {type: 'resolveSkillDecision', playerId: player.id, activate, targetId: activate ? target .id : undefined};
+    }
     if (skillDecision.kind === 'scorpioEndPeek') {
       return { type: 'resolveSkillDecision', playerId: player.id, activate: true, ...scorpioWaterPeekOrder(state) };
     }
@@ -4375,19 +4514,14 @@ export function chooseAiAction(state           )                     {
 
   if (canUseActiveSkill && player.characterId === 'cancer' && !player.flags.usedCancerHeal) {
     const ally = mostDamagedAlly(state, player);
-    const cost = player.hand[0];
+    const cost = aiSupportCosts(player)[0];
     if (ally && cost) return { type: 'useSkill', playerId: player.id, skillId: 'cancer.heal', targetId: ally.id, cardIds: [cost.id] };
   }
 
   if (canUseActiveSkill && player.characterId === 'aquarius' && !player.flags.usedAquariusMassHeal) {
-    const hasDamagedCharacter = state.players.some((candidate) => candidate.hp > 0 && candidate.hp < candidate.maxHp);
-    const air = firstCost(player, (card) => card.element === 'air');
-    const other = player.hand.find((card) => card.id !== air?.id && card.element === 'air')
-      ?? player.hand.find((card) => card.id !== air?.id);
-    const canPreHeal = other?.element === 'air' && !isLeoHealingBlocked(state, player)
-      && !(isInfectionMode(state) && (player.infected || isInfectedFaction(player)));
-    if (hasDamagedCharacter && air && other && (player.hp > 1 || canPreHeal)) {
-      return { type: 'useSkill', playerId: player.id, skillId: 'aquarius.massHeal', targetId: enemy.id, cardIds: [air.id, other.id] };
+    const cardIds = aquariusAiBrewCosts(state, player);
+    if (cardIds) {
+      return { type: 'useSkill', playerId: player.id, skillId: 'aquarius.massHeal', targetId: enemy.id, cardIds };
     }
   }
 
@@ -4424,12 +4558,9 @@ export function chooseAiAction(state           )                     {
     }
   }
 
-  if (canUseActiveSkill && player.characterId === 'capricorn' && player.rage >= 3 && !player.flags.usedCapricornChargeThisRound) {
-    if (outputEnemy) {
-      const action         = { type: 'useSkill', playerId: player.id, skillId: 'capricorn.charge', targetId: outputEnemy.id };
-      const withCost = withDistanceCost(action, state, player, outputEnemy, skillNeedsDistanceCost(state, player, outputEnemy, 'capricorn.charge'), []);
-      if (withCost) return withCost;
-    }
+  if (canUseActiveSkill && player.characterId === 'capricorn') {
+    const charge = chooseAiCapricornCharge(state, player, true);
+    if (charge) return charge;
   }
 
   if (canUseActiveSkill) {
@@ -4523,6 +4654,10 @@ export function chooseAiAction(state           )                     {
   if (canUseActiveSkill && player.characterId === 'pisces' && !player.flags.usedPiscesObserveTide) {
     const cards = player.hand.filter(card => card.kind !== 'sun' && card.kind !== 'moon');
     if (cards.length) return { type: 'useSkill', playerId: player.id, skillId: 'pisces.observeTide', cardIds: cards.map(card => card.id) };
+  }
+  if (canUseActiveSkill && player.characterId === 'capricorn') {
+    const charge = chooseAiCapricornCharge(state, player, false);
+    if (charge) return charge;
   }
   return { type: 'endMain', playerId: player.id };
 }

@@ -1,7 +1,7 @@
 
 const labels = {"aries":"白羊座","leo":"狮子座","sagittarius":"射手座","gemini":"双子座","libra":"天秤座","aquarius":"水瓶座","cancer":"巨蟹座","scorpio":"天蝎座","pisces":"双鱼座","taurus":"金牛座","virgo":"处女座","capricorn":"摩羯座"};
-const skillDescriptions = {"aries.bloodRage":{"name":"血怒","text":"被动。从上个主动回合结束到当前主动回合开始前，若白羊因非神圣伤害减少过生命，则本回合下一次羊角冲伤害 +1；触发后消失，每个主动回合最多触发一次。"},"aries.ram":{"name":"羊角冲","text":"每回合一次。消耗 1 张火属性普通攻击或状态攻击牌，对一名角色造成 1 点不可防御技能伤害；若消耗的是火属性状态攻击牌，则目标同时获得灼烧。羊角冲不计入基础攻击次数，可被圣盾抵消，也会因致盲落空。"},"aries.burnSoul":{"name":"燃魂","text":"每回合限一次。你的非火普通攻击或状态攻击手牌可以视为火属性牌支付羊角冲费用；该牌只作为费用被消耗，不改变原本属性、类型和牌面效果。AOE、装备、功能、星能、太阳、月亮不能通过燃魂支付。"},"leo.aura":{"name":"狮威","text":"被动。狮子存活时，所有灼烧角色不能通过普通回复恢复生命。太阳不属于普通回复，不受狮威限制。"},"leo.roar":{"name":"狮吼","text":"每回合一次。弃 1 张火牌，指定最多 3 名角色，使其获得 1 轮灼烧；若目标已经灼烧，则不刷新持续时间。"},"leo.order":{"name":"王令","text":"弃 1 张任意牌指定一名角色。直到狮子下个回合开始前，该角色对狮子使用牌时，必须交给狮子 1 张牌，否则该牌失效。"},"sagittarius.bowcraft":{"name":"整弓","text":"被动。当你的装备被拆除、被替换或被其他角色获得时，摸 2 张牌。"},"sagittarius.seekEquipment":{"name":"寻器","text":"每回合一次。弃 1 张火属性牌和 1 张任意手牌，随机获得牌库中的 1 张武器或防具；若牌库没有装备，返还费用。"},"sagittarius.sharpshot":{"name":"神射","text":"被动。装备任意武器时，你每次使用火属性普通攻击或状态攻击伤害 +1，不限每回合首次，不强化 AOE；装备防具时，每次承受非神圣的实际生命伤害后摸 1 张牌。"},"gemini.windForm":{"name":"双生","text":"被动。双子每减少 1 点生命，摸 1 张风牌；神圣伤害造成的生命减少不触发。"},"gemini.steal":{"name":"换影","text":"每回合一次。弃 2 张牌，或弃 1 张牌并失去 1 点生命；查看目标手牌和装备并选择获得其中 1 张。若获得的牌不是风属性，对目标造成 1 点伤害，不附加致盲；仅当发动前目标没有手牌和装备时，改为造成 2 点伤害并附加致盲。换影无距离限制。"},"gemini.extraTurn":{"name":"连星","text":"被动。本回合使用第 3 张风属性牌后，获得 1 个额外回合；换影消耗的风牌可以计入。每轮最多触发一次。"},"libra.elementSense":{"name":"衡感","text":"被动。每轮内，每当你首次正式使用一种新属性牌时，摸 1 张牌，每轮最多 4 次；回合内外均可触发。太阳/月亮视为全属性，使用时为衡感选择一种基础属性。"},"libra.judgment":{"name":"审判","text":"被动。主动回合内，本回合首次正式使用第 3 种不同属性牌时，令一名角色获得致盲；首次正式使用第 4 种不同属性牌时触发完美审判，可选择抽取目标 1 张手牌或造成 1 点普通伤害。每项每回合最多一次。"},"libra.harmony":{"name":"裁衡","text":"每回合一次。选择两名其他存活角色，计算手牌差 D；若 D 小于 2 不能发动。天秤弃置 floor(D/2) 张风牌，并从多牌者的手牌或装备中选择等量牌交给少牌者。"},"aquarius.stormEye":{"name":"倾杯","text":"被动。水瓶受到非神圣的实际伤害后，摸 2 张牌，并可与至多 2 名其他存活角色交换至多 2 张等量手牌。友方手牌明牌任选；敌方只显示卡背，确认后随机取回。每张交出须对应取回一张。神酿献祭的 1 点生命会触发本被动；若因此濒死，须急救存活后再触发。"},"aquarius.massHeal":{"name":"神酿","text":"每回合一次。弃置 1 张风属性牌和 1 张任意牌；若两张均为风牌，先额外回复自己 1 点生命。随后献祭 1 点生命，再令所有存活角色回复 1 点生命。所有回复均遵守普通恢复限制和生命上限。"},"aquarius.windCut":{"name":"断流","text":"被动，每轮一次。弃牌阶段一次弃置至少 2 张牌后，可以选择是否发动；若发动，选择一名其他存活角色并指定弃置其 2 张手牌，不足 2 张则弃置全部，然后对其造成 1 点伤害。"},"cancer.tideBond":{"name":"共潮","text":"被动。任意角色成功回复生命后，巨蟹摸 1 张牌；每轮最多触发 3 次。"},"cancer.heal":{"name":"疗潮","text":"每回合一次。弃 1 张任意手牌，令一名角色回复 1 点生命。"},"cancer.rescue":{"name":"蟹护","text":"每轮一次。回合外弃 1 张水牌，急救一名其他濒死角色，使其回复 1 点生命。"},"scorpio.freezeAoe":{"name":"蝎毒","text":"出牌阶段每回合一次。弃置两张不同手牌：1 张水牌和 1 张任意牌（可以是另一张水牌），令一名其他存活角色冰冻，然后查看其手牌并选择获得 1 张，不追加伤害，也不能选择装备；仅当目标没有手牌时，改为对其造成 1 点普通伤害。付费并结算冰冻后才能查看手牌，夺牌不解除冰冻，费用牌不按普通出牌结算。"},"scorpio.peek":{"name":"伏击","text":"锁定技（开局部分）。每个自己的回合摸牌前强制发动，不受沉默影响：查看牌堆顶部若干张牌，按任意顺序放回牌顶或牌底，确认后才能摸牌。5 人及以上看 5 张，4 人看 4 张，少于 4 人看 3 张，不足时只看现有牌。若开局查看的牌中没有水牌，本回合结束时可额外发动一次，仍只排序、不额外摸牌。"},"scorpio.spoils":{"name":"缴械","text":"出牌阶段每回合一次。弃置 1 张任意手牌，指定一名其他存活角色，选择将其 1 点护甲、圣盾或一件装备转移给自己。每次只转移一项；自身护甲已满时不能选择护甲，装备直接装备并正常替换。目标没有护甲、圣盾和装备时，改为对其造成 1 点普通伤害。无需冰冻前置。"},"pisces.observeTide":{"name":"观潮","text":"出牌阶段每回合一次，自行选择任意数量的手牌弃置，再摸等量牌。没有牌数上限，确认前可调整或取消选择。"},"pisces.balance":{"name":"平潮","text":"选择两名角色，弃等同生命差的水牌，双方生命调整为平均值向下取整；造成生命损耗会影响回梦补牌。"},"pisces.dream":{"name":"回梦","text":"被动。弃牌阶段结束后摸 1 张牌；若本回合平潮造成过生命变化，则改为摸 2 张牌。"},"taurus.guard":{"name":"牛守","text":"每个自己的回合开始时，可以弃 1 张手牌，选择或更换一名其他存活角色作为守护对象，最多同时守护一人；不重新选择则延续原守护。守护对象每次成为普通攻击、状态攻击或 AOE 的目标时，你可免费替代其成为攻击目标，并正常防御，不限次数。技能的直接伤害不触发代承。"},"taurus.thickSkin":{"name":"厚皮","text":"被动。受到非神圣伤害、损失护甲或生命后摸 1 张牌；同一次伤害同时损失护甲和生命也只摸 1 张。之后可以弃 1 张手牌，令其他存活的伤害来源沉默，持续至其下一个主动回合结束；若来源已沉默，改为对其造成 1 点普通伤害。"},"taurus.armor":{"name":"筑甲","text":"每回合一次。弃 1 张土牌，令自己获得 1 点护甲，不能超过护甲上限。"},"virgo.purify":{"name":"净化","text":"主动回合限一次。弃 1 张土牌指定角色：移除其全部普通异常；若其没有普通异常，则获得一次异常免疫。感染模式中可改为只移除感染。"},"virgo.domain":{"name":"净域","text":"锁定技。每回合首次受到非神圣伤害（损失生命或护甲）并存活后自动发动：本回合免疫后续卡牌、技能的非神圣伤害及新增负面状态（含感染）；神圣伤害仍可穿透且不触发净域。已有负面状态不清除，生命调整和失去生命的费用不受保护。致命伤害先急救，存活后才生效。"},"virgo.discipline":{"name":"戒律","text":"被动。其他角色使用 AOE 或多目标牌/技能且你成为目标时，你可以对来源造成 1 点普通伤害。每次符合条件的结算均可选择发动，不设每回合次数限制。"},"infection.bossDrain":{"name":"月蚀汲取","text":"被动。Boss 主动回合首次对其他角色造成实际生命伤害后，回复 1 点生命并摸 1 张牌；满血时仍摸牌并消耗本回合触发次数。"},"infection.bossCommand":{"name":"蚀月战令","text":"Boss 开局额外摸 2 张牌。每个主动回合限一次，选择一项：本回合可额外使用 1 张基础攻击牌；或令本回合 1 张基础攻击牌额外指定 1 个目标。"},"infection.bossNoDistance":{"name":"月蚀领域","text":"被动。Boss 使用卡牌和技能无距离限制，不需要支付跨距离费用。"},"weapon.waterCodex":{"name":"潮汐法典","text":"每回合限一次，将任意 2 张手牌合成为 1 张本角色属性牌。攻击素材决定打击次数；武器素材令攻击必中且不可防御；防具素材令使用者获得 1 点护甲。"},"weapon.airCompass":{"name":"命运罗盘","text":"主动回合限一次。正式使用过 2 张不同属性牌后，选择一种属性，获得牌库中的 1 张该属性牌。"},"capricorn.unyielding":{"name":"蓄怒","text":"被动。摩羯每次对其他角色造成实际伤害（包括神圣伤害），或承受来自其他角色的非神圣实际伤害时，获得 1 点怒气；怒气没有上限。被圣盾抵消的伤害和自伤不增长怒气。"},"capricorn.wushuang":{"name":"重压","text":"被动。摩羯使用土属性普通攻击或土属性状态攻击时，目标需要 2 张有效防御牌才能抵消。非土牌、AOE、技能伤害、装备与功能牌伤害不触发。"},"capricorn.charge":{"name":"山崩","text":"每轮一次，不需要土牌，消耗全部怒气（至少 1 点）。先令目标沉默：1 怒只沉默；3 怒再造成 1 点神圣伤害，摩羯弃全部手牌；5 怒再造成 2 点神圣伤害，双方弃全部手牌和装备。跨距离的额外弃牌费用仍需支付。"}};
-const serverVersion = "web-7f2e2487a0c949f8";
+const skillDescriptions = {"aries.bloodRage":{"name":"血怒","text":"被动。从上个主动回合结束到当前主动回合开始前，若白羊因非神圣伤害减少过生命，则本回合下一次羊角冲伤害 +1；触发后消失，每个主动回合最多触发一次。"},"aries.ram":{"name":"羊角冲","text":"每回合一次。消耗 1 张火属性普通攻击或状态攻击牌，对一名角色造成 1 点不可防御技能伤害；若消耗的是火属性状态攻击牌，则目标同时获得灼烧。羊角冲不计入基础攻击次数，可被圣盾抵消，也会因致盲落空。"},"aries.burnSoul":{"name":"燃魂","text":"每回合限一次。你的非火普通攻击或状态攻击手牌可以视为火属性牌支付羊角冲费用；该牌只作为费用被消耗，不改变原本属性、类型和牌面效果。AOE、装备、功能、星能、太阳、月亮不能通过燃魂支付。"},"leo.aura":{"name":"狮威","text":"被动。狮子存活时，所有灼烧角色不能通过普通回复恢复生命。太阳不属于普通回复，不受狮威限制。"},"leo.roar":{"name":"狮吼","text":"每回合一次。弃 1 张火牌，指定最多 3 名角色，使其获得 1 轮灼烧；若目标已经灼烧，则不刷新持续时间。"},"leo.order":{"name":"王令","text":"弃 1 张任意牌指定一名角色。直到狮子下个回合开始前，该角色对狮子使用牌时，必须交给狮子 1 张牌，否则该牌失效。"},"sagittarius.bowcraft":{"name":"整弓","text":"被动。当你的装备被拆除、被替换或被其他角色获得时，摸 2 张牌。"},"sagittarius.seekEquipment":{"name":"寻器","text":"每回合一次。弃 1 张火属性牌和 1 张任意手牌，随机获得牌库中的 1 张武器或防具；若牌库没有装备，返还费用。"},"sagittarius.sharpshot":{"name":"神射","text":"被动。装备武器后，每个自己的回合可额外使用 N 张普通攻击或状态攻击，N 为当前装备数量；仅这些额外攻击中的火属性牌不可防御，其他属性可以防御；AOE 不享受该效果。不可防御仍受致盲、圣盾、护甲和净域影响。装备防具时，每次承受非神圣的实际生命伤害并存活后，可指定一名存活角色，将其手牌补至生命上限且最多 4 张；已有手牌超过上限不弃牌。不限触发次数，濒死时先完成急救，存活后才可补牌。"},"gemini.windForm":{"name":"双生","text":"被动。双子每减少 1 点生命，摸 1 张风牌；神圣伤害造成的生命减少不触发。"},"gemini.steal":{"name":"换影","text":"每回合一次。弃 2 张牌，或弃 1 张牌并失去 1 点生命；查看目标手牌和装备并选择获得其中 1 张。若获得的牌不是风属性，对目标造成 1 点伤害，不附加致盲；仅当发动前目标没有手牌和装备时，改为造成 1 点伤害并附加致盲。换影无距离限制。"},"gemini.extraTurn":{"name":"连星","text":"被动。本回合使用第 3 张风属性牌后，获得 1 个额外回合；换影消耗的风牌可以计入。每轮最多触发一次。"},"libra.elementSense":{"name":"衡感","text":"被动。仅统计自己主动回合内正式使用的属性牌：每轮每种属性首次使用后摸 1 张牌，最多 4 次。回合外防御不触发摸牌，也不占用自己回合该属性的触发资格。太阳/月亮视为全属性，使用时为衡感选择一种基础属性。"},"libra.judgment":{"name":"审判","text":"被动。主动回合内，本回合首次正式使用第 3 种不同属性牌时，令一名角色获得致盲；首次正式使用第 4 种不同属性牌时触发完美审判，可选择抽取目标 1 张手牌或造成 1 点普通伤害。每项每回合最多一次。"},"libra.harmony":{"name":"裁衡","text":"每回合一次。选择两名其他存活角色，计算手牌差 D；若 D 小于 2 不能发动。天秤弃置 floor(D/2) 张风牌，并从多牌者的手牌或装备中选择等量牌交给少牌者。"},"aquarius.stormEye":{"name":"倾杯","text":"被动。水瓶受到非神圣的实际伤害后，摸 2 张牌，并可与至多 2 名其他存活角色交换至多 2 张等量手牌。友方手牌明牌任选；敌方只显示卡背，确认后随机取回。每张交出须对应取回一张。神酿献祭的 1 点生命会触发本被动；若因此濒死，须急救存活后再触发。"},"aquarius.massHeal":{"name":"神酿","text":"每回合一次。弃置 1 张风属性牌和 1 张任意牌；若两张均为风牌，先额外回复自己 1 点生命。随后献祭 1 点生命，再令所有存活角色回复 1 点生命。所有回复均遵守普通恢复限制和生命上限。"},"aquarius.windCut":{"name":"断流","text":"被动，每轮一次。弃牌阶段一次弃置至少 2 张牌后，可以选择是否发动；若发动，选择一名其他存活角色并指定弃置其 2 张手牌，不足 2 张则弃置全部，然后对其造成 1 点伤害。"},"cancer.tideBond":{"name":"共潮","text":"被动。任意角色成功回复生命后，巨蟹摸 1 张牌；每轮最多触发 3 次。"},"cancer.heal":{"name":"疗潮","text":"每回合一次。弃 1 张任意手牌，令一名角色回复 1 点生命。"},"cancer.rescue":{"name":"蟹护","text":"每轮一次。回合外弃 1 张水牌，急救一名其他濒死角色，使其回复 1 点生命。"},"scorpio.freezeAoe":{"name":"蝎毒","text":"出牌阶段每回合一次。弃置两张不同手牌：1 张水牌和 1 张任意牌（可以是另一张水牌），令一名其他存活角色冰冻，然后查看其手牌并选择获得 1 张，不追加伤害，也不能选择装备；仅当目标没有手牌时，改为对其造成 1 点普通伤害。付费并结算冰冻后才能查看手牌，夺牌不解除冰冻，费用牌不按普通出牌结算。"},"scorpio.peek":{"name":"伏击","text":"锁定技（开局部分）。每个自己的回合摸牌前强制发动，不受沉默影响：查看牌堆顶部若干张牌，按任意顺序放回牌顶或牌底，确认后才能摸牌。5 人及以上看 5 张，4 人看 4 张，少于 4 人看 3 张，不足时只看现有牌。若开局查看的牌中没有水牌，本回合结束时可额外发动一次，仍只排序、不额外摸牌。"},"scorpio.spoils":{"name":"缴械","text":"出牌阶段每回合一次。弃置 1 张任意手牌，指定一名其他存活角色，选择将其 1 点护甲、圣盾或一件装备转移给自己。每次只转移一项；自身护甲已满时不能选择护甲，装备直接装备并正常替换。目标没有护甲、圣盾和装备时，改为对其造成 1 点普通伤害。无需冰冻前置。"},"pisces.observeTide":{"name":"观潮","text":"出牌阶段每回合一次，自行选择任意数量的手牌弃置，再摸等量牌。没有牌数上限，确认前可调整或取消选择。"},"pisces.balance":{"name":"平潮","text":"选择两名角色，弃等同生命差的水牌，双方生命调整为平均值向下取整；造成生命损耗会影响回梦补牌。"},"pisces.dream":{"name":"回梦","text":"被动。弃牌阶段结束后摸 1 张牌；若本回合平潮造成过生命变化，则改为摸 2 张牌。"},"taurus.guard":{"name":"牛守","text":"每个自己的回合开始时，可以弃 1 张手牌，选择或更换一名其他存活角色作为守护对象，最多同时守护一人；不重新选择则延续原守护。守护对象每次成为普通攻击、状态攻击或 AOE 的目标时，你可免费替代其成为攻击目标，并正常防御，不限次数。技能的直接伤害不触发代承。"},"taurus.thickSkin":{"name":"厚皮","text":"被动。受到非神圣伤害、损失护甲或生命后摸 1 张牌；同一次伤害同时损失护甲和生命也只摸 1 张。之后可以弃 1 张手牌，令其他存活的伤害来源沉默，持续至其下一个主动回合结束；若来源已沉默，改为对其造成 1 点普通伤害。"},"taurus.armor":{"name":"筑甲","text":"每回合一次。弃 1 张土牌，令自己获得 1 点护甲，不能超过护甲上限。"},"virgo.purify":{"name":"净化","text":"主动回合限一次。弃 1 张土牌指定角色：移除其全部普通异常；若其没有普通异常，则获得一次异常免疫。感染模式中可改为只移除感染。"},"virgo.domain":{"name":"净域","text":"锁定技。每回合首次受到非神圣伤害（损失生命或护甲）并存活后自动发动：本回合免疫后续卡牌、技能的非神圣伤害及新增负面状态（含感染）；神圣伤害仍可穿透且不触发净域。已有负面状态不清除，生命调整和失去生命的费用不受保护。致命伤害先急救，存活后才生效。"},"virgo.discipline":{"name":"戒律","text":"被动。其他角色使用 AOE 或多目标牌/技能且你成为目标时，你可以对来源造成 1 点普通伤害。每次符合条件的结算均可选择发动，不设每回合次数限制。"},"infection.bossDrain":{"name":"月蚀汲取","text":"被动。Boss 主动回合首次对其他角色造成实际生命伤害后，回复 1 点生命并摸 1 张牌；满血时仍摸牌并消耗本回合触发次数。"},"infection.bossCommand":{"name":"蚀月战令","text":"Boss 开局额外摸 2 张牌。每个主动回合限一次，选择一项：本回合可额外使用 1 张基础攻击牌；或令本回合 1 张基础攻击牌额外指定 1 个目标。"},"infection.bossNoDistance":{"name":"月蚀领域","text":"被动。Boss 使用卡牌和技能无距离限制，不需要支付跨距离费用。"},"weapon.waterCodex":{"name":"潮汐法典","text":"每回合限一次，将任意 2 张手牌合成为 1 张本角色属性牌。攻击素材决定打击次数；武器素材令攻击必中且不可防御；防具素材令使用者获得 1 点护甲。"},"weapon.airCompass":{"name":"命运罗盘","text":"主动回合限一次。正式使用过 2 张不同属性牌后，选择一种属性，获得牌库中的 1 张该属性牌。"},"capricorn.unyielding":{"name":"蓄怒","text":"被动。摩羯每次对其他角色造成实际伤害（包括神圣伤害），或承受来自其他角色的非神圣实际伤害时，获得 1 点怒气；怒气没有上限。被圣盾抵消的伤害和自伤不增长怒气。"},"capricorn.wushuang":{"name":"重压","text":"被动。摩羯使用土属性普通攻击或土属性状态攻击时，目标需要 2 张有效防御牌才能抵消。非土牌、AOE、技能伤害、装备与功能牌伤害不触发。"},"capricorn.charge":{"name":"山崩","text":"每轮一次，不需要土牌，消耗全部怒气（至少 1 点）。1–2 怒令一名目标沉默；3–4 怒再造成 1 点神圣伤害，摩羯弃全部手牌；5 怒及以上可选单体重击（2 点神圣伤害）或分散打击（1 至 3 名目标各 1 点神圣伤害），令所选目标沉默，摩羯与所选目标弃全部手牌和装备。跨距离仍额外弃 1 张牌，多目标只付一次。"}};
+const serverVersion = "web-e8166760e8cc72a3";
 const clientGameModes = {"test":{"seatCount":4,"playerCounts":[4],"randomCharacters":false,"characters":["aries","cancer","gemini","capricorn"],"controls":["human","ai","ai","ai"],"playerNames":["A队前锋","A队辅助","B队前锋","B队终结"]},"standard":{"seatCount":4,"playerCounts":[4,6],"randomCharacters":true,"characters":["aries","cancer","gemini","capricorn","taurus","aquarius"],"controls":["human","ai","ai","ai","ai","ai"],"playerNames":["A队前锋","A队辅助","B队前锋","B队终结"]},"infection":{"seatCount":4,"playerCounts":[4,5,6,7,8],"randomCharacters":true,"characters":["aries","cancer","aquarius","taurus","virgo","sagittarius","libra","pisces"],"controls":["human","ai","ai","ai","ai","ai","ai","ai"],"playerNames":["1号位","2号位","3号位","4号位","5号位","6号位","7号位","8号位"]}};
 const allSeatIds = ['1', '2', '3', '4', '5', '6', '7', '8'];
 const infoOnlySkills = new Set([
@@ -55,6 +55,8 @@ let error = '';
 let visible = { p1: true, p2: false, p3: false, p4: false };
 let selectedSkills = {};
 let skillDecisionDrafts = {};
+let boardSkillUI = { key: '', stage: 'targets', targetIds: [] };
+let boardSkillBusy = false;
 let libraHarmonyDrafts = {};
 let piscesBalanceDrafts = {};
 let skillInfoAutoHideTimer = null;
@@ -70,6 +72,7 @@ let aquariusChaliceDrafts = {};
 let aquariusChaliceInFlight = false;
 let aquariusMassHealDrafts = {};
 let sagittariusSeekDrafts = {};
+let sagittariusResupplyInFlight = false;
 let virgoPurifyDrafts = {};
 let peekDrafts = {};
 let taurusDecisionInFlight = false;
@@ -128,7 +131,10 @@ function basicAttackLimit(player) {
 }
 
 function canPlayMoreBasicAttacks(player) {
-  return player.flags.basicAttackCount < basicAttackLimit(player);
+  const equipmentCount = Number(Boolean(player.equipment.weapon)) + Number(Boolean(player.equipment.armor));
+  const extraAvailable = player.characterId === 'sagittarius' && Boolean(player.equipment.weapon) &&
+    (player.flags.usedSagittariusExtraAttacks || 0) < equipmentCount;
+  return player.flags.basicAttackCount < basicAttackLimit(player) || extraAvailable;
 }
 
 const HTML_ESCAPES = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
@@ -448,6 +454,7 @@ function updateSelectedCardGuide(event) {
 
 function canDropCardOnSeat(payload, targetId) {
   if (!payload || !state || state.phase !== 'main') return false;
+  if (boardSkillBusy || boardSkillSelection() || sagittariusResupplySelection()) return false;
   const player = state.players.find(candidate => candidate.id === payload.playerId);
   const target = state.players.find(candidate => candidate.id === targetId);
   const card = player?.hand.find(candidate => candidate.id === payload.cardId);
@@ -965,8 +972,11 @@ function renderActionCountdown(player) {
 
 function actionPrompt(active, activeOpponent, attackSource, defenseTarget) {
   if (!state) return '';
+  const boardHint=boardSkillHint();
+  if (boardHint) return boardHint;
   const skillDecision = state.pendingSkillDecisions?.[0];
   if (skillDecision) {
+    if (sagittariusResupplySelection()) return '神射：点击角色选择补牌目标，再点确定。';
     const owner = state.players.find(player => player.id === skillDecision.playerId);
     return (owner?.name || '角色') + ' 正在进行技能选择，请先完成上方选择。';
   }
@@ -1008,7 +1018,10 @@ function actionPrompt(active, activeOpponent, attackSource, defenseTarget) {
     const pending = (state.pendingRescue || state.infection?.pendingDying);
     const target = state.players.find(player => player.id === pending?.targetId);
     const responder = state.players.find(player => player.id === pending?.currentResponderId);
-    return (responder?.name || '角色') + ' 可使用太阳急救濒死的 ' + (target?.name || '幸存者') + '。';
+    const hasSun = responder?.hand.some(card => card.kind === 'sun' && canUseRescueCard(responder, card));
+    const hasEnergy = responder?.hand.some(card => card.kind === 'energy' && canUseRescueCard(responder, card));
+    const rescueName = hasSun ? (hasEnergy ? '太阳或星能' : '太阳') : hasEnergy ? '星能' : '';
+    return (responder?.name || '角色') + (rescueName ? ' 可使用' + rescueName + '急救濒死的 ' : ' 正在选择是否急救濒死的 ') + (target?.name || '幸存者') + '。';
   }
   if (state.phase === 'reward') {
     const pending = state.infection?.pendingReward;
@@ -1191,6 +1204,8 @@ function targetIdsForDisplay(display) {
 
 function currentActionGuide() {
   if (!state || setupPaused || lobbyOpen || state.phase === 'mulligan' || state.phase === 'gameOver') return null;
+  if (sagittariusResupplySelection()) return null;
+  if (boardSkillSelection()) return null;
   const selected = selectedCardObject();
   const selectedTargets = selected?.kind === 'aoe' ? targetIdsForSelectedCard() : (selectedCard?.targetIds || []);
   if (selected && selectedTargets.length > 0) {
@@ -1535,9 +1550,16 @@ function showSeatSkillTip(playerId, skillId, event, preferredPlacement = '') {
 
 function renderSeatSkillTip() {
   if (!seatSkillTip) return '';
+  const player = state?.players.find(candidate => candidate.id === seatSkillTip.playerId);
+  const senseHint = seatSkillTip.skillId === 'libra.elementSense' && player
+    ? (state.activePlayerId === player.id
+      ? '本轮衡感已记录：' + new Set(player.flags.libraRoundElements).size + '/4'
+      : '回合外防御不触发衡感，也不占用属性资格。')
+    : '';
   return '<aside class="seatSkillPopover ' + seatSkillTip.placement + '" style="left:' + Math.round(seatSkillTip.x) + 'px;top:' + Math.round(seatSkillTip.y) + 'px;width:' + Math.round(seatSkillTip.width || 360) + 'px" role="status">' +
     '<strong>' + safeText(seatSkillTip.label) + '</strong>' +
     '<span>' + safeText(seatSkillTip.description) + '</span>' +
+    (senseHint ? '<span class="skillHint">' + safeText(senseHint) + '</span>' : '') +
   '</aside>';
 }
 
@@ -1697,11 +1719,11 @@ function renderSkillChoiceContent(title, description, choices, actions, playerId
       (choices.includes('choiceCard') ? '<span class="skillChoiceSummary" role="status"></span>' : '') + actions + '</footer>' : '') + '</div>';
 }
 
-function renderActiveSkillPanel(player) {
+function renderActiveSkillPanel(player, onBoard = false) {
   if (!player || !selectedSkills[player.id]) return '';
   if (activeSkillCostDraft(player)) return '';
   if (isReadOnlySkillSelection(player)) return '';
-  const info = skillInfo(player);
+  const info = skillInfo(player, onBoard);
   if (!info) return '';
   return '<section class="activeSkillPanel" role="dialog" aria-label="' + safeText(skillDescriptions[selectedSkills[player.id]]?.name || '技能选择') + '">' + info + '</section>';
 }
@@ -1721,6 +1743,229 @@ function skillDecisionDraft(decision) {
   const key = skillDecisionKey(decision);
   if (!skillDecisionDrafts[key]) skillDecisionDrafts[key] = {};
   return skillDecisionDrafts[key];
+}
+
+function sagittariusResupplySelection() {
+  const decision = state.pendingSkillDecisions?.[0];
+  if (state.pendingRescue || decision?.kind !== 'sagittariusResupply') return null;
+  const player = state.players.find(candidate => candidate.id === decision.playerId);
+  if (!player || player.control !== 'human' || player.hp <= 0 || player.eliminated) return null;
+  const draft = skillDecisionDraft(decision);
+  return draft.selectingTarget ? { decision, draft } : null;
+}
+
+function canSelectSagittariusResupplyTarget(targetId) {
+  if (!sagittariusResupplySelection() || sagittariusResupplyInFlight) return false;
+  const target = state.players.find(candidate => candidate.id === targetId);
+  return Boolean(target && target.hp > 0 && !target.eliminated && target.hand.length < Math.min(4, target.maxHp));
+}
+
+function beginSagittariusResupply() {
+  const decision = state.pendingSkillDecisions?.[0];
+  if (state.pendingRescue || decision?.kind !== 'sagittariusResupply' || sagittariusResupplyInFlight) return;
+  const player = state.players.find(candidate => candidate.id === decision.playerId);
+  if (!player || player.control !== 'human' || player.hp <= 0 || player.eliminated) return;
+  clearSelectedCard();
+  delete selectedSkills[player.id];
+  inspectedPlayerId = '';
+  seatSkillTip = null;
+  skillDecisionDrafts[skillDecisionKey(decision)] = { selectingTarget: true };
+  render();
+}
+
+function selectSagittariusResupplyTarget(targetId) {
+  if (!canSelectSagittariusResupplyTarget(targetId)) return;
+  setSkillDecisionDraft('targetId', targetId);
+}
+
+function boardSkillSelection() {
+  if (!state || setupPaused || lobbyOpen || state.pendingRescue || state.phase === 'gameOver') return null;
+  const decision = state.pendingSkillDecisions?.[0];
+  const player = state.players.find(candidate => candidate.id === (decision?.playerId || state.activePlayerId));
+  if (!player || player.control !== 'human' || player.hp <= 0 || player.eliminated) return null;
+  const pendingNames = {taurusGuardSetup:'牛守',taurusGuard:'牛守',taurusThickSkin:'厚皮',virgoDiscipline:'戒律',aquariusWindCut:'断流',aquariusChalice:'倾杯',libraJudgment:'审判',libraPerfectJudgment:'完美审判'};
+  const kind = decision?.kind || selectedSkills[player.id];
+  const cost = decision ? null : activeSkillCostDraft(player);
+  const complex = ['capricorn.charge','gemini.steal','scorpio.spoils','libra.harmony','pisces.balance'];
+  if (decision ? !pendingNames[kind] : state.phase !== 'main' || (!cost?.requiresTarget && !complex.includes(kind)) || isReadOnlySkillSelection(player)) return null;
+  const optional = Boolean(decision && !['libraJudgment','libraPerfectJudgment'].includes(kind));
+  const key = clientMatchId + ':' + (decision ? skillDecisionKey(decision) : player.id + ':' + kind + ':' + state.round);
+  const charge = kind === 'capricorn.charge' ? capricornChargeDraft(player) : null;
+  if (kind === 'capricorn.charge' && !charge) return null;
+  if (boardSkillUI.key !== key) boardSkillUI = {key,stage:optional ? 'prompt' : charge && !charge.option ? 'options' : 'targets',targetIds:[]};
+  const draft = decision ? skillDecisionDraft(decision) : null;
+  let targets = state.players.filter(candidate => candidate.hp > 0 && !candidate.eliminated);
+  let targetIds = boardSkillUI.targetIds;
+  let min = 1, max = 1;
+  const immediate = ['taurusGuard','virgoDiscipline'].includes(kind);
+  if (cost?.requiresTarget) {
+    targets = targets.filter(target => canReleaseSkillCostOnSeat(player.id,target.id));
+    if (kind === 'leo.roar') { targetIds = cost.targetIds; max = 3; }
+  } else if (['taurusGuardSetup','aquariusWindCut','aquariusChalice','libra.harmony','capricorn.charge','scorpio.spoils'].includes(kind)) {
+    targets = targets.filter(target => target.id !== player.id);
+  } else if (kind === 'gemini.steal') targets = enemiesOf(player).filter(target => target.hp > 0 && !target.eliminated);
+  if (['libraJudgment','libraPerfectJudgment','aquariusWindCut','scorpio.spoils'].includes(kind)) targets = targets.filter(target => !player.flags.iceArmorBlockedTargetIds?.includes(target.id));
+  if (['taurusGuardSetup','aquariusWindCut','libraJudgment','libraPerfectJudgment'].includes(kind)) targetIds = draft.targetId ? [draft.targetId] : [];
+  if (kind === 'taurusThickSkin') { targetIds = [decision.sourceId]; targets = targets.filter(target => target.id === decision.sourceId); }
+  if (kind === 'aquariusChalice') { targets=targets.filter(target=>target.hand.length>0);targetIds = aquariusChaliceDraft(player.id).targets.map(target => target.id); max = 2; }
+  if (kind === 'libra.harmony') { targetIds = libraHarmonyDrafts[player.id]?.targetIds || []; min = max = 2; }
+  if (kind === 'pisces.balance') { targetIds = piscesBalanceDrafts[player.id]?.targetIds || []; min = max = 2; }
+  if (charge) { targetIds = charge.targetIds; max = charge.maxTargets; }
+  if (kind === 'scorpio.spoils') { targets = scorpioDisarmTargets(player); targetIds = spoilsDrafts[player.id]?.targetId ? [spoilsDrafts[player.id].targetId] : []; }
+  const validTargetIds = targetIds.filter(id => targets.some(target => target.id === id));
+  const allTargetsValid = validTargetIds.length === targetIds.length;
+  targetIds = validTargetIds;
+  let ready = allTargetsValid && targetIds.length >= min && targetIds.length <= max;
+  if (cost) ready = ready && cost.ready;
+  if (['taurusGuardSetup','taurusThickSkin'].includes(kind)) ready = ready && draft.cardIds?.length === 1 && player.hand.some(card => card.id === draft.cardIds[0]);
+  if (kind === 'gemini.steal') { const ids=stealDrafts[player.id]?.costCardIds || []; ready=ready && [1,2].includes(ids.length) && ids.every(id=>player.hand.some(card=>card.id===id)); }
+  if (kind === 'scorpio.spoils') ready = ready && player.hand.some(card => card.id === spoilsDrafts[player.id]?.costCardId) && scorpioDisarmOptions(player,state.players.find(target=>target.id===targetIds[0])).length > 0;
+  if (kind === 'libra.harmony') { const requirement=libraHarmonyRequirement(player.id); ready=ready && requirement.valid && (libraHarmonyDrafts[player.id]?.costCardIds || []).length === requirement.required; }
+  if (kind === 'pisces.balance') ready = ready && (piscesBalanceDrafts[player.id]?.costCardIds || []).length === piscesBalanceRequirement(player.id).required;
+  if (charge) ready = charge.ready;
+  return {key,player,kind,name:decision ? pendingNames[kind] : skillDescriptions[kind].name,decision,cost,charge,draft,optional,immediate,targets,targetIds,min,max,stage:boardSkillUI.stage,ready:Boolean(ready)};
+}
+
+function canSelectBoardSkillTarget(targetId) {
+  const selection = boardSkillSelection();
+  return Boolean(selection && selection.stage === 'targets' && !boardSkillBusy && selection.targets.some(target=>target.id===targetId) &&
+    (selection.max === 1 || selection.targetIds.includes(targetId) || selection.targetIds.length < selection.max));
+}
+
+function openBoardSkillOptionsIfNeeded() {
+  const selection=boardSkillSelection();
+  if (!selection || selection.stage!=='targets' || !selection.ready || selection.max!==1 || boardSkillBusy) return;
+  const target=state.players.find(player=>player.id===selection.targetIds[0]);
+  const needsOptions=selection.kind==='libraPerfectJudgment' ||
+    selection.kind==='aquariusWindCut' && target.hand.length>0 ||
+    selection.kind==='gemini.steal' && stealTargetsOf(target).length>0 ||
+    selection.kind==='scorpio.spoils' && scorpioDisarmOptions(selection.player,target).length>1;
+  if (needsOptions) {boardSkillUI.stage='options';render();}
+}
+
+function selectBoardSkillTarget(targetId) {
+  const selection = boardSkillSelection();
+  if (!selection || !canSelectBoardSkillTarget(targetId)) return;
+  const {kind,player} = selection;
+  if (kind === 'leo.roar') return toggleLeoRoarTarget(player.id,targetId);
+  if (kind === 'capricorn.charge') return toggleCapricornChargeTarget(player.id,targetId);
+  if (kind === 'libra.harmony') return toggleLibraHarmonyTarget(player.id,targetId);
+  if (kind === 'pisces.balance') return togglePiscesBalanceTarget(player.id,targetId);
+  if (kind === 'aquariusChalice') return toggleAquariusChaliceTarget(player.id,targetId);
+  if (kind === 'taurusThickSkin') return;
+  if (kind === 'scorpio.spoils') return setSpoilsDraft(player.id,'targetId',targetId);
+  if (selection.decision) {
+    if (selection.draft.targetId !== targetId && ['aquariusWindCut','libraPerfectJudgment'].includes(kind)) { selection.draft.cardIds=[]; selection.draft.selectedCardId=''; }
+    return setSkillDecisionDraft('targetId',targetId);
+  }
+  if (kind === 'gemini.steal') { targetDrafts[player.id]={...(targetDrafts[player.id]||{}),enemyId:targetId}; stealDrafts[player.id]={...(stealDrafts[player.id]||{}),targetCardId:''}; }
+  boardSkillUI.targetIds = [targetId];
+  render();
+}
+
+function submitBoardSkill(callback) {
+  if (boardSkillBusy) return;
+  boardSkillBusy = true;
+  render();
+  const finish = () => {boardSkillBusy=false;boardSkillUI={key:'',stage:'targets',targetIds:[]};render();};
+  try { return Promise.resolve(callback()).finally(finish); } catch (failure) { finish(); throw failure; }
+}
+
+function beginBoardSkill() {
+  const selection = boardSkillSelection();
+  if (!selection || boardSkillBusy) return;
+  if (selection.immediate) return submitBoardSkill(()=>resolvePendingSkillDecision(true));
+  clearSelectedCard(); inspectedPlayerId=''; seatSkillTip=null;
+  boardSkillUI.stage = 'targets';
+  render();
+}
+
+function cancelBoardSkill() {
+  const selection=boardSkillSelection();
+  if (!selection || boardSkillBusy) return;
+  if (selection.decision) return selection.optional ? submitBoardSkill(()=>resolvePendingSkillDecision(false)) : undefined;
+  for (const drafts of [stealDrafts,spoilsDrafts,libraHarmonyDrafts,piscesBalanceDrafts]) delete drafts[selection.player.id];
+  boardSkillUI={key:'',stage:'targets',targetIds:[]};
+  return cancelActiveSkillCost(selection.player.id);
+}
+
+function returnBoardSkillTargets() {
+  if (!boardSkillSelection() || boardSkillBusy) return;
+  boardSkillUI.stage='targets'; render();
+}
+
+function confirmBoardSkillTargets() {
+  const selection=boardSkillSelection();
+  if (!selection || selection.stage !== 'targets' || !selection.ready || boardSkillBusy) return;
+  const {kind,player,targetIds}=selection;
+  if (selection.cost) return submitBoardSkill(()=>confirmActiveSkillCost(player.id,targetIds[0]));
+  if (kind === 'capricorn.charge') return submitBoardSkill(()=>confirmCapricornCharge(player.id));
+  if (kind === 'pisces.balance') return submitBoardSkill(()=>confirmPiscesBalance(player.id));
+  if (kind === 'scorpio.spoils') {
+    const options=scorpioDisarmOptions(player,state.players.find(target=>target.id===targetIds[0]));
+    if (options.length===1) {Object.assign(spoilsDrafts[player.id],options[0]);return submitBoardSkill(()=>confirmScorpioSpoils(player.id));}
+  }
+  if (kind === 'gemini.steal' && !stealTargetsOf(selectedEnemyOf(player)).length) return submitBoardSkill(()=>confirmSteal(player.id));
+  if (selection.decision && !['aquariusChalice','libraPerfectJudgment'].includes(kind) && (kind !== 'aquariusWindCut' || !state.players.find(target=>target.id===targetIds[0]).hand.length)) return submitBoardSkill(()=>resolvePendingSkillDecision(true));
+  boardSkillUI.stage='options'; render();
+}
+
+function confirmBoardSkillOptions() {
+  const selection=boardSkillSelection();
+  if (!selection || selection.stage !== 'options' || !selection.ready || boardSkillBusy) return;
+  return submitBoardSkill(()=>selection.decision ? resolvePendingSkillDecision(true) :
+    selection.kind==='gemini.steal' ? confirmSteal(selection.player.id) :
+    selection.kind==='libra.harmony' ? confirmLibraHarmony(selection.player.id) :
+    selection.kind==='scorpio.spoils' ? confirmScorpioSpoils(selection.player.id) : undefined);
+}
+
+function boardSkillHandDraft(player) {
+  if (!player) return null;
+  const selection=boardSkillSelection();
+  if (!selection || selection.player.id!==player.id || selection.stage==='prompt' || selection.cost) return null;
+  const {kind,draft}=selection;
+  let valid=player.hand, selected=[];
+  if (['taurusGuardSetup','taurusThickSkin'].includes(kind)) selected=draft.cardIds || [];
+  else if (kind==='gemini.steal') selected=stealDrafts[player.id]?.costCardIds || [];
+  else if (kind==='scorpio.spoils') selected=spoilsDrafts[player.id]?.costCardId ? [spoilsDrafts[player.id].costCardId] : [];
+  else if (kind==='libra.harmony') { valid=libraHarmonyRequirement(player.id).valid ? valid.filter(card=>card.element==='air') : []; selected=libraHarmonyDrafts[player.id]?.costCardIds || []; }
+  else if (kind==='pisces.balance') { const requirement=piscesBalanceRequirement(player.id);valid=requirement.targets.length===2 && requirement.required>0 ? valid.filter(card=>card.element==='water') : []; selected=piscesBalanceDrafts[player.id]?.costCardIds || []; }
+  else if (kind==='capricorn.charge') {valid=selection.charge.needsDistance ? valid : [];selected=selection.charge.extraCostCardId ? [selection.charge.extraCostCardId] : [];}
+  else valid=[];
+  return {skillId:kind,costCardIds:selected,validCardIds:boardSkillBusy ? [] : valid.map(card=>card.id)};
+}
+
+function toggleBoardSkillCost(playerId,cardId) {
+  const selection=boardSkillSelection(), hand=boardSkillHandDraft(state.players.find(player=>player.id===playerId));
+  if (!selection || !hand?.validCardIds.includes(cardId) || boardSkillBusy) return;
+  if (['taurusGuardSetup','taurusThickSkin'].includes(selection.kind)) return setSkillDecisionDraft('cardIds',hand.costCardIds.includes(cardId) ? [] : [cardId]);
+  if (selection.kind==='gemini.steal') return toggleStealCost(playerId,cardId);
+  if (selection.kind==='scorpio.spoils') return setSpoilsDraft(playerId,'costCardId',hand.costCardIds.includes(cardId) ? '' : cardId);
+  if (selection.kind==='libra.harmony') return toggleLibraHarmonyCard(playerId,'costCardIds',cardId);
+  if (selection.kind==='pisces.balance') return togglePiscesBalanceCost(playerId,cardId);
+  if (selection.kind==='capricorn.charge') return setCapricornChargeDraft(playerId,'extraCostCardId',hand.costCardIds.includes(cardId) ? '' : cardId);
+}
+
+function boardSkillHint() {
+  const selection=boardSkillSelection();
+  if (!selection || selection.stage==='prompt') return '';
+  const costs=boardSkillHandDraft(selection.player) || selection.cost;
+  let hint=costs?.validCardIds.length ? '选择费用牌和高亮角色，再点确定。' : '点击高亮角色选择目标，再点确定。';
+  const fees={'aries.ram':'费用：1 张火普通攻击或状态攻击。','aries.burnSoul':'费用：1 张非火普通攻击或状态攻击。','cancer.heal':'费用：1 张任意手牌。','leo.order':'费用：1 张任意手牌。','virgo.purify':'费用：1 张土牌。','leo.roar':'费用：1 张火牌。','scorpio.freezeAoe':'费用：1 张水牌 + 1 张任意牌。'};
+  if (selection.cost && !selection.cost.ready && !(selection.kind==='leo.roar' && selection.cost.costCardIds.length===1)) hint=fees[selection.kind] || hint;
+  if (selection.kind==='taurusThickSkin') hint='选择 1 张手牌作为费用，再点确定。';
+  if (selection.kind==='libra.harmony' && selection.targetIds.length===2 && !libraHarmonyRequirement(selection.player.id).valid) hint='两名角色手牌差不足 2，不能发动裁衡。';
+  if (selection.kind==='pisces.balance' && piscesBalanceRequirement(selection.player.id).required>selection.player.hand.filter(card=>card.element==='water').length) hint='没有足够水牌。';
+  if (selection.charge?.needsDistance && !selection.player.hand.length) hint='跨距离需要额外弃 1 张手牌，但当前没有可支付的手牌。';
+  return selection.name+'（'+selection.targetIds.length+'/'+selection.max+'）：'+hint;
+}
+
+function renderBoardSkillPanel(player) {
+  const selection=boardSkillSelection();
+  if (!selection || selection.player.id!==player?.id) return undefined;
+  if (boardSkillBusy || selection.stage==='targets') return '';
+  if (selection.stage==='prompt') return '<section class="activeSkillPanel skillActivationPrompt" role="dialog" aria-label="是否发动'+safeText(selection.name)+'？"><strong>是否发动'+safeText(selection.name)+'？</strong><div class="skillActivationChoices"><button onclick="beginBoardSkill()">是</button><button onclick="cancelBoardSkill()">否</button></div></section>';
+  return selection.decision ? renderPendingSkillDecisionPanel(player,true) : renderActiveSkillPanel(player,true);
 }
 
 function setSkillDecisionDraft(field, value) {
@@ -1777,6 +2022,17 @@ function resolvePendingSkillDecision(activate) {
     render();
     return action({type:'resolveSkillDecision',playerId:decision.playerId,activate:false}).finally(() => {scorpioPeekInFlight=false;render();});
   }
+  if (decision.kind === 'sagittariusResupply') {
+    if (sagittariusResupplyInFlight) return;
+    const draft = skillDecisionDraft(decision);
+    const target = state.players.find(candidate => candidate.id === draft.targetId && candidate.hp > 0 && !candidate.eliminated);
+    if (activate && !canSelectSagittariusResupplyTarget(target?.id)) return;
+    const key = skillDecisionKey(decision);
+    sagittariusResupplyInFlight = true;
+    render();
+    return action({type:'resolveSkillDecision',playerId:decision.playerId,activate,targetId:activate ? target.id : undefined})
+      .finally(() => {delete skillDecisionDrafts[key];sagittariusResupplyInFlight=false;render();});
+  }
   const taurusDecision = ['taurusGuardSetup', 'taurusGuard', 'taurusThickSkin'].includes(decision.kind);
   if (taurusDecision && taurusDecisionInFlight) return;
   const key = skillDecisionKey(decision);
@@ -1797,9 +2053,16 @@ function resolvePendingSkillDecision(activate) {
   return action(body).finally(() => { taurusDecisionInFlight = false; render(); });
 }
 
-function renderPendingSkillDecisionPanel(player) {
+function renderPendingSkillDecisionPanel(player, onBoard = false) {
   const decision = state.pendingSkillDecisions?.[0];
   if (!decision || !player || decision.playerId !== player.id || player.control !== 'human') return '';
+  if (decision.kind === 'sagittariusResupply') {
+    if (sagittariusResupplySelection() || sagittariusResupplyInFlight) return '';
+    return '<section class="activeSkillPanel sagittariusResupplyPrompt" role="dialog" aria-label="是否发动神射？">' +
+      '<strong>是否发动神射？</strong><div class="sagittariusResupplyChoices">' +
+      '<button onclick="beginSagittariusResupply()">是</button>' +
+      '<button onclick="resolvePendingSkillDecision(false)">否</button></div></section>';
+  }
   if (decision.kind === 'scorpioEndPeek') {
     const content = scorpioPeekChoices(player, true);
     return '<section class="activeSkillPanel" role="dialog" aria-label="回合结束伏击">' + renderSkillChoiceContent('伏击', skillDescriptions['scorpio.peek'].text, content.chooser, content.actions) + '</section>';
@@ -1818,7 +2081,7 @@ function renderPendingSkillDecisionPanel(player) {
     aquariusWindCut: '是否发动断流',
     aquariusChalice: '倾杯触发：摸 2 牌（可选换牌）',
     libraJudgment: '审判：选择致盲目标',
-    libraPerfectJudgment: '完美审判：选择目标与效果'
+    libraPerfectJudgment: onBoard ? '完美审判：选择效果' : '完美审判：选择目标与效果'
   };
   let chooser = '';
   let canConfirm = true;
@@ -1859,7 +2122,7 @@ function renderPendingSkillDecisionPanel(player) {
 
   if (decision.kind === 'aquariusWindCut') {
     const targets = state.players.filter(candidate => candidate.hp > 0 && candidate.id !== player.id);
-    const target = targets.find(candidate => candidate.id === draft.targetId) || targets[0];
+    const target = targets.find(candidate => candidate.id === draft.targetId) || (!onBoard ? targets[0] : null);
     if (!draft.targetId && target) draft.targetId = target.id;
     const targetOptions = targets.map(candidate =>
       '<button class="choiceCard ' + (target?.id === candidate.id ? 'selected' : '') + '" onclick="setSkillDecisionDraft(\'targetId\', \'' + candidate.id + '\'); setSkillDecisionDraft(\'cardIds\', [])">' + safeText(characterVisual(candidate).name) + ' · 手牌 ' + candidate.hand.length + '</button>'
@@ -1869,7 +2132,7 @@ function renderPendingSkillDecisionPanel(player) {
       '<button class="choiceCard ' + ((draft.cardIds || []).includes(card.id) ? 'selected' : '') + '" onclick="toggleSkillDecisionCard(\'' + card.id + '\')">目标手牌 ' + (index + 1) + '</button>'
     ).join('') || '<div class="skillHint">目标没有手牌；发动后仍会造成 1 点伤害。</div>';
     canConfirm = Boolean(target) && (draft.cardIds || []).length === required;
-    chooser = '<div class="chooserLabel">选择断流目标</div><div class="choiceGrid">' + targetOptions + '</div>' +
+    chooser = (onBoard ? '' : '<div class="chooserLabel">选择断流目标</div><div class="choiceGrid">' + targetOptions + '</div>') +
       '<div class="chooserLabel">选择令其弃置的 ' + required + ' 张手牌</div><div class="choiceGrid">' + cardBacks + '</div>';
   }
 
@@ -1917,7 +2180,7 @@ function renderPendingSkillDecisionPanel(player) {
           (!aquariusChaliceCanView(player, target) || takeIds.every(id => target.hand.some(card => card.id === id)));
       });
     chooser = '<div class="skillChooser">' +
-      '<div><div class="chooserLabel">选择交换对象（0-2 名，可不选）</div><div class="choiceGrid">' + (targetOptions || '<div class="skillHint">没有可交换目标。</div>') + '</div></div>' +
+      (onBoard ? '' : '<div><div class="chooserLabel">选择交换对象（0-2 名，可不选）</div><div class="choiceGrid">' + (targetOptions || '<div class="skillHint">没有可交换目标。</div>') + '</div></div>') +
       (perTargetBlocks || '') +
       '</div>';
   }
@@ -1928,7 +2191,7 @@ function renderPendingSkillDecisionPanel(player) {
     const targetOptions = targets.map(candidate =>
       '<button class="choiceCard ' + (draft.targetId === candidate.id ? 'selected' : '') + '" onclick="setSkillDecisionDraft(\'targetId\', \'' + candidate.id + '\')">' + safeText(characterVisual(candidate).name) + '</button>'
     ).join('');
-    chooser = '<div class="chooserLabel">选择目标</div><div class="choiceGrid">' + targetOptions + '</div>';
+    chooser = onBoard ? '' : '<div class="chooserLabel">选择目标</div><div class="choiceGrid">' + targetOptions + '</div>';
     canConfirm = Boolean(target);
     if (decision.kind === 'libraPerfectJudgment') {
       chooser += '<div class="chooserLabel">选择效果</div><div class="choiceGrid">' +
@@ -1958,8 +2221,10 @@ function renderPendingSkillDecisionPanel(player) {
   const declineText = {taurusGuardSetup:currentGuard?'延续守护':'本回合不设置',taurusGuard:'不代承',taurusThickSkin:'不反击',aquariusChalice:'不交换'}[decision.kind] || '不发动';
   const decisionInFlight = (taurusDecision && taurusDecisionInFlight) || (decision.kind === 'aquariusChalice' && aquariusChaliceInFlight) || (decision.kind === 'scorpioPoisonTake' && scorpioPoisonTakeInFlight);
   if (decisionInFlight) canConfirm = false;
-  const actions =
-      (optionalKinds.has(decision.kind) ? '<button ' + (decisionInFlight ? 'disabled' : '') + ' onclick="resolvePendingSkillDecision(false)">' + declineText + '</button>' : '') +
+  const actions = onBoard
+    ? '<button onclick="returnBoardSkillTargets()">重选目标</button>' + (optionalKinds.has(decision.kind) ? '<button onclick="cancelBoardSkill()">取消</button>' : '') +
+      '<button ' + (!canConfirm || boardSkillBusy ? 'disabled' : '') + ' onclick="confirmBoardSkillOptions()">确定</button>'
+    : (optionalKinds.has(decision.kind) ? '<button ' + (decisionInFlight ? 'disabled' : '') + ' onclick="resolvePendingSkillDecision(false)">' + declineText + '</button>' : '') +
       '<button ' + (!canConfirm ? 'disabled' : '') + ' onclick="resolvePendingSkillDecision(true)">' + confirmText + '</button>';
   const title = titles[decision.kind] || '技能选择';
   return '<section class="activeSkillPanel" role="dialog" aria-label="' + safeText(title) + '">' +
@@ -2064,7 +2329,8 @@ function renderFocusedHand(player, tableControls = '') {
   const leoOrderDraft = leoOrderPaymentDraft?.playerId === player.id ? leoOrderPaymentDraft : null;
   const waterDraft = waterStealDraft?.playerId === player.id ? waterStealDraft : null;
   const airDraft = airDismantleDraft?.playerId === player.id ? airDismantleDraft : null;
-  const skillCostDraft = distanceDraft || leoOrderDraft || waterDraft || airDraft ? null : activeSkillCostDraft(player);
+  const boardCostDraft = boardSkillHandDraft(player);
+  const skillCostDraft = distanceDraft || leoOrderDraft || waterDraft || airDraft ? null : boardCostDraft || activeSkillCostDraft(player);
   const distanceCandidateIds = distanceDraft ? distanceCostCandidates(player, distanceDraft).map(card => card.id) : [];
   const leoOrderPaymentCandidateIds = leoOrderDraft ? leoOrderPaymentCandidates(player, leoOrderDraft.reservedCardIds || []).map(card => card.id) : [];
   const cards = player.hand.map((card, index) => {
@@ -2081,7 +2347,7 @@ function renderFocusedHand(player, tableControls = '') {
       player.hp > 0 && state.activePlayerId !== player.id && !player.flags.usedCancerRescueThisRound &&
       !isOrdinaryRescueBlocked(dyingRescueTargetOf(player)) &&
       !(state.pendingRescue || state.infection?.pendingDying)?.willTransform;
-    const enabled = !pendingSkillDecision && (waterDraft || airDraft
+    const enabled = !boardSkillBusy && (!pendingSkillDecision || boardCostDraft) && (waterDraft || airDraft
       ? false
       : distanceCostMode
       ? distanceCostCandidate
@@ -2146,7 +2412,7 @@ function renderFocusedHand(player, tableControls = '') {
       ? '<div class="response"><span>撼岳锤：点击 1 张手牌作为额外防御费用</span><button onclick="skipEarthHammerBreak(\'' + player.id + '\')">不支付（防御失效）</button></div>'
       : '';
   const targetCardChoiceOverlay = renderWaterStealChoiceBar(player) + renderAirDismantleChoiceBar(player);
-  const interactionOverlay = pendingSkillDecision ? '' : targetCardChoiceOverlay || (
+  const interactionOverlay = pendingSkillDecision || boardSkillSelection() ? '' : targetCardChoiceOverlay || (
     tableControls +
     operationHintForFocusedHand(player, canAct, canRespond, canHammerBreak, canRespondInfection, canRescue) +
     renderDistanceCostBar(player) +
@@ -2889,6 +3155,7 @@ function activeSkillCostDraft(player) {
 
 function toggleSkillCostCard(playerId, cardId) {
   const player = state.players.find(candidate => candidate.id === playerId);
+  if (boardSkillHandDraft(player)) {toggleBoardSkillCost(playerId,cardId);openBoardSkillOptionsIfNeeded();return;}
   const draft = activeSkillCostDraft(player);
   if (!draft || !draft.validCardIds.includes(cardId)) return;
   if (draft.skillId === 'cancer.heal') {
@@ -4485,6 +4752,7 @@ function setCapricornChargeDraft(playerId, field, value) {
   if (field === 'extraCostCardId' && !player.hand.some(card => card.id === value)) return;
   capricornChargeDrafts[playerId] = {...capricornChargeDrafts[playerId],[field]:value};
   if (field === 'option') capricornChargeDrafts[playerId].targetIds = [];
+  if (field === 'option' && boardSkillSelection()?.kind === 'capricorn.charge') boardSkillUI.stage='targets';
   render();
 }
 
@@ -4512,7 +4780,7 @@ function confirmCapricornCharge(playerId) {
   return action({type:'useSkill',playerId,skillId:'capricorn.charge',option:draft.option,targetId:draft.targetIds[0],targetIds:draft.targetIds,cardIds:[],...(draft.needsDistance ? {extraCostCardId:draft.extraCostCardId} : {})}).finally(() => {capricornChargeInFlight = false;render();});
 }
 
-function renderCapricornChargePanel(player) {
+function renderCapricornChargePanel(player, onBoard = false) {
   const draft = capricornChargeDraft(player);
   if (!draft) return '';
   const handler = (name,args) => safeText(name + '(' + args.map(value => JSON.stringify(value)).join(',') + ')');
@@ -4523,16 +4791,16 @@ function renderCapricornChargePanel(player) {
   const targets = draft.targets.map(target => button(characterVisual(target).name + ' · ' + (target.teamId === player.teamId ? '友' : '敌'),handler('toggleCapricornChargeTarget',[player.id,target.id]),draft.targetIds.includes(target.id),!draft.option || (draft.targetIds.length >= draft.maxTargets && draft.maxTargets > 1 && !draft.targetIds.includes(target.id)))).join('');
   const distance = draft.needsDistance ? '<div class="chooserLabel">跨距离：额外弃 1 张牌（本次发动支付一次）</div><div class="choiceGrid">' + player.hand.map(card => button(cardText(card),handler('setCapricornChargeDraft',[player.id,'extraCostCardId',card.id]),draft.extraCostCardId === card.id)).join('') + '</div>' : '';
   const choices = '<div class="skillHint">当前 ' + player.rage + ' 点怒气；发动将消耗全部怒气。' + (player.rage >= 5 ? '摩羯和所有选中目标弃全部手牌、装备。' : '') + '</div>' + modes +
-    '<div class="chooserLabel">选择目标（' + draft.targetIds.length + '/' + draft.maxTargets + '）</div><div class="choiceGrid">' + targets + '</div>' + distance;
+    (onBoard ? '' : '<div class="chooserLabel">选择目标（' + draft.targetIds.length + '/' + draft.maxTargets + '）</div><div class="choiceGrid">' + targets + '</div>' + distance);
   const actions = '<button ' + (!draft.ready || capricornChargeInFlight ? 'disabled' : '') + ' onclick="' + handler('confirmCapricornCharge',[player.id]) + '">确认山崩</button>';
-  return renderSkillChoiceContent('山崩',skillDescriptions['capricorn.charge'].text,choices,actions,player.id);
+  return renderSkillChoiceContent('山崩',onBoard ? '' : skillDescriptions['capricorn.charge'].text,choices,onBoard ? '' : actions,player.id);
 }
 
-function skillInfo(player) {
+function skillInfo(player, onBoard = false) {
   const id = selectedSkills[player.id];
   if (!id || !skillDescriptions[id]) return '';
   const item = skillDescriptions[id];
-  if (id === 'capricorn.charge') return renderCapricornChargePanel(player);
+  if (id === 'capricorn.charge') return renderCapricornChargePanel(player,onBoard);
   const opponent = selectedEnemyOf(player);
   let chooser = '';
   let actions = '';
@@ -4551,12 +4819,12 @@ function skillInfo(player) {
     ).join('') : '';
     const ready = requirement.valid && (draft.costCardIds || []).length === requirement.required && (draft.selectedCardIds || []).length === requirement.required;
     chooser = '<div class="skillChooser">' +
-      '<div class="chooserLabel">选择两名其他角色</div><div class="choiceGrid">' + targetOptions + '</div>' +
+      (onBoard ? '' : '<div class="chooserLabel">选择两名其他角色</div><div class="choiceGrid">' + targetOptions + '</div>') +
       (requirement.targets.length === 2 && !requirement.valid ? '<div class="skillHint">两名角色手牌差不足 2，不能发动裁衡。</div>' : '') +
-      (requirement.valid ? '<div class="chooserLabel">弃置 ' + requirement.required + ' 张风牌</div><div class="choiceGrid">' + (costOptions || '<div class="skillHint">没有足够风牌。</div>') + '</div>' +
+      (requirement.valid ? (onBoard ? '' : '<div class="chooserLabel">弃置 ' + requirement.required + ' 张风牌</div><div class="choiceGrid">' + (costOptions || '<div class="skillHint">没有足够风牌。</div>') + '</div>') +
         '<div class="chooserLabel">从手牌较多的 ' + safeText(characterVisual(requirement.richer).name) + ' 处选择转移的 ' + requirement.required + ' 张牌或装备</div><div class="choiceGrid">' + transferOptions + '</div>' : '') +
       '</div>';
-    actions = '<button ' + (!ready ? 'disabled' : '') + ' onclick="confirmLibraHarmony(\'' + player.id + '\')">发动裁衡</button>';
+    actions = '<button ' + (!ready ? 'disabled' : '') + ' onclick="' + (onBoard ? 'confirmBoardSkillOptions()' : 'confirmLibraHarmony(\'' + player.id + '\')') + '">' + (onBoard ? '确定' : '发动裁衡') + '</button>';
   }
   if (id === 'pisces.balance' && state.activePlayerId === player.id && state.phase === 'main') {
     const draft = piscesBalanceDrafts[player.id] || { targetIds: [], costCardIds: [] };
@@ -4610,13 +4878,13 @@ function skillInfo(player) {
     ).join('');
     const targetChooser = stealTargets.length > 0
       ? '<div><div class="chooserLabel">选择对手手牌或装备</div><div class="choiceGrid">' + targetOptions + '</div></div>'
-      : '<div class="skillHint">目标没有手牌和装备：发动后对目标造成 2 点伤害并附加致盲。</div>';
+      : '<div class="skillHint">目标没有手牌和装备：发动后对目标造成 1 点伤害并附加致盲。</div>';
     chooser = '<div class="skillChooser">' +
-      '<div><div class="chooserLabel">选择费用：弃 2 张牌，或弃 1 张牌并失去 1 点生命</div><div class="choiceGrid">' + ownOptions + '</div></div>' +
+      (onBoard ? '' : '<div><div class="chooserLabel">选择费用：弃 2 张牌，或弃 1 张牌并失去 1 点生命</div><div class="choiceGrid">' + ownOptions + '</div></div>') +
       '<div class="skillHint">选择 1 张费用牌时，发动后失去 1 点生命。换影无距离限制。</div>' +
       targetChooser +
       '</div>';
-    actions = '<button ' + (!validStealCost || (stealTargets.length > 0 && !draft.targetCardId) ? 'disabled' : '') + ' onclick="confirmSteal(\'' + player.id + '\')">发动换影</button>';
+    actions = '<button ' + (!validStealCost || (stealTargets.length > 0 && !draft.targetCardId) ? 'disabled' : '') + ' onclick="' + (onBoard ? 'confirmBoardSkillOptions()' : 'confirmSteal(\'' + player.id + '\')') + '">' + (onBoard ? '确定' : '发动换影') + '</button>';
   }
 
   if (id === 'scorpio.peek' && isScorpioAmbushPending(player)) {
@@ -4635,15 +4903,16 @@ function skillInfo(player) {
     const targetOptions = targets.map(target => choice('targetId',target.id,safeText(characterVisual(target).name),draft.targetId === target.id)).join('');
     const resourceOptions = options.map(option => choice('option',option.option,safeText(option.label) + (option.card ? ' · ' + safeText(option.card.name) : ''),draft.option === option.option)).join('');
     chooser = '<div class="skillChooser">' +
-      '<div><div class="chooserLabel">选择弃置的 1 张手牌</div><div class="choiceGrid">' + costOptions + '</div></div>' +
-      '<div><div class="chooserLabel">选择一名其他存活角色</div><div class="choiceGrid">' + targetOptions + '</div></div>' +
+      (onBoard ? '' : '<div><div class="chooserLabel">选择弃置的 1 张手牌</div><div class="choiceGrid">' + costOptions + '</div></div>' +
+      '<div><div class="chooserLabel">选择一名其他存活角色</div><div class="choiceGrid">' + targetOptions + '</div></div>') +
       (target ? '<div><div class="chooserLabel">选择一项转移资源</div><div class="choiceGrid">' + (resourceOptions || '<div class="skillHint">自身护甲已满，不能转移护甲，请选择其他目标。</div>') + '</div></div>' : '') +
       '<div class="skillHint">每次只转移一项。装备直接装备并正常替换；目标没有护甲、圣盾或装备时才造成伤害。</div>' +
       '</div>';
     const ready = player.hand.some(card => card.id === draft.costCardId) && options.some(option => option.option === draft.option && (!option.selectedCardId || option.selectedCardId === draft.selectedCardId));
-    actions = '<button ' + (!ready || scorpioDisarmInFlight ? 'disabled' : '') + ' onclick="' + handler('confirmScorpioSpoils',[player.id]) + '">发动缴械</button>';
+    actions = '<button ' + (!ready || scorpioDisarmInFlight ? 'disabled' : '') + ' onclick="' + (onBoard ? 'confirmBoardSkillOptions()' : handler('confirmScorpioSpoils',[player.id])) + '">' + (onBoard ? '确定' : '发动缴械') + '</button>';
   }
-  return renderSkillChoiceContent(item.name, item.text, chooser, actions, id === 'scorpio.peek' ? '' : player.id);
+  if (onBoard) actions='<button onclick="returnBoardSkillTargets()">重选目标</button>'+actions;
+  return renderSkillChoiceContent(item.name, onBoard ? '' : item.text, chooser, actions, id === 'scorpio.peek' ? '' : player.id);
 }
 
 function syncHandStacking() {

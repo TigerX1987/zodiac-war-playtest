@@ -168,6 +168,19 @@ body.tabletopV10.matchOpen #board .v10-hand-dock .stackedHand .card:first-child 
   width: 100%; margin: 0; padding: 0; box-sizing: border-box; overflow: hidden; border: 1px solid #c4a361;
   color: #eee3c8; background: #0b1521fa; box-shadow: 0 12px 40px #000b;
 }
+.tabletopV10 .v10-skill-action-overlay.v10-resupply-prompt { width: min(300px, calc(100vw - 32px)); }
+.tabletopV10 .v10-skill-action-overlay .sagittariusResupplyPrompt, .tabletopV10 .v10-skill-action-overlay .skillActivationPrompt { padding: 18px; gap: 16px; border-radius: 8px; text-align: center; }
+.tabletopV10 .sagittariusResupplyPrompt > strong, .tabletopV10 .skillActivationPrompt > strong { color: #f3d89c; font-size: 18px; }
+.tabletopV10 .sagittariusResupplyChoices, .tabletopV10 .skillActivationChoices { display: flex; gap: 12px; }
+.tabletopV10 .sagittariusResupplyChoices button, .tabletopV10 .skillActivationChoices button { flex: 1; min-height: 44px; padding: 8px 12px; border: 1px solid #8c784f; border-radius: 4px; color: #e7dcc3; background: #172739; font-size: 16px; }
+.tabletopV10 .sagittariusResupplyChoices button:first-child, .tabletopV10 .skillActivationChoices button:first-child { color: #f8e6b8; border-color: #bca064; background: #49391d; }
+.tabletopV10 .v10-skill-action-overlay.v10-board-skill-options { width: min(660px, calc(100vw - 32px)); }
+.tabletopV10 .v10-arena[data-skill-targeting="targets"] .v10-equipment { pointer-events: none; }
+@media (max-width: 520px) and (orientation: portrait) {
+  .tabletopV10 .v10-board-skill-options .skillChoiceActions { flex-wrap: wrap; }
+  .tabletopV10 .v10-board-skill-options .skillChoiceSummary { flex-basis: 100%; max-height: 4.8em; }
+  .tabletopV10 .v10-board-skill-options .skillChoiceActions button { flex: 1 1 0; min-width: 0; }
+}
 .tabletopV10 .activeSkillPanel .skillInfo { display: flex; flex-direction: column; min-height: 0; margin: 0; padding: 0; gap: 0; border: 0; background: none; }
 .tabletopV10 .skillChoiceHeader { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex: 0 0 auto; padding: 8px 14px; border-bottom: 1px solid #786039; background: #122132; }
 .tabletopV10 .skillChoiceHeader strong { font-size: 18px; color: #f3d89c; }

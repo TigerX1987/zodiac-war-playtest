@@ -9,7 +9,7 @@ window.ZodiacTutorial = {
     'attack-result': ['攻击已结算', '摩羯失去1点生命', '普通攻击在出牌阶段可以攻击敌人；确认前可重选手牌和目标。'],
     defense: ['1 / 3 · 基础攻防', '同一类牌，也能防御', '摩羯使用了风普通攻击。选风普通攻击，再点「确认防御」。防御目标已锁定自己。'],
     'defense-result': ['防御成功', '白羊没有掉血', '普通攻击牌在回合外可以防御。本次普通攻击已被挡住，无需再选目标。'],
-    skill: ['2 / 3 · 招牌技能', '先点手牌上方的「羊角冲」', '再选火普通攻击作为费用，点击摩羯发动。技能模式下，费用牌不会当作普通攻击使用。'],
+    skill: ['2 / 3 · 招牌技能', '先点手牌上方的「羊角冲」', '再选火普通攻击作为费用，点击摩羯选择目标，最后点“确定”发动。技能模式下，费用牌不会当作普通攻击使用。'],
     'skill-result': ['羊角冲已发动', '费用牌不同，效果也不同', '本次弃火普通攻击，造成1点不可防御技能伤害，不附灼烧；弃火状态攻击才额外附加灼烧。'],
     rescue: ['3 / 3 · 队友急救', '巨蟹濒死，先别放弃队友', '选择太阳，再点「确认急救」。急救目标已锁定巨蟹，无需另选；濒死仍有机会回到战场。'],
     'rescue-result': ['队友急救成功', '巨蟹：0 → 1点生命，并获圣盾', '太阳已经救回队友。巨蟹存活后，共潮自动摸牌；被动技能不需要手动点击。'],
@@ -46,7 +46,7 @@ window.ZodiacTutorial = {
     const copy = this.copy[step];
     let title = copy[1];
     if (step === 'attack' && selectedCard?.cardId === 'fire-normal-1') title = selectedCard.targetIds?.length ? '点击「确认出牌」，完成攻击' : '再点红框摩羯，选择目标';
-    if (step === 'skill' && selectedSkills.p1 === 'aries.ram') title = ariesRamDrafts.p1?.costCardIds?.length ? '点击红框摩羯，发动羊角冲' : '选择火普通攻击，支付技能费用';
+    if (step === 'skill' && selectedSkills.p1 === 'aries.ram') title = ariesRamDrafts.p1?.costCardIds?.length ? boardSkillSelection()?.targetIds.length ? '点击「确定」，发动羊角冲' : '点击红框摩羯，选择目标' : '选择火普通攻击，支付技能费用';
     if (step === 'defense' && this.responseCard) title = '点击「确认防御」，挡住这一击';
     if (step === 'rescue' && this.responseCard) title = '点击「确认急救」，救回巨蟹';
     const guide = document.createElement('aside');

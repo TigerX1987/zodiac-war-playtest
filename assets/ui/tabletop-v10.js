@@ -87,6 +87,9 @@ window.TabletopV10 = {
       '<span>' + label + (card ? '' : '·空') + '</span>' + (ready ? '<small>可发动</small>' : '') + '</button>';
   },
   clickEquipment(playerId, slot) {
+    if (boardSkillBusy) return;
+    if (boardSkillSelection()) {selectBoardSkillTarget(playerId);openBoardSkillOptionsIfNeeded();return;}
+    if (sagittariusResupplySelection()) return selectSagittariusResupplyTarget(playerId);
     const player = state.players.find(candidate => candidate.id === playerId);
     if (!player?.equipment[slot]) return;
     const card = player.equipment[slot];
@@ -125,10 +128,17 @@ window.TabletopV10 = {
       const passive = infoOnlySkills.has(item.id);
       const available = !passive && isSkillUsable(player, item.id, canAct);
       return '<button class="v10-skill ' + (passive ? 'is-passive' : 'is-active') + (available ? ' ready' : '') + (selectedSkills[player.id] === item.id ? ' selected' : '') +
-        '" onclick="event.stopPropagation();skill(state.players.find(p=>p.id===\'' + player.id + '\'),\'' + item.id + '\',event)" aria-label="' +
+        '" onclick="event.stopPropagation();TabletopV10.clickSkill(\'' + player.id + '\',\'' + item.id + '\',event)" aria-label="' +
         safeText(item.label + (passive ? '，被动技能，查看说明' : available ? '，可以发动' : '，当前不可发动，查看说明')) + '" title="' + safeText(item.description) + '">' +
         this.icon(this.skillArtwork(item.id)) + '<span>' + safeText(item.label) + '</span>' + (passive ? '<small>被动</small>' : '') + '</button>';
     }).join('') + this.equipmentSkill(player, 'weapon') + this.equipmentSkill(player, 'armor') + '</nav>';
+  },
+  clickSkill(playerId, id, event) {
+    if (boardSkillBusy) return;
+    const selection=boardSkillSelection();
+    if (selection?.decision || (selection?.player.id===playerId && (selection.kind===id || selection.kind==='aries.burnSoul' && id==='aries.ram'))) return;
+    boardSkillUI={key:'',stage:'targets',targetIds:[]};
+    return skill(state.players.find(player=>player.id===playerId),id,event);
   },
   equipmentSkill(player, slot) {
     const card = player.equipment[slot];
@@ -142,14 +152,20 @@ window.TabletopV10 = {
       '" title="' + safeText(card ? equipmentEffectText(card) + ' ' + this.equipmentReason(player, id) : '装备后显示对应技能') + '"><span>' + safeText(label) + '</span></button>';
   },
   playerCard(player, active, focus, self = false) {
+    const boardSelection = boardSkillSelection();
+    const boardSelected = boardSelection?.targetIds.includes(player.id);
+    const canBoardSelect = canSelectBoardSkillTarget(player.id);
+    const resupply = sagittariusResupplySelection();
+    const canResupply = canSelectSagittariusResupplyTarget(player.id);
+    const resupplySelected = resupply?.draft.targetId === player.id;
     const canTarget = canReleaseSelectedCardOnSeat(player.id);
     const canSkill = active && canReleaseSkillCostOnSeat(active.id, player.id);
     const queued = selectedCard?.targetIds?.includes(player.id);
     const roarSelected = active && selectedSkills[active.id] === 'leo.roar' && isLeoRoarTargetSelected(active.id, player.id);
     const feedback = effectFeedbackFor(player);
     const classes = ['seatCard', self ? 'v10-self stageFocusCard' : 'v10-seat', this.relation(player) === '友' ? 'v10-friend' : 'v10-enemy', state.mode === 'infection' && player.infectionRole === 'initial' ? 'v10-boss' : '', state.activePlayerId === player.id ? 'current' : '',
-      queued ? 'target' : '', roarSelected ? 'multiSkillTargetSelected' : '', canTarget || canSkill ? 'selectedCardTarget' : '', player.eliminated || player.hp <= 0 ? 'dead' : '', feedback.className].filter(Boolean).join(' ');
-    return '<article class="' + classes + '" data-player-id="' + player.id + '" tabindex="0" aria-label="' + safeText(labels[player.characterId] + '，' + this.identity(player) + (roarSelected ? '，狮吼已选目标' : '')) +
+      queued || resupplySelected || boardSelected ? 'target' : '', roarSelected ? 'multiSkillTargetSelected' : '', canTarget || canSkill || canResupply || canBoardSelect ? 'selectedCardTarget' : '', player.eliminated || player.hp <= 0 ? 'dead' : '', feedback.className].filter(Boolean).join(' ');
+    return '<article class="' + classes + '" data-player-id="' + player.id + '" tabindex="0" aria-label="' + safeText(labels[player.characterId] + '，' + this.identity(player) + (roarSelected ? '，狮吼已选目标' : '') + (resupplySelected ? '，补牌已选目标' : '') + (boardSelected ? '，技能已选目标' : '')) +
       '" onclick="TabletopV10.clickPlayer(\'' + player.id + '\')" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();TabletopV10.clickPlayer(\'' + player.id + '\')}"' +
       ' onpointerenter="TabletopV10.hoverPlayer(\'' + player.id + '\',event)" onpointerleave="TabletopV10.hideHover()"' +
       ' onfocusin="TabletopV10.hoverPlayer(\'' + player.id + '\',event)" onfocusout="TabletopV10.hideHover()"' +
@@ -189,6 +205,9 @@ window.TabletopV10 = {
       '<b aria-hidden="true">' + direction + '</b></span><small>十二星座罗盘</small></aside>';
   },
   clickPlayer(id) {
+    if (boardSkillBusy) return;
+    if (boardSkillSelection()) {selectBoardSkillTarget(id);openBoardSkillOptionsIfNeeded();return;}
+    if (sagittariusResupplySelection()) return selectSagittariusResupplyTarget(id);
     if (canReleaseSelectedCardOnSeat(id)) return releaseSelectedCardOnSeat(id);
     const active = state.players.find(player => player.id === state.activePlayerId);
     if (active && canReleaseSkillCostOnSeat(active.id, id)) return releaseSkillCostOnSeat(active.id, id);
@@ -279,12 +298,25 @@ window.TabletopV10 = {
   controls(handFocus, controls) {
     const teachingControls = window.ZodiacTutorial?.controls();
     if (teachingControls !== undefined) return teachingControls;
+    const boardSelection = boardSkillSelection();
+    if (boardSkillBusy) return '<div class="v10-actions"><button disabled>确定</button></div>';
+    if (boardSelection && boardSelection.player.id === handFocus.id) {
+      if (boardSelection.stage !== 'targets') return '';
+      return '<div class="v10-actions"><button id="v10-confirm-card" class="v10-confirm-card" ' + (boardSelection.ready ? '' : 'disabled ') +
+        'onclick="confirmBoardSkillTargets()">确定</button>' + (boardSelection.optional || !boardSelection.decision ? '<button onclick="cancelBoardSkill()">取消</button>' : '') + '</div>';
+    }
+    const resupply = sagittariusResupplySelection();
+    if (resupply && resupply.decision.playerId === handFocus.id) {
+      return '<div class="v10-actions"><button id="v10-confirm-card" class="v10-confirm-card" ' +
+        (canSelectSagittariusResupplyTarget(resupply.draft.targetId) ? '' : 'disabled') + ' onclick="resolvePendingSkillDecision(true)">确定</button>' +
+        '<button ' + (sagittariusResupplyInFlight ? 'disabled' : '') + ' onclick="resolvePendingSkillDecision(false)">取消</button></div>';
+    }
     if (state.pendingSkillDecisions?.length) return '';
     const main = !setupPaused && state.phase === 'main' && state.activePlayerId === handFocus.id && handFocus.control === 'human';
     const draft = main ? activeSkillCostDraft(handFocus) : null;
     const synthesizing = draft?.skillId === 'weapon.waterCodex';
     const observing = draft?.skillId === 'pisces.observeTide';
-    const confirmingSkill = synthesizing || observing;
+    const confirmingSkill = synthesizing || observing || draft?.skillId === 'leo.roar';
     const canConfirm = confirmingSkill ? draft.ready && (synthesizing ? canActivateEquipmentSkill(handFocus, draft.skillId) : isSkillUsable(handFocus, draft.skillId, main)) : this.canConfirmCard();
     const confirmHandler = confirmingSkill ? "confirmActiveSkillCost('" + handFocus.id + "')" : 'TabletopV10.confirmCard()';
     const many = (controls.match(/<button/g) || []).length > 2;
@@ -398,13 +430,16 @@ window.TabletopV10 = {
     this.syncNavigationDialog();
     this.syncSettingsPanel();
     const focus = handFocus || localHumanPlayer() || active || state.players[0];
-    const skillPanel = state.pendingRescue ? '' : renderPendingSkillDecisionPanel(focus) || renderActiveSkillPanel(focus);
+    const boardSelection = boardSkillSelection();
+    const boardPanel = renderBoardSkillPanel(focus);
+    const resupplying = state.pendingSkillDecisions?.[0]?.kind === 'sagittariusResupply';
+    const skillPanel = state.pendingRescue ? '' : boardPanel !== undefined ? boardPanel : renderPendingSkillDecisionPanel(focus) || (resupplying ? '' : renderActiveSkillPanel(focus));
     const skillPanelKey = clientMatchId + ':' + focus.id + ':' + (state.pendingSkillDecisions?.length ? skillDecisionKey(state.pendingSkillDecisions[0]) : selectedSkills[focus.id]);
     const prompt = active ? actionPrompt(active, opponent, source, target) : '等待牌局开始';
-    return '<section class="arena v10-arena mode' + state.players.length + '" data-ui-layout="round-table-r5">' + this.header() +
+    return '<section class="arena v10-arena mode' + state.players.length + '" data-ui-layout="round-table-r5" data-skill-targeting="' + (boardSelection?.stage || '') + '">' + this.header() +
       '<div class="v10-table">' + this.seats(active, focus) + this.compass() +
       '<div class="v10-center">' + renderSetupPause(active) + renderMulliganCountdown() + renderPlayedCards() + '</div>' +
-      (skillPanel ? '<div class="v10-skill-action-overlay" data-skill-panel-key="' + safeText(skillPanelKey) + '">' + skillPanel + '</div>' : '') +
+      (skillPanel ? '<div class="v10-skill-action-overlay' + (resupplying || boardSelection?.stage==='prompt' ? ' v10-resupply-prompt' : boardSelection ? ' v10-board-skill-options' : '') + '" data-skill-panel-key="' + safeText(skillPanelKey) + '">' + skillPanel + '</div>' : '') +
       '<div class="v10-self-dock">' + this.playerCard(focus, active, focus, true) + '</div>' +
       '<section class="v10-hand-dock" aria-label="自己的手牌"><div class="v10-phase"><span>' + safeText(formatLogMessage(prompt)) +
       '</span><b id="v10-round-clock"></b></div>' + this.ownSkills(focus) + renderFocusedHand(focus, '') + '</section>' + this.controls(focus, controls) + '</div>' +

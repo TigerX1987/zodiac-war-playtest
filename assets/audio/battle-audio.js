@@ -89,7 +89,7 @@
     const passive = new Set(['taurus.thickSkin','gemini.windForm','cancer.tideBond','libra.elementSense','scorpio.peek','sagittarius.bowcraft','aquarius.stormEye','pisces.dream']);
     for (const [metric, count] of Object.entries(state.metrics?.skillTriggers || {})) {
       if (count <= (previous?.metrics?.skillTriggers?.[metric] || 0) || metric.startsWith('aries.') || metric.startsWith('weapon.') || metric.startsWith('infection.')) continue;
-      const id = metric === 'libra.perfectJudgment' ? 'libra.judgment' : metric === 'pisces.dreamExtra' ? 'pisces.dream' : metric;
+      const id = metric === 'sagittarius.extraAttack' || metric === 'sagittarius.resupply' ? 'sagittarius.sharpshot' : metric === 'libra.perfectJudgment' ? 'libra.judgment' : metric === 'pisces.dreamExtra' ? 'pisces.dream' : metric;
       const owners = players.filter(p => p.characterId === id.split('.')[0]);
       if (owners.length !== 1) continue;
       const player = owners[0], old = previous?.players.find(p => p.id === player.id);
@@ -98,7 +98,7 @@
       // receive the normal skill priority. Rage speaks only at key thresholds.
       const confirmed = events.some(e => e.playerId === player.id && e.type === 'skill' &&
         (id === 'taurus.thickSkin' && e.key?.includes('弃置') && e.key.includes('发动厚皮') || id === 'aquarius.stormEye' && e.key?.startsWith('${p0} 发动倾杯，与')));
-      const low = id === 'capricorn.unyielding' || passive.has(id) && !confirmed || id === 'sagittarius.sharpshot' && old?.hp > player.hp;
+      const low = id === 'capricorn.unyielding' || passive.has(id) && !confirmed || id === 'sagittarius.sharpshot' && (metric === 'sagittarius.resupply' || old?.hp > player.hp);
       add(player, id, id === 'cancer.rescue' ? 'critical' : low ? 'reaction' : 'major', id === 'cancer.rescue' ? 100 : low ? 35 : id === 'gemini.extraTurn' ? 70 : 80);
     }
     for (const player of players) {
