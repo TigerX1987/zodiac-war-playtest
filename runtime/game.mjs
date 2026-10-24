@@ -1,14 +1,14 @@
-import { SKILL_DESCRIPTIONS } from '../src/content/skillDescriptions.mjs?v=web-3d90b584e6e8d47e';
-import { applyTutorialAction, createTutorialCheckpoint, nextTutorialCheckpoint } from '../src/game/tutorial.mjs?v=web-3d90b584e6e8d47e';
+import { SKILL_DESCRIPTIONS } from '../src/content/skillDescriptions.mjs?v=web-95301784513ffc88';
+import { applyTutorialAction, createTutorialCheckpoint, nextTutorialCheckpoint } from '../src/game/tutorial.mjs?v=web-95301784513ffc88';
 import {
   applyAction,
   applySingleAiAction,
   autoDiscardToHp,
   createGame,
   createInfectionGame,
-} from '../src/game/engine.mjs?v=web-3d90b584e6e8d47e';
+} from '../src/game/engine.mjs?v=web-95301784513ffc88';
 
-const SERVER_VERSION = "web-3d90b584e6e8d47e";
+const SERVER_VERSION = "web-95301784513ffc88";
 const MULLIGAN_SECONDS = 8;
 const MAIN_TOTAL_SECONDS = 65;
 const MAIN_IDLE_SECONDS = 20;
@@ -506,9 +506,20 @@ export async function handleRequest(req, res) {
       const body = await readBody(req);
       try {
         if (body.type === 'surrender') throw new Error('投降必须通过独立确认入口执行');
+        if (body.type === 'mulligan' && body.matchId && body.matchId !== matchId) {
+          lastError = '';
+          sendState(res);
+          return;
+        }
         if (setupPaused) throw new Error('请先确认星盘，再开始换牌或行动');
         finishExpiredMulligan();
         finishExpiredActionTimeout();
+        if (body.type === 'mulligan' && game.players.some(player => player.id === body.playerId) &&
+            (game.phase !== 'mulligan' || !game.mulliganPendingPlayerIds.includes(body.playerId))) {
+          lastError = '';
+          sendState(res);
+          return;
+        }
         if (tutorial) {
           const result = applyTutorialAction(game, tutorial, body);
           game = result.state;
@@ -677,7 +688,8 @@ export async function handleRequest(req, res) {
     }
 
     if (req.method === 'POST' && req.url === '/api/mulligan-timeout') {
-      finishMulliganDefaults();
+      const body = await readBody(req);
+      if (!body.matchId || body.matchId === matchId) finishMulliganDefaults();
       lastError = '';
       sendState(res);
       return;
