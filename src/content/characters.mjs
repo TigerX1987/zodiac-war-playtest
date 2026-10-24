@@ -111,7 +111,7 @@ export const CHARACTERS                                 = {
     id: 'taurus',
     name: '金牛座',
     element: 'earth',
-    maxHp: 3,
+    maxHp: 4,
     initialArmor: 1,
     maxArmor: 2,
     role: '承伤 / 护卫 / 筑甲',

@@ -59,9 +59,10 @@ window.TabletopV10 = {
     const allLabels = unique.map(id => names[id] || id).join('、');
     return unique.map(id => {
       const turns = player.statuses?.[id]?.turns;
-      const label = (names[id] || id) + (Number.isFinite(turns) ? '，剩余 ' + turns + ' 回合' : '');
+      const untilTurnStart = id === 'silence' && player.statuses[id].expiresAtTurnStart;
+      const label = untilTurnStart ? '沉默，至下回合开始' : (names[id] || id) + (Number.isFinite(turns) ? '，剩余 ' + turns + ' 回合' : '');
       return '<span class="v10-status" title="' + safeText(label) + '">' + this.icon(artwork[id] || id, label) +
-        (Number.isFinite(turns) ? '<small>' + turns + '</small>' : '') + '</span>';
+        (Number.isFinite(turns) && !untilTurnStart ? '<small>' + turns + '</small>' : '') + '</span>';
     }).join('') + (unique.length > 7 ? '<span class="v10-status-overflow pc" title="' + safeText(allLabels) + '" aria-label="' + safeText(allLabels) + '">+' + (unique.length - 7) + '</span>' : '') +
       (unique.length > 3 ? '<span class="v10-status-overflow mobile" title="' + safeText(allLabels) + '" aria-label="' + safeText(allLabels) + '">+' + (unique.length - 3) + '</span>' : '');
   },

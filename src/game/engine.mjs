@@ -1,10 +1,10 @@
-import { createBaseDeck, createInfectionDeck, effectiveRitualCard, ELEMENT_LABELS, statusForElement } from '../content/cards.mjs?v=web-cffa0b26a543c114';
+import { createBaseDeck, createInfectionDeck, effectiveRitualCard, ELEMENT_LABELS, statusForElement } from '../content/cards.mjs?v=web-3d90b584e6e8d47e';
 import {
   CHARACTERS,
   DEFAULT_CHARACTER_PAIR,
   DEFAULT_DEMO_CHARACTERS,
   zodiacSeatIndices,
-} from '../content/characters.mjs?v=web-cffa0b26a543c114';
+} from '../content/characters.mjs?v=web-3d90b584e6e8d47e';
              
          
        
@@ -23,7 +23,7 @@ import {
               
             
                      
-import { randomFloat, shuffleWithSeed } from './random.mjs?v=web-cffa0b26a543c114';
+import { randomFloat, shuffleWithSeed } from './random.mjs?v=web-3d90b584e6e8d47e';
 
 const STATUS_LABELS                           = {
   burn: '灼烧',
@@ -123,6 +123,9 @@ function cloneState(state           )            {
           ...state.pendingAttack,
           targetIds: [...state.pendingAttack.targetIds],
           remainingTargetIds: [...state.pendingAttack.remainingTargetIds],
+          taurusDrawnPlayerIds: state.pendingAttack.taurusDrawnPlayerIds
+            ? [...state.pendingAttack.taurusDrawnPlayerIds]
+            : undefined,
           scorpioPoisonTargetIds: state.pendingAttack.scorpioPoisonTargetIds
             ? [...state.pendingAttack.scorpioPoisonTargetIds]
             : undefined,
@@ -559,7 +562,8 @@ function addStatus(state           , player             , status          , turn
   }
 
   const retainThroughTurn = status === 'silence' ? player.statuses.silence?.retainThroughTurn : undefined;
-  player.statuses[status] = { id: status, turns, ...(retainThroughTurn !== undefined ? {retainThroughTurn} : {}) };
+  const expiresAtTurnStart = status === 'silence' ? player.statuses.silence?.expiresAtTurnStart : undefined;
+  player.statuses[status] = { id: status, turns, ...(retainThroughTurn !== undefined ? {retainThroughTurn} : {}), ...(expiresAtTurnStart ? {expiresAtTurnStart} : {}) };
   if (isAbnormal) state.metrics.statusesApplied += 1;
   log(state, messageTemplate`${player.name} 获得 ${STATUS_LABELS[status]}`, player.id, 'status');
 }
@@ -567,12 +571,19 @@ function addStatus(state           , player             , status          , turn
 function removeOneRoundStatuses(state           , player             ) {
   for (const status of ['burn', 'frozen', 'silence']              ) {
     if (player.statuses[status]) {
+      if (status === 'silence' && player.statuses.silence?.expiresAtTurnStart) continue;
       if (status === 'silence' && player.statuses.silence?.retainThroughTurn !== undefined &&
           state.metrics.turns <= player.statuses.silence.retainThroughTurn) continue;
       delete player.statuses[status];
       log(state, messageTemplate`${player.name} 的 ${STATUS_LABELS[status]} 消失`, player.id, 'status');
     }
   }
+}
+
+function removeTurnStartStatuses(state           , player             ) {
+  if (!player.statuses.silence?.expiresAtTurnStart) return;
+  delete player.statuses.silence;
+  log(state, messageTemplate`${player.name} 的沉默在回合开始时消失`, player.id, 'status');
 }
 
 function isLeoHealingBlocked(state           , player             ) {
@@ -1059,6 +1070,22 @@ function setTaurusGuardTarget(state           , player             , targetId   
   log(state, messageTemplate`${player.name} 弃置 ${cost.name}，将牛守目标设为 ${target.name}`, player.id, 'skill');
 }
 
+function drawTaurusForCardAttack(state           , target             ) {
+  if (target.characterId !== 'taurus' || !isAlive(target)) return;
+  drawCards(state, target, 1);
+  triggerSkillMetric(state, 'taurus.thickSkin');
+  log(state, messageTemplate`${target.name} 因厚皮受到卡牌攻击，摸 1 张牌`, target.id, 'skill');
+}
+
+function triggerTaurusCardAttackDraw(state           ) {
+  const pending = state.pendingAttack;
+  if (!pending || !['normalAttack', 'statusAttack'].includes(pending.card.kind)) return;
+  const target = findPlayer(state, pending.currentTargetId);
+  if (target.characterId !== 'taurus' || !isAlive(target) || pending.taurusDrawnPlayerIds?.includes(target.id)) return;
+  (pending.taurusDrawnPlayerIds ??= []).push(target.id);
+  drawTaurusForCardAttack(state, target);
+}
+
 function offerTaurusGuardInterception(state           ) {
   const pending = state.pendingAttack;
   if (!pending || pending.taurusGuardChecked || pending.scorpioPoisonStep) return;
@@ -1066,7 +1093,10 @@ function offerTaurusGuardInterception(state           ) {
   const target = findPlayer(state, pending.currentTargetId);
   if (!isAlive(target)) return;
   const guardian = findTaurusGuardianFor(state, target);
-  if (!guardian || guardian.id === pending.sourceId) return;
+  if (!guardian || guardian.id === pending.sourceId) {
+    triggerTaurusCardAttackDraw(state);
+    return;
+  }
   queueSkillDecision(state, {kind:'taurusGuard',playerId:guardian.id,sourceId:pending.sourceId,targetId:target.id});
   log(state, messageTemplate`${guardian.name} 可以发动牛守，替代 ${target.name} 成为 ${pending.card.name} 的目标`, guardian.id, 'skill');
 }
@@ -1161,6 +1191,7 @@ function resolveSkillDecision(
       log(state, messageTemplate`${player.name} 本次不代承，${target.name} 仍为攻击目标`, player.id, 'skill');
     }
     state.phase = 'response';
+    triggerTaurusCardAttackDraw(state);
   }
 
   if (decision.kind === 'taurusThickSkin' && action.activate) {
@@ -1169,12 +1200,13 @@ function resolveSkillDecision(
     if (!source || !isAlive(source) || source.id === player.id || !isAlive(player)) throw new Error('厚皮需要有效的其他伤害来源');
     const discarded = takeCard(player, cardIds[0]);
     state.discard.push(discarded);
+    triggerSkillMetric(state, 'taurus.thickSkin');
     if (source.statuses.silence) {
       applyDamage(state, source, player, 1, {skillKey:'taurus.thickSkin'});
       log(state, messageTemplate`${player.name} 弃置 ${discarded.name} 发动厚皮，对已沉默的 ${source.name} 造成 1 点伤害`, player.id, 'skill');
     } else {
       addStatus(state, source, 'silence', 1);
-      if (source.statuses.silence) source.statuses.silence.retainThroughTurn = state.metrics.turns;
+      if (source.statuses.silence) source.statuses.silence.expiresAtTurnStart = true;
       log(state, messageTemplate`${player.name} 弃置 ${discarded.name} 发动厚皮，令 ${source.name} 沉默`, player.id, 'skill');
     }
   }
@@ -1331,9 +1363,6 @@ function triggerWoundedChoices(state           , target             , damage    
     }
   }
   if (target.characterId === 'taurus' && (damage.armorLost || damage.hpLost > 0)) {
-    drawCards(state, target, 1);
-    triggerSkillMetric(state, 'taurus.thickSkin');
-    log(state, messageTemplate`${target.name} 因厚皮受伤后摸 1 张牌`, target.id, 'skill');
     if (source && source.id !== target.id && isAlive(source) && target.hand.length > 0) {
       queueSkillDecision(state, {kind:'taurusThickSkin',playerId:target.id,sourceId:source.id});
       log(state, messageTemplate`${target.name} 可以弃 1 张牌发动厚皮，${source.statuses.silence ? '对已沉默的来源造成 1 点伤害' : '令伤害来源沉默'}`, target.id, 'skill');
@@ -1589,6 +1618,7 @@ function moveTurnAfterDyingActivePlayer(state           , player             ) {
   advanceTurnOrder(state, player.id);
   state.phase = 'draw';
   state.firstTurn = false;
+  removeTurnStartStatuses(state, findPlayer(state, state.activePlayerId));
   log(state, messageTemplate`${player.name} 濒死，行动立即结束`, player.id, 'defeat');
   offerTaurusGuardSetup(state);
   return true;
@@ -2104,6 +2134,7 @@ function endTurn(state           , player             , skipEndEffects = false) 
   state.phase = 'draw';
   state.firstTurn = false;
   const nextActive = findPlayer(state, state.activePlayerId);
+  removeTurnStartStatuses(state, nextActive);
   if (nextActive.characterId === 'leo') nextActive.flags.leoOrderTargetId = undefined;
   offerTaurusGuardSetup(state);
 }
@@ -2633,6 +2664,7 @@ function handlePlayCard(state           , action                                
     if (card.element === 'fire') assertNotIceArmorBlocked(player, target);
     state.discard.push(card);
     if (card.element === 'fire') {
+      drawTaurusForCardAttack(state, target);
       applyDamage(state, target, player, 1, { cardDamage: true });
       log(state, messageTemplate`${player.name} 发动元素对决，${target.name} 失去 1 点生命`, player.id, 'card');
     } else if (card.element === 'water') {
@@ -3884,6 +3916,42 @@ function aiSupportCosts(player             ) {
     .sort((a, b) => value(a) - value(b));
 }
 
+function taurusSilenceHasValue(state           , source             ) {
+  if (state.activePlayerId !== source.id || hasVirgoDomain(source) || source.statuses.shield || source.statuses.abnormalImmunity) return false;
+  // Only public cooldowns, equipment and hand counts are used; enemy card identities stay hidden.
+  const count = source.hand.length, flags = source.flags;
+  if (source.equipment.weapon?.element === 'water' && !flags.usedWeaponConvert && count >= 2) return true;
+  if (isInitialInfectionBoss(state, source) && !flags.usedInfectionBossCommand) return true;
+  switch (source.characterId) {
+    case 'aries': return !flags.usedAriesRam && count >= 1;
+    case 'leo': return count >= 1 && (!flags.usedLeoRoar || !flags.usedLeoOrder);
+    case 'sagittarius': return !flags.usedSagittariusSeek && count >= 2 && (!source.equipment.weapon || !source.equipment.armor);
+    case 'gemini': return !flags.usedGeminiSteal && count >= 2;
+    case 'libra': return !flags.usedLibraHarmony && count >= 1 && state.players.some(rich =>
+      isAlive(rich) && state.players.some(poor => isAlive(poor) && poor.id !== rich.id && rich.hand.length - poor.hand.length >= 2));
+    case 'aquarius': return !flags.usedAquariusMassHeal && count >= 2 && alliesOf(state, source.id).some(ally => ally.hp < ally.maxHp);
+    case 'cancer': return !flags.usedCancerHeal && count >= 1 && alliesOf(state, source.id).some(ally => ally.hp < ally.maxHp);
+    case 'scorpio': return (!flags.usedScorpioPoison && count >= 2) || (!flags.usedScorpioSting && count >= 1);
+    case 'pisces': return count >= 1 && (!flags.usedPiscesObserveTide || !flags.usedPiscesBalance);
+    case 'taurus': return !flags.usedTaurusArmor && count >= 1 && source.armor < source.maxArmor;
+    case 'virgo': return !flags.usedVirgoPurify && count >= 1;
+    case 'capricorn': return !flags.usedCapricornChargeThisRound && source.rage > 0;
+  }
+}
+
+function chooseAiTaurusCounter(state           , player             , source                         )         {
+  const decline         = {type:'resolveSkillDecision',playerId:player.id,activate:false,cardIds:[]};
+  if (!source || !isAlive(player) || !isAlive(source) || sameFaction(state, source, player) || hasVirgoDomain(source)) return decline;
+  const earthReduction = source.equipment.armor?.element === 'earth' && !source.flags.usedEarthArmorReductionThisRound;
+  if (source.statuses.silence) {
+    if (earthReduction && !source.statuses.shield) return decline;
+  } else if (!taurusSilenceHasValue(state, source)) return decline;
+  const costs = aiSupportCosts(player).filter(card => card.kind !== 'energy' && !(card.kind === 'ritual' && player.infected));
+  const lethal = Boolean(source.statuses.silence && source.hp <= 1 && source.armor === 0 && !source.statuses.shield && !earthReduction);
+  const cost = costs[0] ?? (lethal ? player.hand.find(card => card.kind === 'weapon' || card.kind === 'armor') : undefined);
+  return cost ? {...decline,activate:true,cardIds:[cost.id]} : decline;
+}
+
 function aquariusAiBrewCosts(state           , player             ) {
   const costs = aiSupportCosts(player);
   const air = costs.find(card => card.element === 'air');
@@ -4277,15 +4345,8 @@ export function chooseAiAction(state           )                     {
       return {type:'resolveSkillDecision',playerId:player.id,activate:isAlive(player) && Boolean(target && sameFaction(state, player, target))};
     }
     if (skillDecision.kind === 'taurusThickSkin') {
-      const cost = player.hand[0];
       const source = state.players.find(candidate => candidate.id === skillDecision.sourceId);
-      const activate = Boolean(cost && source && isAlive(player) && isAlive(source) && !sameFaction(state, source, player));
-      return {
-        type: 'resolveSkillDecision',
-        playerId: player.id,
-        activate,
-        cardIds: activate ? [cost .id] : [],
-      };
+      return chooseAiTaurusCounter(state, player, source);
     }
 
     if (skillDecision.kind === 'virgoDiscipline') {

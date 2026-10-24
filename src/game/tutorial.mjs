@@ -1,5 +1,5 @@
-import { createBaseDeck } from '../content/cards.mjs?v=web-cffa0b26a543c114';
-import { applyAction, createGame } from './engine.mjs?v=web-cffa0b26a543c114';
+import { createBaseDeck } from '../content/cards.mjs?v=web-3d90b584e6e8d47e';
+import { applyAction, createGame } from './engine.mjs?v=web-3d90b584e6e8d47e';
                                                      
 
 // Fixed teaching checkpoints use the production engine, not simulated HP changes.
