@@ -22,7 +22,7 @@ window.TabletopV10 = {
     return '';
   },
   icon(name, label = '', className = '') {
-    return '<img class="v10-icon ' + className + '" src="/zodiac-war-playtest/assets/icons-v10/' + name + '.svg" alt="' + safeText(label) + '"' + (label ? '' : ' aria-hidden="true"') + '>';
+    return '<img class="v10-icon ' + className + '" src="/zodiac-war-playtest/assets/icons-v10/' + name + '.png" alt="' + safeText(label) + '"' + (label ? '' : ' aria-hidden="true"') + '>';
   },
   portrait(player, self = false) {
     const name = player.characterId;
@@ -201,8 +201,7 @@ window.TabletopV10 = {
         return '<span class="v10-zodiac ' + (present.has(id) ? 'present' : '') + '" style="left:' + (50 + Math.cos(angle) * 40) + '%;top:' +
           (50 + Math.sin(angle) * 40) + '%" aria-label="' + labels[id] + (present.has(id) ? '，在场' : '，未在场') + '">' + labels[id].replace('座', '') + '</span>';
       }).join('') + '<span class="v10-turn-direction' + (reverse ? ' reverse' : '') + '" role="img" aria-label="出牌方向：' + direction + '">' +
-      '<svg viewBox="0 0 80 80" aria-hidden="true"><defs><marker id="v10-turn-arrow" markerWidth="4" markerHeight="4" refX="3" refY="2" orient="auto"><path d="M0 0L4 2L0 4Z" fill="currentColor"/></marker></defs>' +
-      '<path d="M58 22A26 26 0 1 1 22 22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" marker-end="url(#v10-turn-arrow)"/></svg>' +
+      '<img src="/zodiac-war-playtest/assets/ui-raster/turn-direction.png" alt="">' +
       '<b aria-hidden="true">' + direction + '</b></span><small>十二星座罗盘</small></aside>';
   },
   clickPlayer(id) {

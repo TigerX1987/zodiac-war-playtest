@@ -224,18 +224,18 @@
     .openingWheelPointer {
       position: absolute;
       z-index: 2;
-      left: calc(50% - 2px);
-      top: 17%;
+      left: calc(50% - 9px);
+      top: 8%;
       bottom: 50%;
-      width: 4px;
+      width: 18px;
       border-radius: 999px;
       transform-origin: 50% 100%;
       transform: rotate(var(--pointer-angle));
-      background: linear-gradient(180deg, #fff7c2, #facc15 68%, transparent);
+      background: url("/zodiac-war-playtest/assets/lobby-entry/compass-needle.png") center/100% 100% no-repeat;
       filter: drop-shadow(0 0 7px rgba(250,204,21,.95));
       animation: openingPointerSpin 2.2s cubic-bezier(.12,.72,.18,1) both;
     }
-    .openingWheelPointer::before {
+    .openingWheelPointer::before { display:none;
       content: "";
       position: absolute;
       left: 50%;
@@ -1505,7 +1505,7 @@
       background: rgba(15,23,42,.76);
       color: #cbd5e1;
     }
-    .statusIcon svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+    .statusIcon img { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
     .statusIcon.clean { color: #4ade80; }
     .statusIcon.burn { color: #fb7185; }
     .statusIcon.frozen { color: #7dd3fc; }
@@ -4170,9 +4170,10 @@
       }
     }
   </style>
-  <link rel="stylesheet" href="/zodiac-war-playtest/assets/ui/tabletop-v10.css?v=web-95301784513ffc88" />
-  <link rel="stylesheet" href="/zodiac-war-playtest/assets/ui/tutorial.css?v=web-95301784513ffc88" />
-  <link rel="stylesheet" href="/zodiac-war-playtest/assets/ui/lobby-r12.css?v=web-95301784513ffc88" />
+  <link rel="stylesheet" href="/zodiac-war-playtest/assets/ui/tabletop-v10.css?v=web-a4031b94bc65313a" />
+  <link rel="stylesheet" href="/zodiac-war-playtest/assets/ui/tutorial.css?v=web-a4031b94bc65313a" />
+  <link rel="stylesheet" href="/zodiac-war-playtest/assets/ui/lobby-r12.css?v=web-a4031b94bc65313a" />
+  <link rel="stylesheet" href="/zodiac-war-playtest/assets/ui/portal-entry.css?v=portal-login-form-v1" />
 </head>
 <body>
 <main>
@@ -4184,11 +4185,11 @@
   </section>
   <section class="startScreen lobby-scene" id="startScreen" data-layout="lobby-r12">
     <picture class="scene-art"><source media="(orientation: portrait) and (max-width: 700px)" srcset="/zodiac-war-playtest/assets/lobby-r12/hero-portrait-half-r12.webp"><source media="(orientation: landscape) and (max-height: 520px)" srcset="/zodiac-war-playtest/assets/lobby-r12/hero-landscape-open-r12.webp"><img src="/zodiac-war-playtest/assets/lobby-r12/hero-wide-open-r12.webp" alt="" fetchpriority="high"></picture>
-    <header class="topbar"><div class="brand" data-i18n-skip aria-label="十二星座·四象战争"><h1 id="lobbyTitle">十二星座</h1><p id="lobbySubtitle">四象战争</p><div class="brand-rule" aria-hidden="true"><span></span><img src="/zodiac-war-playtest/assets/lobby-r12/star-four.svg" alt=""><span></span></div></div>
-      <div class="utilities"><div id="lobby-language"></div><button class="settings-button" id="lobbySettingsButton" onclick="ZodiacLobby.openSettings()"><img src="/zodiac-war-playtest/assets/lobby-r12/gear-six.svg" alt=""><span>设置</span></button></div>
+    <header class="topbar"><div class="brand" data-i18n-skip aria-label="十二星座·四象战争"><h1 id="lobbyTitle">十二星座</h1><p id="lobbySubtitle">四象战争</p><div class="brand-rule" aria-hidden="true"><span></span><img src="/zodiac-war-playtest/assets/lobby-r12/star-four.png" alt=""><span></span></div></div>
+      <div class="utilities"><div id="lobby-language"></div><button class="settings-button" id="lobbySettingsButton" onclick="ZodiacLobby.openSettings()"><img src="/zodiac-war-playtest/assets/lobby-r12/gear-six.png" alt=""><span>设置</span></button></div>
     </header>
     <section class="mode-area" aria-label="对局模式"><div class="mode-picker" role="group" aria-label="对局模式"><button class="mode-option" id="startModeStandard" aria-pressed="false" onclick="setMode('standard')"><span>标准对战</span></button><button class="mode-option" id="startModeInfection" aria-pressed="false" onclick="setMode('infection')"><span>月蚀模式</span></button></div><p id="lobbyModeHelp">4/6人 · 队伍对抗</p></section>
-    <footer class="action-dock"><fieldset class="count-field"><legend>人数</legend><div id="lobbyCountOptions" class="count-options" aria-label="人数"></div></fieldset><button class="startGameButton gold-button" id="lobbyStartGame" onclick="restart()"><span>开始对局</span></button><button class="tutorial-button" id="lobbyTutorial" onclick="tutorialCommand('start')"><img src="/zodiac-war-playtest/assets/lobby-r12/book-open.svg" alt=""><span>5分钟上手</span></button><button class="custom-link" id="startModeTest" aria-pressed="false" onclick="ZodiacLobby.openSettings('test')"><span>自定义练习</span><img src="/zodiac-war-playtest/assets/lobby-r12/caret-right.svg" alt=""></button></footer>
+    <footer class="action-dock"><fieldset class="count-field"><legend>人数</legend><div id="lobbyCountOptions" class="count-options" aria-label="人数"></div></fieldset><button class="startGameButton gold-button" id="lobbyStartGame" onclick="restart()"><span>开始对局</span></button><button class="tutorial-button" id="lobbyTutorial" onclick="tutorialCommand('start')"><img src="/zodiac-war-playtest/assets/lobby-r12/book-open.png" alt=""><span>5分钟上手</span></button><button class="custom-link" id="startModeTest" aria-pressed="false" onclick="ZodiacLobby.openSettings('test')"><span>自定义练习</span><img src="/zodiac-war-playtest/assets/lobby-r12/caret-right.png" alt=""></button></footer>
     <dialog id="lobbySettingsDialog" aria-labelledby="lobbySettingsTitle"><div class="dialog-heading"><div><p class="eyebrow" id="lobbySettingsMode"></p><h2 id="lobbySettingsTitle">对局设置</h2></div><button class="text-button" onclick="ZodiacLobby.closeSettings(false)">关闭</button></div>
       <details class="debugPanel startSettings" id="debugPanel" open>
         <summary>对局设置</summary>
@@ -4225,13 +4226,15 @@
   <svg id="dragGuideLayer" aria-hidden="true"><line id="dragGuideLine" x1="0" y1="0" x2="0" y2="0"></line><circle id="dragGuideHalo" cx="0" cy="0" r="9"></circle></svg>
   <section class="board" id="board"></section>
 </main>
-<script src="/zodiac-war-playtest/assets/i18n/game-i18n.js?v=web-95301784513ffc88"></script>
-<script src="/zodiac-war-playtest/assets/audio/battle-audio.js?v=web-95301784513ffc88"></script>
-<script src="/zodiac-war-playtest/assets/ui/tabletop-v10.js?v=web-95301784513ffc88"></script>
-<script src="/zodiac-war-playtest/assets/ui/tutorial.js?v=web-95301784513ffc88"></script>
-<script src="/zodiac-war-playtest/assets/ui/lobby-r12.js?v=web-95301784513ffc88"></script>
-<script type="module" src="/zodiac-war-playtest/assets/ui/lobby-motion.mjs?v=web-95301784513ffc88"></script>
+<script src="/zodiac-war-playtest/assets/i18n/game-i18n.js?v=web-a4031b94bc65313a"></script>
+<script src="/zodiac-war-playtest/assets/audio/battle-audio.js?v=web-a4031b94bc65313a"></script>
+<script src="/zodiac-war-playtest/assets/ui/tabletop-v10.js?v=web-a4031b94bc65313a"></script>
+<script src="/zodiac-war-playtest/assets/ui/tutorial.js?v=web-a4031b94bc65313a"></script>
+<script src="/zodiac-war-playtest/assets/ui/lobby-r12.js?v=web-a4031b94bc65313a"></script>
+<script src="/zodiac-war-playtest/assets/ui/portal-entry.js?v=portal-login-form-v1"></script>
+<script type="module" src="/zodiac-war-playtest/assets/ui/portal-motion.mjs?v=portal-login-form-v1"></script>
+<script type="module" src="/zodiac-war-playtest/assets/ui/lobby-motion.mjs?v=web-a4031b94bc65313a"></script>
 <p id="web-load-status" role="status" style="position:fixed;left:12px;bottom:0;color:#e8d5a6">正在载入试玩…</p>
-<script type="module" src="/zodiac-war-playtest/runtime/bootstrap.mjs?v=web-95301784513ffc88"></script>
+<script type="module" src="/zodiac-war-playtest/runtime/bootstrap.mjs?v=web-a4031b94bc65313a"></script>
 </body>
 </html>

@@ -88,8 +88,8 @@ body.tabletopV10.matchOpen #board .v10-seat.dead, body.tabletopV10.matchOpen #bo
 .tabletopV10 .v10-zodiac { position: absolute; transform: translate(-50%,-50%); font: clamp(7px,calc(var(--v10-compass-size) * .0917),11px)/1 SimSun,serif; color: #8a9095; white-space: nowrap; }
 .tabletopV10 .v10-zodiac.present { color: #ffe29c; text-shadow: 0 0 5px #c69d42; }
 .tabletopV10 .v10-turn-direction { position: absolute; left: 50%; top: 50%; width: 48%; aspect-ratio: 1; transform: translate(-50%,-50%); display: grid; place-items: center; color: #efcf8b; font-size: 9px; text-shadow: 0 1px 3px #020810; }
-.tabletopV10 .v10-turn-direction svg { position: absolute; inset: 0; width: 100%; height: 100%; }
-.tabletopV10 .v10-turn-direction.reverse svg { transform: scaleX(-1); }
+.tabletopV10 .v10-turn-direction img { position: absolute; inset: 0; width: 100%; height: 100%; }
+.tabletopV10 .v10-turn-direction.reverse img { transform: scaleX(-1); }
 .tabletopV10 .v10-turn-direction b { position: relative; font-weight: 400; line-height: 1; white-space: nowrap; }
 .tabletopV10 .v10-compass > small { display: none; }
 .tabletopV10 .v10-center { position: absolute; left: calc(var(--v10-seat-width) + 44px); right: calc(var(--v10-seat-width) + 44px); top: calc(var(--v10-seat-height) + 32px); bottom: calc(var(--v10-hand-height) + 90px); min-height: 0; }

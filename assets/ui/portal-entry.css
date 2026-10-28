@@ -1,0 +1,145 @@
+@font-face{font-family:PortalSerif;src:url('/zodiac-war-playtest/assets/lobby-r12/title-font.ttf') format('truetype');font-display:swap;font-weight:700}
+#portalEntry{--portal-gold:#efd6a1;--portal-accent:#edb35e;position:fixed;inset:0;z-index:29000;isolation:isolate;overflow:clip;background:#050e1d;color:#efd6a1;font-family:'Microsoft YaHei',system-ui,sans-serif;min-height:320px}
+#portalEntry[hidden],#portalEntry [hidden]{display:none!important}
+#portalEntry *{box-sizing:border-box}
+#portalEntry button,#portalEntry select{font:inherit;color:inherit;cursor:pointer}
+#portalEntry button:focus-visible,#portalEntry select:focus-visible{outline:2px solid #fff0b9;outline-offset:5px}
+#portalEntry .portal-environment{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:-4}
+#portalEntry .portal-guardians{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:-1;pointer-events:none}
+#portalEntry .portal-orbit{position:absolute;left:50%;top:46%;width:min(38vw,46vh);aspect-ratio:1;transform:translate(-50%,-50%);z-index:-2;filter:drop-shadow(0 0 22px #e6ac4133);transition:filter .5s}
+#portalEntry .portal-astrolabe{width:100%;height:100%;object-fit:contain;animation:portal-orbit 160s linear infinite}
+#portalEntry .portal-astrolabe-assembly{position:relative;width:100%;height:100%;animation:none}
+#portalEntry .portal-astrolabe-assembly .portal-astrolabe{animation:none}
+#portalEntry .portal-zodiac-glyphs{position:absolute;inset:0;pointer-events:none}
+#portalEntry .portal-zodiac-glyphs span{position:absolute;transform:translate(-50%,-50%);font-family:'Segoe UI Symbol','Noto Sans Symbols 2','DejaVu Sans',serif;font-size:1em;line-height:1;color:#e8ca83;text-shadow:0 1px 2px #000,0 -1px 1px #ffe2a94d}
+#portalEntry .portal-armillary-core{position:absolute;left:50%;top:49.05%;width:52%;height:52%;object-fit:contain;transform:translate(-50%,-50%);pointer-events:none;filter:drop-shadow(0 3px 3px #0008)}
+#portalEntry .portal-brand{position:absolute;top:4%;left:23%;right:23%;text-align:center;text-shadow:0 3px 16px #020713;pointer-events:none}
+#portalEntry .portal-eyebrow{font-family:Georgia,serif;font-size:11px;letter-spacing:.36em;color:#c3aa7e;margin:0 0 12px}
+#portalEntry h1{font-family:PortalSerif,'Noto Serif SC',serif;font-size:clamp(36px,4.5vw,76px);font-weight:700;line-height:1.15;letter-spacing:.08em;margin:0}
+#portalEntry #portalSubtitle{font-family:PortalSerif,'Noto Serif SC',serif;font-size:clamp(23px,2.7vw,45px);letter-spacing:.2em;margin:6px 0 0;line-height:1.2}
+#portalEntry .portal-tagline{font-family:Georgia,'Microsoft YaHei',serif;font-size:13px;letter-spacing:.22em;margin:14px 0 0;color:#ded3be}
+#portalEntry .portal-utilities{position:absolute;right:26px;top:24px;display:flex;gap:10px}
+#portalEntry .portal-utilities button{min-height:44px;padding:9px 15px;border:1px solid #c6a66a70;background:#061321cf;border-radius:3px;font-size:13px;transition:border-color .2s,background .2s}
+#portalEntry .portal-utilities button:hover{border-color:#efd6a1;background:#182839}
+#portalLanguagePanel{position:absolute;right:26px;top:78px;min-width:235px;padding:18px;border:1px solid #ac8a50;background:#091727f5;z-index:4;box-shadow:0 10px 35px #0009}
+#portalLanguagePanel>label{display:block;margin-bottom:12px;font-size:14px}
+#portalLanguagePanel .game-language>span{display:none}
+#portalLanguagePanel select{width:100%;min-height:44px;background:#101e2c;color:#f1e8d8;border:1px solid #ac8a50;padding:8px}
+#portalEntry .portal-actions{position:absolute;bottom:4.5%;left:50%;width:min(430px,44vw);transform:translateX(-50%);display:flex;align-items:center;flex-direction:column;text-align:center}
+#portalEntry .portal-elements{display:flex;justify-content:center;gap:20px}
+#portalEntry .portal-elements button{display:flex;align-items:center;flex-direction:column;gap:6px;min-height:68px;min-width:48px;padding:0;border:0;background:transparent;font-size:12px;transition:transform .2s}
+#portalEntry .portal-elements img{width:44px;height:44px;object-fit:cover;border:1px solid #b99a67;border-radius:50%;filter:saturate(.7);transition:box-shadow .2s,filter .2s}
+#portalEntry .portal-elements button:hover{transform:translateY(-4px)}
+#portalEntry .portal-elements [aria-pressed=true] img{filter:saturate(1.3);box-shadow:0 0 15px var(--portal-accent);border-color:#ffe8aa}
+#portalEntry #portalElementStatus{font-size:11px;letter-spacing:.22em;margin:7px 0 13px;color:#d7c7a5;min-height:17px}
+#portalEntry .portal-enter{width:100%;min-height:76px;padding:12px 25px;border:0;background:url('/zodiac-war-playtest/assets/lobby-r12/start-gold.webp') center/100% 100% no-repeat;font-family:PortalSerif,'Noto Serif SC',serif;font-weight:700;font-size:29px;letter-spacing:.12em;color:#291b08;text-shadow:0 1px 1px #f7dfab;transition:filter .2s,transform .2s}
+#portalEntry .portal-enter:hover{filter:brightness(1.15) drop-shadow(0 0 18px #ebbf6a66);transform:translateY(-2px)}
+#portalEntry .portal-enter:active{transform:translateY(1px)}
+#portalEntry .portal-footnote{font-size:11px;letter-spacing:.12em;color:#d0c3a9;margin:14px 0 0;text-shadow:0 2px 6px #000}
+#portalEntry[data-element=water]{--portal-accent:#83c9ee}
+#portalEntry[data-element=air]{--portal-accent:#a1d8bb}
+#portalEntry[data-element=earth]{--portal-accent:#d1ba87}
+#portalEntry[data-element=water] .portal-orbit{filter:drop-shadow(0 0 25px #64c8ff80) hue-rotate(12deg)}
+#portalEntry[data-element=air] .portal-orbit{filter:drop-shadow(0 0 25px #9bdab880) brightness(1.1)}
+#portalEntry[data-element=earth] .portal-orbit{filter:drop-shadow(0 0 25px #d8bb6f80) sepia(.2)}
+#portalEntry dialog{width:min(580px,calc(100vw - 32px));max-height:85dvh;overflow:auto;color:#e8dfd0;background:#091727;border:1px solid #ba995b;border-radius:5px;padding:24px}
+#portalEntry dialog::backdrop{background:#010711bf;backdrop-filter:blur(5px)}
+#portalEntry .portal-dialog-heading{display:flex;justify-content:space-between;align-items:center;margin-bottom:22px;gap:16px}
+#portalEntry .portal-dialog-heading h2{font-size:22px;font-family:PortalSerif,serif;margin:0}
+#portalEntry .portal-dialog-heading button{min-height:44px;padding:8px 15px;background:#15283d;border:1px solid #b99a67}
+#portalReturn{min-height:38px!important}
+#portalEntry.portal-departing{animation:portal-depart .65s ease-in forwards;pointer-events:none}
+#portalEntry.portal-departing .portal-orbit{transform:translate(-50%,-50%) scale(1.8);transition:transform .65s}
+#portalEntry:not(:lang(zh-CN)):not(:lang(zh-TW)):not(:lang(ja)) h1{letter-spacing:.04em;font-size:clamp(34px,4.2vw,70px)}
+#portalEntry:not(:lang(zh-CN)):not(:lang(zh-TW)):not(:lang(ja)) #portalSubtitle{letter-spacing:.08em;font-size:clamp(24px,2.4vw,40px)}
+@keyframes portal-orbit{to{transform:rotate(360deg)}}
+@keyframes portal-dial-sway{from{transform:rotate(-3deg)}to{transform:rotate(3deg)}}
+@keyframes portal-breathe{to{transform:translateY(-7px)}}
+@keyframes portal-depart{to{opacity:0;filter:brightness(1.8);transform:scale(1.04)}}
+@media(max-width:700px){
+ #portalEntry .portal-brand{top:15%;left:6%;right:6%}
+ #portalEntry h1{font-size:44px}
+ #portalEntry #portalSubtitle{font-size:29px}
+ #portalEntry .portal-eyebrow{font-size:9px;letter-spacing:.24em}
+ #portalEntry .portal-tagline{font-size:11px;letter-spacing:.1em}
+ #portalEntry .portal-guardians{inset:auto auto 16% 50%;width:100%;height:64%;object-fit:contain;transform:translateX(-50%)}
+ #portalEntry .portal-orbit{top:48%;width:80vw}
+ #portalEntry .portal-actions{width:84%;bottom:5%}
+ #portalEntry .portal-utilities{top:14px;right:14px;gap:7px}
+ #portalEntry .portal-utilities button{padding:8px 11px;font-size:12px}
+ #portalEntry .portal-enter{min-height:68px;font-size:25px}
+ #portalEntry .portal-elements{gap:24px}
+ #portalEntry .portal-footnote{font-size:10px;letter-spacing:.03em}
+ #portalEntry .portal-environment{object-position:center}
+}
+@media(orientation:landscape) and (max-height:540px){
+ #portalEntry .portal-brand{top:5%;left:23%;right:23%}
+ #portalEntry .portal-eyebrow{display:none}
+ #portalEntry h1{font-size:34px}
+ #portalEntry #portalSubtitle{font-size:23px;margin-top:2px}
+ #portalEntry .portal-tagline{font-size:10px;margin-top:6px}
+ #portalEntry .portal-actions{bottom:3%;width:32%}
+ #portalEntry .portal-elements{gap:15px}
+ #portalEntry .portal-elements img{width:30px;height:30px}
+ #portalEntry .portal-elements button{min-height:44px;min-width:35px;font-size:10px}
+ #portalEntry #portalElementStatus{margin:2px 0 6px;font-size:9px}
+ #portalEntry .portal-enter{min-height:52px;font-size:22px}
+ #portalEntry .portal-footnote{display:none}
+ #portalEntry .portal-utilities{top:12px;right:12px}
+ #portalEntry .portal-utilities button{font-size:11px;padding:6px 10px}
+}
+@media(prefers-reduced-motion:reduce){#portalEntry *,#portalEntry.portal-departing{animation:none!important;transition:none!important}}
+
+#portalEntry .portal-art-hotspot{position:absolute;z-index:1;margin:0;padding:0;border:0;background:transparent;border-radius:30%;min-height:0;cursor:pointer;color:#f3ddb0;touch-action:manipulation}
+#portalEntry .portal-art-scales{z-index:2}
+#portalEntry .portal-scales-layer{position:absolute;z-index:0;object-fit:contain;transform-origin:50% 0%;pointer-events:none;will-change:transform}
+#portalEntry .portal-leo-pendant{position:absolute;z-index:0;object-fit:fill;transform-origin:49.91% 1.11%;pointer-events:none;will-change:transform}
+#portalEntry .portal-art-pendant{z-index:2;min-width:36px;min-height:44px}
+#portalEntry .portal-art-hotspot.portal-art-pendant span{top:105%;min-width:100px;white-space:nowrap}
+#portalEntry .portal-eyelid-layer{position:absolute;z-index:0;pointer-events:none;opacity:0;object-fit:fill}
+#portalEntry .portal-leo-highlight{position:absolute;z-index:0;pointer-events:none;opacity:0;overflow:hidden;filter:brightness(1.22) saturate(1.08);mask-image:radial-gradient(ellipse at center,#000 35%,transparent 72%)}
+#portalEntry .portal-leo-highlight img{position:absolute;max-width:none;pointer-events:none}
+#portalEntry .portal-guardians-fullbody{position:absolute;z-index:-1;pointer-events:none;max-width:none}
+#portalEntry .portal-sr-only,#portalEntry .portal-feedback{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
+#portalEntry .portal-art-sigil{z-index:2;min-width:36px;min-height:36px}
+#portalEntry .portal-art-hotspot.portal-art-sigil span{top:105%;min-width:110px;white-space:nowrap}
+#portalEntry .portal-art-hotspot span{position:absolute;left:50%;top:45%;transform:translate(-50%,-50%);padding:9px 13px;max-width:230px;border:1px solid #b99a6780;background:#071321e8;color:#f3ddb0;font-size:12px;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .2s}
+#portalEntry .portal-art-hotspot:focus-visible span{opacity:1}
+#portalEntry .portal-art-scales span{top:105%;white-space:normal;min-width:100px;text-align:center}
+#portalEntry .portal-brand,#portalEntry .portal-actions,#portalEntry .portal-utilities{z-index:3}
+#portalEntry .portal-discovery{position:absolute;left:50%;bottom:1%;transform:translateX(-50%);margin:0;width:70%;text-align:center;font-size:11px;letter-spacing:.1em;color:#d7c6a3;text-shadow:0 2px 6px #000;pointer-events:none}
+#portalEntry .portal-archive-element{font-family:PortalSerif,serif;font-size:22px;color:#efd6a1;margin:0 0 12px}
+#portalEntry .portal-archive-role{font-size:14px;line-height:1.8;color:#d7c6b1;margin:0 0 20px}
+#portalEntry .portal-archive-skills{display:flex;flex-wrap:wrap;gap:12px;list-style:none;padding:0;margin:0}
+#portalEntry .portal-archive-skills li{padding:10px 16px;border:1px solid #b99a6766;color:#ecd6ab;background:#142236}
+@media(orientation:landscape) and (max-height:540px){#portalEntry .portal-discovery{display:none}}
+@media(max-width:700px){#portalEntry .portal-discovery{font-size:10px;bottom:1.2%;width:90%;letter-spacing:0}#portalEntry .portal-art-hotspot span{max-width:170px;white-space:normal;font-size:11px}}
+@media(min-width:701px) and (max-aspect-ratio:3/2){#portalEntry .portal-guardians{inset:auto 0 12%;width:100%;height:80%;object-fit:contain}}
+@media(max-width:700px){#portalEntry .portal-art-hotspot.portal-art-sigil span{left:0;transform:none}}
+
+#portalEntry .portal-dial-needle{position:absolute;left:50%;bottom:50%;width:5.6%;height:40%;object-fit:fill;transform-origin:50% 100%;transform:translateX(-50%) rotate(25deg);pointer-events:none;filter:drop-shadow(0 2px 2px #000b)}
+html body,html body *{cursor:url("/zodiac-war-playtest/assets/lobby-entry/zodiac-cursor.png") 16 2,auto!important}
+html body button,html body a,html body [role=button]{cursor:url("/zodiac-war-playtest/assets/lobby-entry/zodiac-cursor.png") 16 2,pointer!important}
+html body input,html body textarea{cursor:text!important}
+html body :disabled{cursor:not-allowed!important}
+
+#portalEntry .portal-dial-button{position:absolute;inset:0;z-index:2;border:0;border-radius:50%;background:transparent;padding:0}
+
+
+#portalEntry .portal-orbit{top:36%;width:min(33vw,38vh)}
+#portalEntry .portal-actions{width:min(430px,44vw);gap:6px}
+#portalEntry .portal-elements button{min-height:48px;gap:3px}
+#portalEntry .portal-elements img{width:32px;height:32px}
+#portalLoginForm{display:flex;flex-direction:column;gap:9px;width:100%;margin:0;padding:12px 14px 6px;background:linear-gradient(180deg,#071321da,#07132199);border:1px solid #ba995b66;border-radius:5px;box-shadow:0 8px 30px #0005}
+#portalEntry .portal-login-field{display:flex;align-items:center;min-height:42px;gap:9px;padding:0 10px;background:#081421ed;border:1px solid #ae8d5966;border-radius:3px;text-align:left}
+#portalEntry .portal-login-field:focus-within{border-color:#efd6a1;box-shadow:0 0 0 1px #efd6a144}
+#portalEntry .portal-login-field label{font-size:12px;flex:0 0 auto;max-width:8em;color:#e4cea1}
+#portalEntry .portal-login-field input{font:inherit;font-size:14px;min-width:0;width:100%;flex:1;padding:10px 0;color:#fff0d1;background:transparent;border:0;outline:none}
+#portalEntry .portal-login-field input::placeholder{color:#9c9b9a;font-size:12px}
+#portalEntry .portal-login-field input[aria-invalid=true]{box-shadow:inset 0 -1px #f1a39c}
+#portalPasswordToggle{font-size:11px!important;flex:0 0 auto;background:transparent;border:0;padding:8px 0;min-height:40px}
+#portalEntry .portal-demo-note{font-size:11px;line-height:1.4;margin:0;color:#c4bcae}
+#portalLoginMessage{font-size:12px;line-height:1.4;color:#ffd0c7;margin:0;text-align:left}
+#portalEntry #portalLoginForm .portal-enter{min-height:62px;font-size:26px}
+@media(max-width:700px){#portalEntry .portal-orbit{top:39%;width:60vw}#portalEntry .portal-actions{width:86%;bottom:3%}#portalEntry .portal-brand{top:12%}#portalEntry h1{font-size:38px}#portalEntry #portalSubtitle{font-size:25px}#portalLoginForm{padding:10px;gap:7px}#portalEntry .portal-elements{gap:20px}}
+@media(max-height:650px) and (min-width:701px){#portalEntry .portal-actions{bottom:2%;width:360px}#portalEntry .portal-orbit{top:33%;width:30vh}#portalEntry .portal-elements button{min-height:38px}#portalEntry .portal-elements img{width:26px;height:26px}#portalLoginForm{gap:5px;padding:7px}#portalEntry #portalLoginForm .portal-enter{min-height:48px}}
