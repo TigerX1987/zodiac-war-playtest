@@ -1,12 +1,12 @@
-import {ART_SIZE, FULLBODY_SIZE, ANCHORS, SCALES_LAYER, EYELID_LAYERS, LEO_SIGIL_LAYER, LEO_PENDANT_LAYER, ZODIAC_SIGNS, DIAL_SLOT_CENTERS, DIAL_SYMBOL_RATIO, blinkFrames, scaleAngle, fitGuardians, mapHitArea} from './portal-motion-model.mjs?v=web-a4031b94bc65313a';
-import {DIAL_PERIOD_MS, dialSpeedStep} from './portal-motion-model.mjs?v=web-a4031b94bc65313a';
+import {ART_SIZE, FULLBODY_SIZE, ANCHORS, SCALES_LAYER, EYELID_LAYERS, LEO_SIGIL_LAYER, LEO_PENDANT_LAYER, ZODIAC_SIGNS, DIAL_SLOT_CENTERS, DIAL_SYMBOL_RATIO, blinkFrames, scaleAngle, fitGuardians, mapHitArea} from './portal-motion-model.mjs?v=web-9f5a6f776579d6db';
+import {DIAL_PERIOD_MS, dialSpeedStep} from './portal-motion-model.mjs?v=web-9f5a6f776579d6db';
 
 const root = document.getElementById('portalEntry');
 if (root) attach(root);
 function attach(root) {
   const image = root.querySelector('.portal-guardians');
-  image.src='/zodiac-war-playtest/assets/lobby-entry/guardians-whole-leo-v4-upper.webp';
-  const fullbody=document.createElement('img');fullbody.className='portal-guardians-fullbody';fullbody.src='/zodiac-war-playtest/assets/lobby-entry/guardians-whole-leo-v4.webp';fullbody.alt='';fullbody.setAttribute('aria-hidden','true');image.after(fullbody);
+  image.src='/zodiac-war-playtest/assets/lobby-entry/guardians-whole-leo-v5-upper.webp';
+  const fullbody=document.createElement('img');fullbody.className='portal-guardians-fullbody';fullbody.src='/zodiac-war-playtest/assets/lobby-entry/guardians-whole-leo-v5.webp';fullbody.alt='';fullbody.setAttribute('aria-hidden','true');image.after(fullbody);
   const pendant=document.createElement('img');pendant.id='portalLeoPendant';pendant.className='portal-leo-pendant';pendant.src='/zodiac-war-playtest/assets/lobby-entry/leo-pendant.webp';pendant.alt='';pendant.setAttribute('aria-hidden','true');root.append(pendant);
   const pendantButton=document.createElement('button');pendantButton.type='button';pendantButton.className='portal-art-hotspot portal-art-pendant';pendantButton.id='portalPendantButton';pendantButton.append(document.createElement('span'));root.append(pendantButton);
   const orbit=root.querySelector('.portal-orbit');
