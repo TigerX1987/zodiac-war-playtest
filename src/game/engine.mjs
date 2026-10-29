@@ -1,10 +1,10 @@
-import { createBaseDeck, createInfectionDeck, effectiveRitualCard, ELEMENT_LABELS, statusForElement } from '../content/cards.mjs?v=web-5e05b5f141922863';
+import { createBaseDeck, createInfectionDeck, effectiveRitualCard, ELEMENT_LABELS, statusForElement } from '../content/cards.mjs?v=web-c494c61c45e72605';
 import {
   CHARACTERS,
   DEFAULT_CHARACTER_PAIR,
   DEFAULT_DEMO_CHARACTERS,
   zodiacSeatIndices,
-} from '../content/characters.mjs?v=web-5e05b5f141922863';
+} from '../content/characters.mjs?v=web-c494c61c45e72605';
              
          
        
@@ -23,7 +23,7 @@ import {
               
             
                      
-import { randomFloat, shuffleWithSeed } from './random.mjs?v=web-5e05b5f141922863';
+import { randomFloat, shuffleWithSeed } from './random.mjs?v=web-c494c61c45e72605';
 
 const STATUS_LABELS                           = {
   burn: '灼烧',

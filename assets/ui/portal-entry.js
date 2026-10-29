@@ -127,9 +127,10 @@
   const back = document.createElement('button');
   back.type = 'button';
   back.id = 'portalReturn';
+  back.className = 'outline-button';
   back.dataset.i18nSkip = '';
-  back.addEventListener('click', () => { main.inert = true; main.setAttribute('aria-hidden', 'true'); scene.hidden = false; $('portalEnter').focus(); });
-  document.querySelector('#startScreen .utilities')?.prepend(back);
+  back.addEventListener('click', () => { window.ZodiacLobby?.closeSettings(false); main.inert = true; main.setAttribute('aria-hidden', 'true'); scene.hidden = false; $('portalEnter').focus(); });
+  document.querySelector('#lobbySettingsDialog .dialog-footer')?.prepend(back);
   function localize() {
     const w = words();
     scene.lang = window.GameI18n?.language || 'zh-CN';
