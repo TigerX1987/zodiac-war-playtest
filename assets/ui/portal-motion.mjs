@@ -1,18 +1,18 @@
-import {ART_SIZE, FULLBODY_SIZE, ANCHORS, SCALES_LAYER, EYELID_LAYERS, LEO_SIGIL_LAYER, LEO_PENDANT_LAYER, ZODIAC_SIGNS, DIAL_SLOT_CENTERS, DIAL_SYMBOL_RATIO, blinkFrames, scaleAngle, fitGuardians, mapHitArea} from './portal-motion-model.mjs?v=web-c494c61c45e72605';
-import {DIAL_PERIOD_MS, dialSpeedStep} from './portal-motion-model.mjs?v=web-c494c61c45e72605';
+import {ART_SIZE, FULLBODY_SIZE, ANCHORS, SCALES_LAYER, EYELID_LAYERS, LEO_SIGIL_LAYER, LEO_PENDANT_LAYER, ZODIAC_SIGNS, DIAL_SLOT_CENTERS, DIAL_SYMBOL_RATIO, blinkFrames, scaleAngle, fitGuardians, mapHitArea} from './portal-motion-model.mjs?v=web-a4a46edaa6755e2f';
+import {DIAL_PERIOD_MS, dialSpeedStep} from './portal-motion-model.mjs?v=web-a4a46edaa6755e2f';
 
 const root = document.getElementById('portalEntry');
 if (root) attach(root);
 function attach(root) {
   const image = root.querySelector('.portal-guardians');
-  image.src='/zodiac-war-playtest/assets/lobby-entry/guardians-whole-leo-v5-upper.webp';
-  const fullbody=document.createElement('img');fullbody.className='portal-guardians-fullbody';fullbody.src='/zodiac-war-playtest/assets/lobby-entry/guardians-whole-leo-v5.webp';fullbody.alt='';fullbody.setAttribute('aria-hidden','true');image.after(fullbody);
-  const pendant=document.createElement('img');pendant.id='portalLeoPendant';pendant.className='portal-leo-pendant';pendant.src='/zodiac-war-playtest/assets/lobby-entry/leo-pendant.webp';pendant.alt='';pendant.setAttribute('aria-hidden','true');root.append(pendant);
+  image.src='/zodiac-war-playtest/assets/lobby-entry/web/guardians-whole-leo-v5-upper.webp';
+  const fullbody=document.createElement('img');fullbody.className='portal-guardians-fullbody';fullbody.src='/zodiac-war-playtest/assets/lobby-entry/web/guardians-whole-leo-v5.webp';fullbody.alt='';fullbody.setAttribute('aria-hidden','true');image.after(fullbody);
+  const pendant=document.createElement('img');pendant.id='portalLeoPendant';pendant.className='portal-leo-pendant';pendant.src='/zodiac-war-playtest/assets/lobby-entry/web/leo-pendant.webp';pendant.alt='';pendant.setAttribute('aria-hidden','true');root.append(pendant);
   const pendantButton=document.createElement('button');pendantButton.type='button';pendantButton.className='portal-art-hotspot portal-art-pendant';pendantButton.id='portalPendantButton';pendantButton.append(document.createElement('span'));root.append(pendantButton);
   const orbit=root.querySelector('.portal-orbit');
-  const dial=orbit.querySelector('.portal-astrolabe');dial.src='/zodiac-war-playtest/assets/lobby-entry/astrolabe-astronomy.webp';
+  const dial=orbit.querySelector('.portal-astrolabe');dial.src='/zodiac-war-playtest/assets/lobby-entry/web/astrolabe-astronomy.webp';
   const assembly=document.createElement('div');assembly.className='portal-astrolabe-assembly';orbit.append(assembly);assembly.append(dial);
-  const core=document.createElement('img');core.className='portal-armillary-core';core.src='/zodiac-war-playtest/assets/lobby-entry/armillary-core.webp';core.alt='';core.setAttribute('aria-hidden','true');orbit.append(core);
+  const core=document.createElement('img');core.className='portal-armillary-core';core.src='/zodiac-war-playtest/assets/lobby-entry/web/armillary-core.webp';core.alt='';core.setAttribute('aria-hidden','true');orbit.append(core);
   const needle=document.createElement('img');needle.className='portal-dial-needle';needle.src='/zodiac-war-playtest/assets/lobby-entry/compass-needle.png';needle.alt='';needle.setAttribute('aria-hidden','true');orbit.append(needle);
   const glyphs=document.createElement('div');glyphs.className='portal-zodiac-glyphs';glyphs.setAttribute('aria-hidden','true');assembly.append(glyphs);
   for(const [index,[id,glyph]]of ZODIAC_SIGNS.entries()){
@@ -23,7 +23,7 @@ function attach(root) {
   const scales = document.createElement('img');
   scales.id = 'portalScalesLayer';
   scales.className = 'portal-scales-layer';
-  scales.src = '/zodiac-war-playtest/assets/lobby-entry/scales-isolated.webp';
+  scales.src = '/zodiac-war-playtest/assets/lobby-entry/web/scales-isolated.webp';
   scales.alt = ''; scales.setAttribute('aria-hidden','true');
   image.after(scales);
   const eyelids = new Map(), blinkAnimations = new Map(), blinkTimers = new Map();

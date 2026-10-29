@@ -7,9 +7,9 @@
   scene.dataset.i18nSkip = '';
   scene.setAttribute('aria-labelledby', 'portalTitle');
   scene.innerHTML = `
-    <img class="portal-environment" src="/zodiac-war-playtest/assets/lobby-entry/portal-environment.webp" alt="" fetchpriority="high">
-    <img class="portal-guardians" src="/zodiac-war-playtest/assets/lobby-entry/guardians-no-scales.webp" alt="" aria-hidden="true">
-    <div class="portal-orbit"><img class="portal-astrolabe" src="/zodiac-war-playtest/assets/lobby-entry/astrolabe-astronomy.webp" alt="" aria-hidden="true"></div>
+    <img class="portal-environment" src="/zodiac-war-playtest/assets/lobby-entry/web/portal-environment.webp" alt="" fetchpriority="high" decoding="async">
+    <img class="portal-guardians" src="/zodiac-war-playtest/assets/lobby-entry/web/guardians-whole-leo-v5-upper.webp" alt="" aria-hidden="true" decoding="async">
+    <div class="portal-orbit"><img class="portal-astrolabe" src="/zodiac-war-playtest/assets/lobby-entry/web/astrolabe-astronomy.webp" alt="" aria-hidden="true" decoding="async"></div>
     <header class="portal-brand"><p class="portal-eyebrow" hidden>ZODIAC · ELEMENTAL WAR</p><h1 id="portalTitle"></h1><p id="portalSubtitle"></p><p class="portal-tagline" id="portalTagline" hidden></p></header>
     <nav class="portal-utilities" aria-label="入口设置"><button id="portalLanguage" type="button" aria-expanded="false" aria-controls="portalLanguagePanel"></button><button id="portalSound" type="button" aria-haspopup="dialog"></button></nav>
     <div id="portalLanguagePanel" hidden><label for="portal-language-select" id="portalLanguageLabel"></label><div id="portalLanguageSelect"></div></div>
