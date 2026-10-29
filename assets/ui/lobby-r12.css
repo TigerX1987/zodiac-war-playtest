@@ -278,4 +278,4 @@ html:not([lang^=zh]):not([lang=ja]) #startScreen .gold-button{font-size:21px}
 #startScreen #lobbySettingsError:empty{display:none}
 body:not(.matchOpen)>main>#error:not(:empty){position:fixed;z-index:30000;top:80px;left:50%;width:min(720px,90vw);transform:translateX(-50%)}
 @media(orientation:portrait) and (max-width:700px){#startScreen .seatConfigGrid{grid-template-columns:minmax(0,1fr)}#startScreen #debugPanel .controls{padding:12px 16px}#startScreen #lobby-audio-settings{padding:0 16px 16px}}
-@media(orientation:landscape) and (min-height:521px) and (max-aspect-ratio:1672/941){#startScreen .scene-art img{object-fit:contain;object-position:center top}}
+@media(orientation:landscape) and (min-height:521px) and (max-aspect-ratio:1672/941){#startScreen .scene-art img{object-fit:cover;object-position:center top}}

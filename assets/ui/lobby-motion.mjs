@@ -1,5 +1,5 @@
-import {artworkProfile,fitArtwork,materialPass,toScissor} from './lobby-motion-geometry.mjs?v=web-9f5a6f776579d6db';
-import {vertexSource,fragmentSource} from './lobby-motion-shader.mjs?v=web-9f5a6f776579d6db';
+import {artworkProfile,fitArtwork,materialPass,toScissor} from './lobby-motion-geometry.mjs?v=web-5e05b5f141922863';
+import {vertexSource,fragmentSource} from './lobby-motion-shader.mjs?v=web-5e05b5f141922863';
 
 const root=document.getElementById('startScreen'),image=root?.querySelector('.scene-art img');
 if(root&&image)start(root,image);
