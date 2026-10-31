@@ -112,7 +112,7 @@ export const CHARACTERS                                 = {
     name: '金牛座',
     element: 'earth',
     maxHp: 4,
-    initialArmor: 1,
+    initialArmor: 0,
     maxArmor: 2,
     role: '承伤 / 护卫 / 筑甲',
     skills: ['护渡', '神躯', '筑甲'],

@@ -1,10 +1,11 @@
-import { createBaseDeck, createInfectionDeck, effectiveRitualCard, ELEMENT_LABELS, statusForElement } from '../content/cards.mjs?v=web-a4a46edaa6755e2f';
+import { SKILL_DESCRIPTIONS } from '../content/skillDescriptions.mjs?v=web-2ef96cd1fdaac619';
+import { createBaseDeck, createInfectionDeck, effectiveRitualCard, ELEMENT_LABELS, statusForElement } from '../content/cards.mjs?v=web-2ef96cd1fdaac619';
 import {
   CHARACTERS,
   DEFAULT_CHARACTER_PAIR,
   DEFAULT_DEMO_CHARACTERS,
   zodiacSeatIndices,
-} from '../content/characters.mjs?v=web-a4a46edaa6755e2f';
+} from '../content/characters.mjs?v=web-2ef96cd1fdaac619';
              
          
        
@@ -23,7 +24,7 @@ import {
               
             
                      
-import { randomFloat, shuffleWithSeed } from './random.mjs?v=web-a4a46edaa6755e2f';
+import { randomFloat, shuffleWithSeed } from './random.mjs?v=web-2ef96cd1fdaac619';
 
 const STATUS_LABELS                           = {
   burn: '灼烧',
@@ -94,6 +95,7 @@ function freshFlags()            {
 }
 
 function cloneState(state           )            {
+  if (state.mode === 'rogue') return structuredClone(state);
   return {
     ...state,
     players: state.players.map((player) => ({
@@ -134,6 +136,7 @@ function cloneState(state           )            {
             : undefined,
         }
       : undefined,
+    pendingImmediateBurns: state.pendingImmediateBurns?.map(hit => ({...hit})),
     pendingSkillDecisions: state.pendingSkillDecisions?.map((decision) => ({
       ...decision,
       targetIds: decision.targetIds ? [...decision.targetIds] : undefined,
@@ -353,13 +356,14 @@ function circularSeatDistance(state           , source             , target     
 }
 
 function advanceTurnOrder(state           , previousPlayerId        ) {
-  const order = orderedPlayerIdsFrom(state, state.players[0].id);
+  const order = orderedPlayerIdsFrom(state, state.mode === 'rogue' ? state.startingPlayerId : state.players[0].id);
   const next = nextLivingPlayerAfter(state, previousPlayerId);
   state.activePlayerId = next.id;
   // The round boundary remains at the original first seat even after its owner
   // is eliminated. Compare the full seat order instead of requiring that turn.
   if (order.indexOf(next.id) > order.indexOf(previousPlayerId)) return;
   state.round += 1;
+  if (state.mode === 'rogue' && (state.round - 1) % 2 === 0) state.rogue.growthDue = true;
   for (const player of state.players) {
     player.flags.usedGeminiExtraTurnThisRound = false;
     player.flags.libraRoundElements = [];
@@ -405,7 +409,7 @@ function skillNeedsDistanceCost(state           , source             , target   
   if (isInitialInfectionBoss(state, source)) return false;
   if (!isCrossDistanceTarget(state, source, target)) return false;
   if (source.equipment.weapon) return false;
-  return ['aries.ram', 'capricorn.charge'].includes(skillId);
+  return skillId === 'capricorn.charge';
 }
 
 function payDistanceCost(
@@ -426,7 +430,7 @@ function payDistanceCost(
 
 function leoOrderReceiverForTargets(state           , source             , targets               ) {
   return state.players.find((candidate) =>
-    candidate.characterId === 'leo' &&
+    ownsSkill(candidate, 'leo.order') &&
     candidate.hp > 0 &&
     candidate.flags.leoOrderTargetId === source.id &&
     targets.some((target) => target.id === candidate.id),
@@ -537,7 +541,7 @@ function drawCards(state           , player             , count        , filter 
 }
 
 function hasVirgoDomain(player             ) {
-  return player.characterId === 'virgo' && player.flags.virgoDomainActive;
+  return ownsSkill(player, 'virgo.domain') && player.flags.virgoDomainActive;
 }
 
 function virgoBlocksDebuff(state           , player             , label        ) {
@@ -546,7 +550,8 @@ function virgoBlocksDebuff(state           , player             , label        )
   return true;
 }
 
-function addStatus(state           , player             , status          , turns         ) {
+function addStatus(state           , player             , status          , turns         , source              ) {
+  if (status === 'burn' && player.statuses.burn) return;
   const isAbnormal = status !== 'shield' && status !== 'abnormalImmunity' && status !== 'sureHit';
   if (isAbnormal && virgoBlocksDebuff(state, player, STATUS_LABELS[status])) return;
   if (isAbnormal && player.statuses.shield) {
@@ -564,6 +569,11 @@ function addStatus(state           , player             , status          , turn
   const retainThroughTurn = status === 'silence' ? player.statuses.silence?.retainThroughTurn : undefined;
   const expiresAtTurnStart = status === 'silence' ? player.statuses.silence?.expiresAtTurnStart : undefined;
   player.statuses[status] = { id: status, turns, ...(retainThroughTurn !== undefined ? {retainThroughTurn} : {}), ...(expiresAtTurnStart ? {expiresAtTurnStart} : {}) };
+  if (status === 'burn' && source && state.players.some(ally =>
+    isAlive(ally) && ownsSkill(ally, 'aries.burnSoul') && sameFaction(state, ally, source))) {
+    player.statuses.burn .burnDamageSettled = true;
+    (state.pendingImmediateBurns ??= []).push({targetId: player.id, sourceId: source.id});
+  }
   if (isAbnormal) state.metrics.statusesApplied += 1;
   log(state, messageTemplate`${player.name} 获得 ${STATUS_LABELS[status]}`, player.id, 'status');
 }
@@ -587,7 +597,7 @@ function removeTurnStartStatuses(state           , player             ) {
 }
 
 function isLeoHealingBlocked(state           , player             ) {
-  return Boolean(player.statuses.burn && state.players.some(candidate => isAlive(candidate) && candidate.characterId === 'leo'));
+  return Boolean(player.statuses.burn && state.players.some(candidate => isAlive(candidate) && ownsSkill(candidate, 'leo.aura')));
 }
 
 function heal(
@@ -606,6 +616,7 @@ function heal(
     return;
   }
   if (!options.bypassLeoAura && isLeoHealingBlocked(state, player)) {
+    if (state.mode === 'rogue') for (const holder of state.players.filter(p=>isAlive(p)&&ownsSkill(p,'leo.aura'))) revealRogueSkill(holder,'leo.aura');
     log(state, messageTemplate`${player.name} is burning and cannot recover because Leo aura is active`, player.id, 'heal');
     return;
   }
@@ -618,7 +629,7 @@ function heal(
       state.metrics.healingBySource[source.id] = (state.metrics.healingBySource[source.id] ?? 0) + healed;
     }
     for (const cancer of state.players) {
-      if (cancer.hp <= 0 || cancer.characterId !== 'cancer') continue;
+      if (cancer.hp <= 0 || !ownsSkill(cancer, 'cancer.tideBond')) continue;
       if (cancer.flags.cancerTideBondDraws >= 3) continue;
       cancer.flags.cancerTideBondDraws += 1;
       drawCards(state, cancer, 1);
@@ -642,6 +653,7 @@ function rescueHeal(
 }
 
 function triggerSkillMetric(state           , key        ) {
+
   state.metrics.skillTriggers[key] = (state.metrics.skillTriggers[key] ?? 0) + 1;
 }
 
@@ -650,7 +662,7 @@ function isSilencedInOwnActionTurn(state           , player             ) {
 }
 
 function gainCapricornRage(state           , player                         , amount        , reason        ) {
-  if (!player || player.characterId !== 'capricorn' || amount <= 0) return;
+  if (!player || !ownsSkill(player, 'capricorn.unyielding') || amount <= 0) return;
   player.rage += amount;
   triggerSkillMetric(state, 'capricorn.unyielding');
   log(state, messageTemplate`${player.name} 因蓄怒${reason}获得 ${amount} 点怒气`, player.id, 'skill');
@@ -722,6 +734,13 @@ function transformSurvivor(state           , player             ) {
   }
 }
 
+function canUseCancerRescue(state           , candidate             , target             ) {
+  return ownsSkill(candidate, 'cancer.rescue') && !candidate.eliminated && !target.eliminated && target.hp <= 0 &&
+    !candidate.flags.usedCancerRescueThisRound && !isLeoHealingBlocked(state, target) &&
+    candidate.hand.some(card => card.element === 'water') &&
+    (candidate.id === target.id || (isAlive(candidate) && state.activePlayerId !== candidate.id));
+}
+
 function eligibleRescuers(state           , target             , willTransform         ) {
   return state.players
     .filter((candidate) => candidate.factionId === 'survivor' && !candidate.eliminated)
@@ -729,14 +748,7 @@ function eligibleRescuers(state           , target             , willTransform  
       const hasSun = candidate.hand.some((card) => card.kind === 'sun');
       if (hasSun) return true;
       if (willTransform || isLeoHealingBlocked(state, target)) return false;
-      return (
-        candidate.characterId === 'cancer' &&
-        candidate.id !== target.id &&
-        state.activePlayerId !== candidate.id &&
-        candidate.hp > 0 &&
-        !candidate.flags.usedCancerRescueThisRound &&
-        candidate.hand.some((card) => card.element === 'water')
-      );
+      return canUseCancerRescue(state, candidate, target);
     })
     .map((candidate) => candidate.id);
 }
@@ -1026,7 +1038,7 @@ function findTaurusGuardianFor(state           , target             ) {
   return state.players.find(
     (candidate) =>
       isAlive(candidate) &&
-      candidate.characterId === 'taurus' &&
+      ownsSkill(candidate, 'taurus.guard') &&
       candidate.id !== target.id &&
       candidate.flags.taurusGuardTargetId === target.id,
   );
@@ -1040,7 +1052,7 @@ function queueSkillDecision(state           , decision                      ) {
 function offerVirgoDiscipline(state           , source             , targets               , isAoe = false) {
   if ((!isAoe && targets.length < 2) || !isAlive(source)) return;
   for (const target of new Set(targets)) {
-    if (target.id !== source.id && target.characterId === 'virgo' && isAlive(target)) {
+    if (target.id !== source.id && ownsSkill(target, 'virgo.discipline') && isAlive(target)) {
       queueSkillDecision(state, { kind: 'virgoDiscipline', playerId: target.id, sourceId: source.id });
     }
   }
@@ -1048,7 +1060,7 @@ function offerVirgoDiscipline(state           , source             , targets    
 
 function offerTaurusGuardSetup(state           ) {
   const player = findPlayer(state, state.activePlayerId);
-  if (state.phase !== 'draw' || player.characterId !== 'taurus' || !isAlive(player) ||
+  if (state.phase !== 'draw' || !ownsSkill(player, 'taurus.guard') || !isAlive(player) ||
       player.flags.taurusGuardSetupDone || isSilencedInOwnActionTurn(state, player)) return;
   if (state.pendingSkillDecisions?.some(decision => decision.kind === 'taurusGuardSetup' && decision.playerId === player.id)) return;
   const previous = state.players.find(candidate => candidate.id === player.flags.taurusGuardTargetId);
@@ -1071,7 +1083,7 @@ function setTaurusGuardTarget(state           , player             , targetId   
 }
 
 function drawTaurusForCardAttack(state           , target             ) {
-  if (target.characterId !== 'taurus' || !isAlive(target)) return;
+  if (!ownsSkill(target, 'taurus.thickSkin') || !isAlive(target)) return;
   drawCards(state, target, 1);
   triggerSkillMetric(state, 'taurus.thickSkin');
   log(state, messageTemplate`${target.name} 因厚皮受到卡牌攻击，摸 1 张牌`, target.id, 'skill');
@@ -1081,7 +1093,7 @@ function triggerTaurusCardAttackDraw(state           ) {
   const pending = state.pendingAttack;
   if (!pending || !['normalAttack', 'statusAttack'].includes(pending.card.kind)) return;
   const target = findPlayer(state, pending.currentTargetId);
-  if (target.characterId !== 'taurus' || !isAlive(target) || pending.taurusDrawnPlayerIds?.includes(target.id)) return;
+  if (!ownsSkill(target, 'taurus.thickSkin') || !isAlive(target) || pending.taurusDrawnPlayerIds?.includes(target.id)) return;
   (pending.taurusDrawnPlayerIds ??= []).push(target.id);
   drawTaurusForCardAttack(state, target);
 }
@@ -1130,19 +1142,41 @@ function resolveSkillDecision(
   const player = findPlayer(state, decision.playerId);
   const source = decision.sourceId ? findPlayer(state, decision.sourceId) : undefined;
 
+  if (decision.kind === 'rogueSteal') {
+    const target = findPlayer(state, decision.targetId );
+    if (isAlive(player)) {
+      const id = action.selectedCardId;
+      if (!id) throw new Error('已支付换影费用，请选择目标的一张手牌或装备');
+      const item = target.hand.find(c=>c.id===id) ?? Object.values(target.equipment).find(c=>c?.id===id);
+      if (!item) throw new Error('所选目标牌不存在');
+      assertNotIceArmorBlocked(player,target);
+      const ix = target.hand.findIndex(c=>c.id===id);
+      if(ix>=0) target.hand.splice(ix,1);
+      else {
+        if(target.equipment.weapon?.id===id) delete target.equipment.weapon;
+        else delete target.equipment.armor;
+        triggerEquipmentLeftOwner(state,target,item);
+      }
+      player.hand.push(item);
+      applyDamage(state,target,player,1,{status:target.hand.length===0?'blind':undefined});
+      log(state,messageTemplate`${player.name} 发动换影，获得 ${target.name} 的 ${item.name}`,player.id,'skill');
+    }
+  }
+
   if (decision.kind === 'sagittariusResupply' && action.activate) {
     const target = state.players.find(candidate => candidate.id === action.targetId);
     if (!isAlive(player) || !target || !isAlive(target)) throw new Error('补给需要存活的射手和目标');
-    const count = Math.max(0, Math.min(4, target.maxHp) - target.hand.length);
+    const count = Math.max(0, target.maxHp - target.hand.length);
     const before = target.hand.length;
     drawCards(state, target, count);
     triggerSkillMetric(state, 'sagittarius.resupply');
+    if (state.mode === 'rogue' && target.hand.length > before) revealRogueSkill(player, 'sagittarius.sharpshot');
     for (let n = before; n < target.hand.length; n++) triggerSkillMetric(state, 'sagittarius.resupplyCards');
     log(state, messageTemplate`${player.name} 为 ${target.name} 补给 ${target.hand.length - before} 张牌`, player.id, 'skill');
   }
 
   if (decision.kind === 'scorpioEndPeek') {
-    if (player.characterId !== 'scorpio' || !isAlive(player) || state.activePlayerId !== player.id || state.phase !== 'discard') {
+    if (!ownsSkill(player, 'scorpio.peek') || !isAlive(player) || state.activePlayerId !== player.id || state.phase !== 'discard') {
       throw new Error('当前不能结算回合结束伏击');
     }
     if (action.activate) {
@@ -1153,7 +1187,7 @@ function resolveSkillDecision(
 
   if (decision.kind === 'scorpioPoisonTake') {
     const target = decision.targetId ? findPlayer(state, decision.targetId) : undefined;
-    if (player.characterId !== 'scorpio' || !isAlive(player) || !target || !isAlive(target)) throw new Error('蝎毒夺牌目标已失效');
+    if (!ownsSkill(player, 'scorpio.freezeAoe') || !isAlive(player) || !target || !isAlive(target)) throw new Error('蝎毒夺牌目标已失效');
     if (!action.activate) throw new Error('蝎毒必须获得目标的 1 张手牌');
     const selectedId = action.selectedCardId ?? (action.cardIds?.length === 1 ? action.cardIds[0] : undefined);
     const selected = target.hand.find(card => card.id === selectedId);
@@ -1163,7 +1197,7 @@ function resolveSkillDecision(
   }
 
   if (decision.kind === 'taurusGuardSetup') {
-    if (state.phase !== 'draw' || state.activePlayerId !== player.id || player.characterId !== 'taurus') throw new Error('牛守只能在自己的回合开始设置');
+    if (state.phase !== 'draw' || state.activePlayerId !== player.id || !ownsSkill(player, 'taurus.guard')) throw new Error('牛守只能在自己的回合开始设置');
     if (action.activate) {
       if (isSilencedInOwnActionTurn(state, player)) throw new Error('沉默期间不能设置牛守目标');
       setTaurusGuardTarget(state, player, action.targetId, action.cardIds ?? []);
@@ -1328,16 +1362,16 @@ function triggerHpLossSkills(state           , target             , damage      
   if (!isAlive(target) || damage.hpLost <= 0) return;
   const source = damage.sourceId ? findPlayer(state, damage.sourceId) : undefined;
   if (source && source.id !== target.id) gainCapricornRage(state, target, 1, '承受实际伤害');
-  if (target.characterId === 'aries' && damage.outOfTurn) {
+  if (ownsSkill(target, 'aries.bloodRage') && damage.outOfTurn) {
     target.flags.ariesBloodRageReady = true;
     triggerSkillMetric(state, 'aries.bloodRageReady');
   }
-  if (target.characterId === 'gemini') {
+  if (ownsSkill(target, 'gemini.windForm')) {
     drawCards(state, target, damage.hpLost, (card) => card.element === 'air');
     triggerSkillMetric(state, 'gemini.windForm');
     log(state, messageTemplate`${target.name} 因双生摸 ${damage.hpLost} 张风牌`, target.id, 'skill');
   }
-  if (target.characterId === 'sagittarius' && damage.hadArmor) {
+  if (ownsSkill(target, 'sagittarius.sharpshot') && damage.hadArmor) {
     queueSkillDecision(state, {kind: 'sagittariusResupply', playerId: target.id});
     triggerSkillMetric(state, 'sagittarius.resupplyOffer');
   }
@@ -1346,13 +1380,13 @@ function triggerHpLossSkills(state           , target             , damage      
 function triggerWoundedChoices(state           , target             , damage                                           ) {
   if (!isAlive(target)) return;
   const source = damage.sourceId ? findPlayer(state, damage.sourceId) : undefined;
-  if ((damage.hpLost > 0 || damage.armorLost) && target.characterId === 'virgo' && !target.flags.usedVirgoDomainThisTurn) {
+  if ((damage.hpLost > 0 || damage.armorLost) && ownsSkill(target, 'virgo.domain') && !target.flags.usedVirgoDomainThisTurn) {
     target.flags.usedVirgoDomainThisTurn = true;
     target.flags.virgoDomainActive = true;
     triggerSkillMetric(state, 'virgo.domain');
     log(state, messageTemplate`${target.name} 自动发动净域，本回合免疫后续非神圣伤害和新增负面状态`, target.id, 'skill');
   }
-  if (damage.hpLost > 0 && target.characterId === 'aquarius') {
+  if (damage.hpLost > 0 && ownsSkill(target, 'aquarius.stormEye')) {
     drawCards(state, target, 2);
     triggerSkillMetric(state, 'aquarius.stormEye');
     log(state, messageTemplate`${target.name} 的倾杯触发，摸 2 张牌`, target.id, 'skill');
@@ -1362,7 +1396,7 @@ function triggerWoundedChoices(state           , target             , damage    
       log(state, messageTemplate`${target.name} 可以选择发动倾杯，与至多 2 名玩家交换至多 2 张等量手牌`, target.id, 'skill');
     }
   }
-  if (target.characterId === 'taurus' && (damage.armorLost || damage.hpLost > 0)) {
+  if (ownsSkill(target, 'taurus.thickSkin') && (damage.armorLost || damage.hpLost > 0)) {
     if (source && source.id !== target.id && isAlive(source) && target.hand.length > 0) {
       queueSkillDecision(state, {kind:'taurusThickSkin',playerId:target.id,sourceId:source.id});
       log(state, messageTemplate`${target.name} 可以弃 1 张牌发动厚皮，${source.statuses.silence ? '对已沉默的来源造成 1 点伤害' : '令伤害来源沉默'}`, target.id, 'skill');
@@ -1391,6 +1425,8 @@ function applyDamage(
                       
                          
                      
+                                   
+                       
     = {},
 ) {
   if (amount <= 0 && !options.status) return;
@@ -1415,7 +1451,7 @@ function applyDamage(
 
   let damage = amount;
   const armorCard = target.equipment.armor;
-  if (!ignoresArmor && armorCard?.element === 'earth') {
+  if (!ignoresArmor && !options.bypassEquipmentArmor && armorCard?.element === 'earth') {
     damage = Math.min(damage, 1);
     if (damage > 0 && !target.flags.usedEarthArmorReductionThisRound) {
       target.flags.usedEarthArmorReductionThisRound = true;
@@ -1442,7 +1478,21 @@ function applyDamage(
   };
 
   if (damage > 0) {
+    if (state.mode === 'rogue') target.rogue.lastDamageSourceId = source?.id;
     target.hp -= damage;
+    if (options.burnTick) {
+      for (const lion of state.players.filter(candidate => isAlive(candidate) && ownsSkill(candidate, 'leo.aura'))) {
+        if (lion.leoBurnDrawRound !== state.round) {
+          lion.leoBurnDrawRound = state.round;
+          lion.leoBurnDrawCount = 0;
+        }
+        if ((lion.leoBurnDrawCount ?? 0) < 3) {
+          lion.leoBurnDrawCount = (lion.leoBurnDrawCount ?? 0) + 1;
+          drawCards(state, lion, 1);
+          triggerSkillMetric(state, 'leo.burnDraw');
+        }
+      }
+    }
     state.metrics.damageTaken[target.id] = (state.metrics.damageTaken[target.id] ?? 0) + damage;
     if (source) {
       state.metrics.damageBySource[source.id] = (state.metrics.damageBySource[source.id] ?? 0) + damage;
@@ -1477,9 +1527,10 @@ function applyDamage(
     applyInfection(state, target, source);
   }
 
-  if (options.status) addStatus(state, target, options.status, 1);
+  if (state.mode === 'rogue' && options.status === 'burn' && !target.statuses.burn) target.rogue.burnSourceId = source?.id;
+  if (options.status) addStatus(state, target, options.status, 1, source);
 
-  if (damage > 0 && source && !ignoresArmor) triggerArmorAfterDamage(state, target, source);
+  if (damage > 0 && source && !ignoresArmor && !options.bypassEquipmentArmor) triggerArmorAfterDamage(state, target, source);
   if (isInfectionMode(state)) {
     if (target.hp <= 0) beginInfectionDying(state, target, source);
   } else {
@@ -1495,7 +1546,7 @@ function triggerArmorAfterDamage(state           , target             , source  
 
   if (armor.element === 'fire' && !target.flags.firstAttackDamageApplied) {
     target.flags.firstAttackDamageApplied = true;
-    addStatus(state, source, 'burn', 1);
+    addStatus(state, source, 'burn', 1, target);
     log(state, messageTemplate`${target.name} 的烈焰披风令 ${source.name} 获得灼烧`, target.id, 'equipment');
   }
   if (armor.element === 'water') {
@@ -1517,9 +1568,7 @@ function standardRescuers(state           , target             ) {
   const ordinaryAllowed = !isLeoHealingBlocked(state, target);
   return state.players.filter(candidate => !candidate.eliminated && (
     candidate.hand.some(card => card.kind === 'sun' || (ordinaryAllowed && card.kind === 'energy')) ||
-    (ordinaryAllowed && candidate.characterId === 'cancer' && candidate.id !== target.id && candidate.hp > 0 &&
-      state.activePlayerId !== candidate.id && !candidate.flags.usedCancerRescueThisRound &&
-      candidate.hand.some(card => card.element === 'water'))
+    (ordinaryAllowed && canUseCancerRescue(state, candidate, target))
   )).sort((left, right) => {
     const priority = (player             ) => player.id === target.id ? 0 : player.teamId === target.teamId ? 1 : 2;
     return priority(left) - priority(right);
@@ -1565,6 +1614,7 @@ function finishStandardRescue(state           ) {
 }
 
 function checkDefeat(state           ) {
+  if (state.mode === 'rogue') { checkRogueDefeat(state); return; }
   if (isInfectionMode(state)) {
     checkInfectionVictory(state);
     return;
@@ -1639,7 +1689,7 @@ function elementForFormalUse(player             , card      , chosenElement     
 function recordAirUse(state           , player             , count = 1) {
   if (count <= 0) return;
   player.flags.airCardsUsed += count;
-  if (player.characterId === 'gemini' && player.flags.airCardsUsed >= 3 && !player.flags.usedGeminiExtraTurnThisRound) {
+  if (ownsSkill(player, 'gemini.extraTurn') && player.flags.airCardsUsed >= 3 && !player.flags.usedGeminiExtraTurnThisRound) {
     player.flags.usedGeminiExtraTurnThisRound = true;
     player.flags.grantedExtraTurn = true;
     triggerSkillMetric(state, 'gemini.extraTurn');
@@ -1656,7 +1706,7 @@ function recordCardElement(state           , player             , card      , ch
     player.flags.usedCardElements.push(element);
   }
 
-  if (player.characterId === 'libra' && state.activePlayerId === player.id && !player.flags.libraRoundElements.includes(element)) {
+  if (ownsSkill(player, 'libra.elementSense') && state.activePlayerId === player.id && !player.flags.libraRoundElements.includes(element)) {
     player.flags.libraRoundElements.push(element);
     drawCards(state, player, 1);
     triggerSkillMetric(state, 'libra.elementSense');
@@ -1664,7 +1714,7 @@ function recordCardElement(state           , player             , card      , ch
   }
 
   const turnElementCount = player.flags.usedCardElements.length;
-  const canTriggerLibraJudgment = player.characterId === 'libra' && state.activePlayerId === player.id && state.phase === 'main';
+  const canTriggerLibraJudgment = ownsSkill(player, 'libra.judgment') && state.activePlayerId === player.id && state.phase === 'main';
 
   if (canTriggerLibraJudgment && turnElementCount >= 3 && !player.flags.usedLibraJudgmentThisTurn) {
     player.flags.usedLibraJudgmentThisTurn = true;
@@ -1691,7 +1741,7 @@ function canUseBasicAttack(player             ) {
     ? Number.POSITIVE_INFINITY
     : 1 + commandBonus;
   const equipmentCount = Number(Boolean(player.equipment.weapon)) + Number(Boolean(player.equipment.armor));
-  const extraAvailable = player.characterId === 'sagittarius' && Boolean(player.equipment.weapon) &&
+  const extraAvailable = ownsSkill(player, 'sagittarius.sharpshot') && Boolean(player.equipment.weapon) &&
     (player.flags.usedSagittariusExtraAttacks ?? 0) < equipmentCount;
   return player.flags.basicAttackCount < limit || extraAvailable;
 }
@@ -1800,13 +1850,22 @@ function applySuccessfulDefenseOutcome(state           ) {
   finishCurrentHit(state);
 }
 
+function consumeAriesFirstAttackBonus(state           , source             , singleTarget         )         {
+  if (!ownsSkill(source, 'aries.bloodRage') || state.activePlayerId !== source.id || source.flags.ariesBloodRageUsed) return 0;
+  const bonus = source.flags.ariesBloodRageReady && singleTarget ? 1 : 0;
+  source.flags.ariesBloodRageReady = false;
+  source.flags.ariesBloodRageUsed = true;
+  if (bonus) triggerSkillMetric(state, 'aries.bloodRage');
+  return bonus;
+}
+
 function makePendingAttack(state           , source             , card      , targetIds          , baseDamage = 1)                {
   const hitsPerTarget = Math.max(1, card.fusion?.attackCount ?? 1);
   return {
     sourceId: source.id,
     targetIds,
     card,
-    baseDamage,
+    baseDamage: baseDamage + consumeAriesFirstAttackBonus(state, source, card.kind !== 'aoe' && targetIds.length === 1),
     statusToApply: card.kind === 'statusAttack' && card.element ? statusForElement(card.element) : undefined,
     unavoidable: Boolean(card.fusion?.sureHit),
     trueDamage: false,
@@ -1821,7 +1880,7 @@ function makePendingAttack(state           , source             , card      , ta
 
 function isCapricornWushuangAttack(source             , card      ) {
   return (
-    source.characterId === 'capricorn' &&
+    ownsSkill(source, 'capricorn.wushuang') &&
     card.element === 'earth' &&
     (card.kind === 'normalAttack' || card.kind === 'statusAttack')
   );
@@ -2067,8 +2126,8 @@ function handleEarthHammerBreak(state           , action                        
 
 function endTurn(state           , player             , skipEndEffects = false) {
   clearPlayedCards(state);
-  if (!skipEndEffects && player.statuses.burn) {
-    applyDamage(state, player, undefined, 1);
+  if (!skipEndEffects && player.statuses.burn && !player.statuses.burn.burnDamageSettled) {
+    applyDamage(state, player, state.mode === 'rogue' && player.rogue.burnSourceId ? findPlayer(state, player.rogue.burnSourceId) : undefined, 1, { burnTick: true });
     if (state.phase === 'gameOver' || resolutionIsPending(state)) return;
   }
 
@@ -2093,7 +2152,7 @@ function endTurn(state           , player             , skipEndEffects = false) 
   if (state.pendingSkillDecisions?.some(decision => decision.kind === 'sagittariusResupply')) {state.pendingSkillResume = 'endTurnAfterRescue';return;}
   removeOneRoundStatuses(state, player);
 
-  if (player.characterId === 'scorpio' && isAlive(player) && player.flags.usedScorpioPeek &&
+  if (ownsSkill(player, 'scorpio.peek') && isAlive(player) && player.flags.usedScorpioPeek &&
       player.flags.scorpioPeekMissedWater && !player.flags.usedScorpioEndPeek) {
     player.flags.usedScorpioEndPeek = true;
     queueSkillDecision(state, { kind: 'scorpioEndPeek', playerId: player.id });
@@ -2102,8 +2161,9 @@ function endTurn(state           , player             , skipEndEffects = false) 
     return;
   }
 
-  if (player.characterId === 'pisces') {
+  if (ownsSkill(player, 'pisces.dream')) {
     drawCards(state, player, 1 + (player.flags.piscesBalanceLoss > 0 ? 1 : 0));
+    if (state.mode === 'rogue') revealRogueSkill(player, 'pisces.dream');
     if (player.flags.piscesBalanceLoss > 0) triggerSkillMetric(state, 'pisces.dreamExtra');
   }
 
@@ -2135,7 +2195,7 @@ function endTurn(state           , player             , skipEndEffects = false) 
   state.firstTurn = false;
   const nextActive = findPlayer(state, state.activePlayerId);
   removeTurnStartStatuses(state, nextActive);
-  if (nextActive.characterId === 'leo') nextActive.flags.leoOrderTargetId = undefined;
+  if (ownsSkill(nextActive, 'leo.order')) nextActive.flags.leoOrderTargetId = undefined;
   offerTaurusGuardSetup(state);
 }
 
@@ -2148,7 +2208,7 @@ function triggerEquipmentLeftOwner(
     heal(state, owner, 1, owner);
     log(state, messageTemplate`${owner.name} 的石壁离开装备区`, owner.id, 'equipment');
   }
-  if (owner.characterId !== 'sagittarius' || !isAlive(owner)) return;
+  if (!ownsSkill(owner, 'sagittarius.bowcraft') || !isAlive(owner)) return;
   drawCards(state, owner, 2);
   triggerSkillMetric(state, 'sagittarius.bowcraft');
   log(state, messageTemplate`${owner.name} 的整弓触发：${card.name} 离开装备区，摸 2 张牌`, owner.id, 'skill');
@@ -2524,8 +2584,15 @@ function playMoon(state           , player             , card      , targetId   
 }
 
 function handleCancerRescue(state           , action                                       , player             ) {
-  if (player.characterId !== 'cancer') throw new Error('Only Cancer can use Crab Guard');
-  if (!isAlive(player)) throw new Error('濒死或已出局的巨蟹不能发动蟹护');
+  if (!ownsSkill(player, 'cancer.rescue')) throw new Error('Only Cancer can use Crab Guard');
+  const target = action.targetId ? findPlayer(state, action.targetId) : undefined;
+  if (!target || target.hp > 0) throw new Error('蟹护只能急救濒死角色');
+  if (target.id === player.id) {
+    const pending = state.pendingRescue ?? state.infection?.pendingDying;
+    const reviewing = state.phase === 'gameOver' && !state.winnerId && !state.winnerTeamId;
+    if (!(pending?.targetId === player.id && pending.currentResponderId === player.id) && !reviewing) throw new Error('只能在自己的濒死急救响应中自救');
+  }
+  if (player.eliminated || (!isAlive(player) && player.id !== target.id)) throw new Error('已出局的巨蟹不能急救，濒死时只能急救自己');
   const infectionPending = state.infection?.pendingDying;
   if (
     isInfectionMode(state) &&
@@ -2537,10 +2604,8 @@ function handleCancerRescue(state           , action                            
   ) {
     throw new Error('感染模式中蟹护只能处理当前未感染的濒死幸存者');
   }
-  if (state.phase !== 'gameOver' && state.activePlayerId === player.id) throw new Error('蟹护只能在回合外急救');
+  if (state.phase !== 'gameOver' && state.activePlayerId === player.id && target.id !== player.id) throw new Error('蟹护救其他角色只能在回合外发动');
   if (player.flags.usedCancerRescueThisRound) throw new Error('蟹护每轮限一次');
-  const target = action.targetId ? findPlayer(state, action.targetId) : undefined;
-  if (!target || target.id === player.id || target.hp > 0) throw new Error('蟹护只能急救其他濒死角色');
   if (target.eliminated) throw new Error('阵亡判定后不能通过蟹护急救');
   if (isLeoHealingBlocked(state, target)) throw new Error('狮威禁止普通急救，请使用太阳');
   if (action.cardIds?.length !== 1) throw new Error('蟹护需要恰好 1 张水牌');
@@ -2550,7 +2615,7 @@ function handleCancerRescue(state           , action                            
   if (card.element !== 'water') throw new Error('蟹护只能弃水牌');
   state.discard.push(card);
   player.flags.usedCancerRescueThisRound = true;
-  rescueHeal(state, target, 1, player);
+  rescueHeal(state, target, Math.max(1, 1 - target.hp), player);
   triggerSkillMetric(state, action.skillId);
   log(state, messageTemplate`${player.name} 发动蟹护急救 ${target.name}`, player.id, 'skill');
   if (state.pendingRescue) return finishStandardRescue(state);
@@ -2769,7 +2834,7 @@ function handlePlayCard(state           , action                                
       targets.map((candidate) => candidate.id),
       attackDamage,
     );
-    if (player.characterId === 'sagittarius' && player.equipment.weapon &&
+    if (ownsSkill(player, 'sagittarius.sharpshot') && player.equipment.weapon &&
         (card.kind === 'normalAttack' || card.kind === 'statusAttack') &&
         player.flags.basicAttackCount > 1 + (player.flags.infectionBossCommandMode === 'extraAttack' ? 1 : 0) &&
         (player.flags.usedSagittariusExtraAttacks ?? 0) < Number(Boolean(player.equipment.weapon)) + Number(Boolean(player.equipment.armor))) {
@@ -2873,7 +2938,7 @@ function arrangeScorpioPeek(state           , player             , topIds       
 function handleSkill(state           , action                                       ) {
   const player = findPlayer(state, action.playerId);
   if (action.skillId.includes('.') && action.skillId.split('.')[0] in CHARACTERS &&
-      action.skillId.split('.')[0] !== player.characterId) throw new Error('不能发动其他星座的技能');
+      !ownsSkill(player, action.skillId)) throw new Error('不能发动其他星座的技能');
   if (action.skillId === 'cancer.rescue') {
     handleCancerRescue(state, action, player);
     return;
@@ -2954,6 +3019,7 @@ function handleSkill(state           , action                                   
     const usedBurnSoul = card.element !== 'fire';
     const isAttackCost = card.kind === 'normalAttack' || card.kind === 'statusAttack';
     if (usedBurnSoul) {
+      if (!ownsSkill(player, 'aries.burnSoul')) throw new Error('尚未学会燃魂');
       if (!isAttackCost) throw new Error('Burn Soul can only use non-fire normal or status attack cards');
       if (player.flags.usedAriesBurnSoul) throw new Error('燃魂每回合限一次');
       player.flags.usedAriesBurnSoul = true;
@@ -2969,21 +3035,14 @@ function handleSkill(state           , action                                   
       action.extraCostCardId,
       [cardId],
     );
-    assertNotIceArmorBlocked(player, target);
     state.discard.push(card);
     player.flags.usedAriesRam = true;
-    let damage = 1;
-    if (player.flags.ariesBloodRageReady && !player.flags.ariesBloodRageUsed) {
-      damage += 1;
-      player.flags.ariesBloodRageReady = false;
-      player.flags.ariesBloodRageUsed = true;
-      triggerSkillMetric(state, 'aries.bloodRage');
-    }
+    const damage = 1 + consumeAriesFirstAttackBonus(state, player, true);
     if (player.statuses.blind) {
       delete player.statuses.blind;
       log(state, messageTemplate`${player.name} 因致盲，羊角冲落空`, player.id, 'status');
     } else {
-      applyDamage(state, target, player, damage, { status: card.kind === 'statusAttack' && card.element === 'fire' ? 'burn' : undefined });
+      applyDamage(state, target, player, damage, { bypassEquipmentArmor: true, status: card.kind === 'statusAttack' && card.element === 'fire' ? 'burn' : undefined });
     }
     triggerSkillMetric(state, action.skillId);
     log(state, messageTemplate`${player.name}${usedBurnSoul ? ' 以燃魂' : ''}发动羊角冲，对 ${target.name} 造成不可防御伤害`, player.id, 'skill');
@@ -3007,7 +3066,10 @@ function handleSkill(state           , action                                   
     state.discard.push(fireCost);
     player.flags.usedLeoRoar = true;
     for (const candidate of leoTargets) {
-      if (!candidate.statuses.burn) addStatus(state, candidate, 'burn', 1);
+      if (!candidate.statuses.burn) {
+        addStatus(state, candidate, 'burn', 1, player);
+        if (state.mode === 'rogue' && candidate.statuses.burn) candidate.rogue.burnSourceId = player.id;
+      }
     }
     offerVirgoDiscipline(state, player, leoTargets);
     triggerSkillMetric(state, action.skillId);
@@ -3016,7 +3078,7 @@ function handleSkill(state           , action                                   
   }
 
   if (action.skillId === 'leo.order') {
-    if (player.characterId !== 'leo') throw new Error('Only Leo can use order');
+    if (!ownsSkill(player, action.skillId)) throw new Error('Only Leo can use order');
     if (player.flags.usedLeoOrder) throw new Error('Leo order can only be used once per turn');
     if (target.id === player.id || target.hp <= 0) throw new Error('Leo order targets one living other role');
     const costCardId = action.cardIds?.[0];
@@ -3061,7 +3123,7 @@ function handleSkill(state           , action                                   
   }
 
   if (action.skillId === 'taurus.guard') {
-    if (player.characterId !== 'taurus') throw new Error('Only Taurus can use guard');
+    if (!ownsSkill(player, action.skillId)) throw new Error('Only Taurus can use guard');
     if (player.flags.taurusGuardSetupDone) throw new Error('牛守每个自己的回合开始只能设置或更换一次');
     if (!action.targetId) offerTaurusGuardSetup(state);
     else setTaurusGuardTarget(state, player, action.targetId, action.cardIds ?? []);
@@ -3090,10 +3152,20 @@ function handleSkill(state           , action                                   
       recordAirUse(state, player, costs.filter(card => card.element === 'air').length);
       if (costIds.length === 1) applyDamage(state, player, player, 1, { hpCost: true });
       if (state.phase === 'gameOver') return;
-      applyDamage(state, target, player, 1, { status: 'blind' });
+      applyDamage(state, target, player, 0, { status: 'blind' });
       player.flags.usedGeminiSteal = true;
       triggerSkillMetric(state, action.skillId);
-      log(state, messageTemplate`${player.name} 发动换影，${target.name} 没有手牌和装备，受到 1 点伤害并获得致盲`, player.id, 'skill');
+      log(state, messageTemplate`${player.name} 发动换影，${target.name} 没有手牌和装备，获得致盲`, player.id, 'skill');
+      return;
+    }
+    if (state.mode === 'rogue' && !action.selectedCardId) {
+      assertNotIceArmorBlocked(player,target);
+      player.flags.usedGeminiSteal=true;
+      queueSkillDecision(state,{kind:'rogueSteal',playerId:player.id,targetId:target.id});
+      const costs=costIds.map(id=>takeCard(player,id));state.discard.push(...costs);
+      recordAirUse(state,player,costs.filter(c=>c.element==='air').length);
+      if(costIds.length===1) applyDamage(state,player,player,1,{hpCost:true});
+      triggerSkillMetric(state,action.skillId);
       return;
     }
     if (!action.selectedCardId) throw new Error('换影需要选择目标手牌或装备中的 1 张');
@@ -3112,7 +3184,7 @@ function handleSkill(state           , action                                   
       throw new Error('换影选择的目标手牌或装备不存在');
     }
 
-    if (stolen.element !== 'air') assertNotIceArmorBlocked(player, target);
+    assertNotIceArmorBlocked(player, target);
     payDistanceCost(
       state,
       player,
@@ -3137,7 +3209,7 @@ function handleSkill(state           , action                                   
     if (state.phase === 'gameOver') return;
     if (stolen) {
       player.hand.push(stolen);
-      if (stolen.element !== 'air') applyDamage(state, target, player, 1);
+      applyDamage(state, target, player, 1, { status: target.hand.length === 0 ? 'blind' : undefined });
     }
     player.flags.usedGeminiSteal = true;
     triggerSkillMetric(state, action.skillId);
@@ -3146,7 +3218,7 @@ function handleSkill(state           , action                                   
   }
 
   if (action.skillId === 'libra.harmony') {
-    if (player.characterId !== 'libra') throw new Error('只有天秤可以发动裁衡');
+    if (!ownsSkill(player, action.skillId)) throw new Error('只有天秤可以发动裁衡');
     if (player.flags.usedLibraHarmony) throw new Error('裁衡每回合限一次');
     const targetIds = [...new Set(action.targetIds ?? [])];
     if (targetIds.length !== 2 || targetIds.includes(player.id)) {
@@ -3249,17 +3321,29 @@ function handleSkill(state           , action                                   
     }
     const [first, second] = targets;
     const diff = Math.abs(first.hp - second.hp);
-    const waterCardIds = [...new Set(action.cardIds ?? [])];
+    const waterCardIds = action.cardIds ?? [];
+    if (new Set(waterCardIds).size !== waterCardIds.length) throw new Error('平潮费用牌不能重复');
     if (waterCardIds.length !== diff) throw new Error('平潮需要弃等同生命差的水牌');
     if (
       waterCardIds.some((cardId) => {
-        const card = player.hand.find((candidate) => candidate.id === cardId);
+        const card = [...player.hand, ...Object.values(player.equipment)].find((candidate) => candidate?.id === cardId);
         return !card || card.element !== 'water';
       })
     ) {
-      throw new Error('平潮只能弃自己的水属性手牌');
+      throw new Error('平潮只能弃自己的水属性手牌或已装备的水属性装备');
     }
-    for (const cardId of waterCardIds) state.discard.push(takeCard(player, cardId));
+    const equipmentCosts         = [];
+    for (const cardId of waterCardIds) {
+      if (player.hand.some(card => card.id === cardId)) state.discard.push(takeCard(player, cardId));
+      else {
+        const slot = player.equipment.weapon?.id === cardId ? 'weapon' : 'armor';
+        const card = player.equipment[slot] ;
+        delete player.equipment[slot];
+        state.discard.push(card);
+        equipmentCosts.push(card);
+      }
+    }
+    for (const card of equipmentCosts) triggerEquipmentLeftOwner(state, player, card);
     const average = Math.floor((first.hp + second.hp) / 2);
     const beforeHp = new Map(targets.map((candidate) => [candidate.id, candidate.hp]));
     for (const candidate of targets) {
@@ -3284,7 +3368,7 @@ function handleSkill(state           , action                                   
   }
 
   if (action.skillId === 'sagittarius.seekEquipment') {
-    if (player.characterId !== 'sagittarius') throw new Error('只有射手可以发动寻器');
+    if (!ownsSkill(player, action.skillId)) throw new Error('只有射手可以发动寻器');
     if (player.flags.usedSagittariusSeek) throw new Error('寻器每回合限一次');
     const costIds = action.cardIds ?? [];
     if (costIds.length !== 2 || new Set(costIds).size !== 2) {
@@ -3316,7 +3400,7 @@ function handleSkill(state           , action                                   
   }
 
   if (action.skillId === 'virgo.purify') {
-    if (player.characterId !== 'virgo') throw new Error('只有处女可以发动净化');
+    if (!ownsSkill(player, action.skillId)) throw new Error('只有处女可以发动净化');
     if (player.flags.usedVirgoPurify) throw new Error('净化每回合限一次');
     const costId = action.cardIds?.[0];
     if (!costId) throw new Error('净化需要弃 1 张土牌');
@@ -3344,7 +3428,7 @@ function handleSkill(state           , action                                   
   }
 
   if (action.skillId === 'scorpio.peek') {
-    if (player.characterId !== 'scorpio') throw new Error('只有天蝎可以发动伏击');
+    if (!ownsSkill(player, action.skillId)) throw new Error('只有天蝎可以发动伏击');
     if (player.flags.usedScorpioPeek) throw new Error('伏击每回合限一次');
     const peeked = arrangeScorpioPeek(state, player, action.topCardIds, action.bottomCardIds);
     player.flags.usedScorpioPeek = true;
@@ -3353,7 +3437,7 @@ function handleSkill(state           , action                                   
   }
 
   if (action.skillId === 'scorpio.freezeAoe') {
-    if (player.characterId !== 'scorpio') throw new Error('只有天蝎可以发动蝎毒');
+    if (!ownsSkill(player, action.skillId)) throw new Error('只有天蝎可以发动蝎毒');
     if (player.flags.usedScorpioPoison) throw new Error('蝎毒每回合限一次');
     if (!action.targetId || target.id === player.id || target.hp <= 0 || target.eliminated) throw new Error('蝎毒需要指定一名其他存活角色');
     assertNotIceArmorBlocked(player, target);
@@ -3373,7 +3457,7 @@ function handleSkill(state           , action                                   
   }
 
   if (action.skillId === 'scorpio.spoils') {
-    if (player.characterId !== 'scorpio') throw new Error('只有天蝎可以发动缴械');
+    if (!ownsSkill(player, action.skillId)) throw new Error('只有天蝎可以发动缴械');
     if (player.flags.usedScorpioSting) throw new Error('缴械每回合限一次');
     if (!action.targetId || target.id === player.id || !isAlive(target)) throw new Error('缴械需要指定一名其他存活角色');
     assertNotIceArmorBlocked(player, target);
@@ -3505,7 +3589,7 @@ export function createGame(options
       equipment: {},
       statuses: {},
       flags: freshFlags(),
-      rage: 0,
+      rage: characterId === 'capricorn' ? 1 : 0,
       baseMaxHp: character.maxHp,
     };
   });
@@ -3635,7 +3719,7 @@ export function createInfectionGame(options
       equipment: {},
       statuses: {},
       flags: freshFlags(),
-      rage: 0,
+      rage: characterId === 'capricorn' ? 1 : 0,
       factionId: isBoss ? 'infected' : 'survivor',
       infectionRole: isBoss ? 'initial' : undefined,
       infected: false,
@@ -3705,7 +3789,7 @@ export function createInfectionGame(options
   return state;
 }
 
-export function applyAction(input           , action        )                                            {
+function applyCoreAction(input           , action        )                                            {
   const state = cloneState(input);
   const beforeLogLength = state.log.length;
   if (action.type === 'surrender') {
@@ -3786,11 +3870,11 @@ export function applyAction(input           , action        )                   
   if (action.type === 'drawPhase') {
     if (state.phase !== 'draw') throw new Error('Not in draw phase');
     const player = findPlayer(state, state.activePlayerId);
-    if (player.characterId === 'scorpio' && !player.flags.usedScorpioPeek) {
+    if (ownsSkill(player, 'scorpio.peek') && !player.flags.usedScorpioPeek) {
       throw new Error('请先完成锁定技伏击，再进入摸牌阶段');
     }
     state.metrics.turns += 1;
-    drawCards(state, player, state.firstTurn ? 1 : 2);
+    drawCards(state, player, state.firstTurn && state.mode !== 'rogue' ? 1 : 2);
     state.phase = 'main';
   }
 
@@ -3841,7 +3925,7 @@ export function applyAction(input           , action        )                   
     const handLimit = Math.max(0, player.hp);
     if (player.hand.length > handLimit) throw new Error('Hand must be discarded down to current HP');
     const canOfferWindCut =
-      player.characterId === 'aquarius' &&
+      ownsSkill(player, 'aquarius.windCut') &&
       action.cardIds.length >= 2 &&
       !player.flags.usedAquariusWindCutThisRound &&
       state.players.some((candidate) => candidate.id !== player.id && candidate.hp > 0);
@@ -3903,7 +3987,7 @@ function aiSupportCosts(player             ) {
     if (card.kind === 'normalAttack' || card.kind === 'statusAttack') {
       return (canUseHandCard(player, card) && canUseBasicAttack(player) ? 4 : 0)
         + (card.kind === 'statusAttack' ? 1 : 0)
-        + (player.characterId === 'cancer' && card.element === 'water' ? 1 : 0);
+        + (ownsStar(player, 'cancer') && card.element === 'water' ? 1 : 0);
     }
     if (card.kind === 'weapon' || card.kind === 'armor') return 2;
     if (card.kind === 'energy') return 6;
@@ -4105,7 +4189,7 @@ function chooseAiCancerRescueAction(state           )                     {
     const cancer = findPlayer(state, pending.currentResponderId);
     if (
       cancer.control !== 'ai' ||
-      cancer.characterId !== 'cancer' ||
+      !ownsStar(cancer, 'cancer') ||
       pending.willTransform ||
       isLeoHealingBlocked(state, findPlayer(state, pending.targetId)) ||
       cancer.flags.usedCancerRescueThisRound
@@ -4125,7 +4209,7 @@ function chooseAiCancerRescueAction(state           )                     {
   }
   for (const cancer of state.players) {
     if (cancer.control !== 'ai') continue;
-    if (cancer.characterId !== 'cancer') continue;
+    if (!ownsStar(cancer, 'cancer')) continue;
     if (!isAlive(cancer)) continue;
     if (cancer.flags.usedCancerRescueThisRound) continue;
     if (state.activePlayerId === cancer.id) continue;
@@ -4155,7 +4239,7 @@ function chooseAiStandardRescueAction(state           )                     {
     const card = player.hand.find(card => card.kind === 'sun' || (card.kind === 'energy' && !isLeoHealingBlocked(state, target)));
     if (card) return {type:'playCard',playerId:player.id,cardId:card.id,targetId:target.id,mode:'rescue'};
     const water = player.hand.find(card => card.element === 'water');
-    if (player.characterId === 'cancer' && water && !isLeoHealingBlocked(state, target)) return {type:'useSkill',playerId:player.id,skillId:'cancer.rescue',targetId:target.id,cardIds:[water.id]};
+    if (water && canUseCancerRescue(state, player, target)) return {type:'useSkill',playerId:player.id,skillId:'cancer.rescue',targetId:target.id,cardIds:[water.id]};
     return {type:'skipRescue',playerId:player.id};
   }
   if (isInfectionMode(state) || state.phase !== 'gameOver' || state.winnerTeamId || state.winnerId) return undefined;
@@ -4213,6 +4297,55 @@ function scorpioAiDisarm(state           , player             , target          
   return choice ? {type:'useSkill',playerId:player.id,skillId:'scorpio.spoils',targetId:target.id,cardIds:[cost.id],...choice} : undefined;
 }
 
+function chooseAiPiscesBalance(state           , player             )                     {
+  if (player.flags.usedPiscesBalance) return;
+  const equipped = Object.values(player.equipment).filter((card)              => Boolean(card));
+  const water = [...player.hand,...equipped].filter(card => card.element === 'water').sort((a,b) => {
+    const cost = (card     ) => (card.kind === 'weapon' && !player.equipment.weapon) ||
+      (card.kind === 'armor' && !player.equipment.armor) ? 4 : equipped.includes(card) ? 3 : card.kind === 'normalAttack' ? 0 : 1;
+    return cost(a)-cost(b);
+  });
+  const living = state.players.filter(isAlive);
+  let best                    , bestScore=0;
+  for(let i=0;i<living.length;i++)for(let j=i+1;j<living.length;j++) {
+    const pair=[living[i],living[j]],diff=Math.abs(pair[0].hp-pair[1].hp);
+    if(!diff || diff>water.length)continue;
+    const average=Math.floor((pair[0].hp+pair[1].hp)/2);
+    let score=0,changed=false;
+    for(const target of pair) {
+      const healingBlocked=isLeoHealingBlocked(state,target) ||
+        (isInfectionMode(state) && (target.infected || isInfectedFaction(target)));
+      const hp=target.hp>average?average:healingBlocked?target.hp:Math.min(target.maxHp,average);
+      const delta=hp-target.hp,friend=sameFaction(state,player,target);
+      changed ||= delta!==0;
+      score+=(friend?1:-1)*delta;
+      if(friend && delta>0 && target.hp<=2)score+=target.hp===1?0.75:0.25;
+      if(!friend && delta<0 && hp<=2)score+=0.25;
+    }
+    if(!changed)continue;
+    score+=player.flags.piscesBalanceLoss>0?0:0.6;
+    for(const card of water.slice(0,diff))score-=equipped.includes(card)?1.25:((card.kind==='weapon'&&!player.equipment.weapon)||(card.kind==='armor'&&!player.equipment.armor))?2:0.55;
+    if(score>bestScore){bestScore=score;best={type:'useSkill',playerId:player.id,skillId:'pisces.balance',targetIds:pair.map(p=>p.id),cardIds:water.slice(0,diff).map(c=>c.id)};}
+  }
+  return best;
+}
+
+function chooseAiPiscesObserve(state           , player             )                     {
+  if(player.flags.usedPiscesObserveTide)return;
+  let water=0,attack=false,energy=false;
+  const discard=player.hand.filter(card=>{
+    if(card.kind==='sun'||card.kind==='moon')return false;
+    if(card.kind==='weapon'&&!player.equipment.weapon)return false;
+    if(card.kind==='armor'&&!player.equipment.armor)return false;
+    if(card.element==='water'&&water<2){water++;return false;}
+    if((card.kind==='normalAttack'||card.kind==='statusAttack')&&canUseBasicAttack(player)&&!attack){attack=true;return false;}
+    if(card.kind==='energy'&&!player.flags.energyChargeElement&&canUseBasicAttack(player)&&!energy&&player.hand.some(c=>c.kind==='normalAttack'||c.kind==='statusAttack')){energy=true;return false;}
+    if(card.kind==='aoe'||card.kind==='utility')return false;
+    return true;
+  });
+  if(discard.length)return {type:'useSkill',playerId:player.id,skillId:'pisces.observeTide',cardIds:discard.map(c=>c.id)};
+}
+
 function chooseAiAdditionalSkill(state           , player             )                     {
   const enemies = aiHostilePlayers(state, player).filter(target => !isIceArmorBlocked(player, target));
   const enemy = enemies.sort((a, b) => a.hp - b.hp)[0];
@@ -4227,30 +4360,31 @@ function chooseAiAdditionalSkill(state           , player             )         
       ?? state.deck.find(card => card.element)?.element;
     if (element) return use('weapon.airCompass', { option: element });
   }
-  if (player.characterId === 'virgo' && !player.flags.usedVirgoPurify) {
+  if (ownsStar(player, 'virgo') && !player.flags.usedVirgoPurify) {
     const earth = costs.find(card => card.element === 'earth');
     const target = allies.find(target => target.infected || NORMAL_ABNORMAL_STATUSES.some(status => target.statuses[status]));
     if (earth && target) return use('virgo.purify', { targetId: target.id, cardIds: [earth.id], ...(target.infected ? { option: 'infection' } : {}) });
   }
-  if (player.characterId === 'gemini' && !player.flags.usedGeminiSteal && enemy && (costs.length >= 2 || (costs.length && player.hp > 1))) {
+  if (ownsStar(player, 'gemini') && !player.flags.usedGeminiSteal && enemy && (costs.length >= 2 || (costs.length && player.hp > 1))) {
     const selected = enemy.equipment.weapon ?? enemy.equipment.armor ?? enemy.hand[0];
     return use('gemini.steal', { targetId: enemy.id, cardIds: costs.slice(0, 2).map(card => card.id), ...(selected ? { selectedCardId: selected.id } : {}) });
   }
-  if (player.characterId === 'scorpio' && !player.flags.usedScorpioSting) {
+  if (ownsStar(player, 'scorpio') && !player.flags.usedScorpioSting) {
     for (const target of enemies) {
       const action = scorpioAiDisarm(state, player, target);
       if (action) return action;
     }
   }
-  if (player.characterId === 'aries' && !player.flags.usedAriesRam && !player.flags.usedAriesBurnSoul && enemy) {
+  const ramEnemy = lowestHpEnemy(state, player);
+  if (ownsStar(player, 'aries') && !player.flags.usedAriesRam && !player.flags.usedAriesBurnSoul && ramEnemy) {
     const cost = costs.find(card => card.element !== 'fire' && (card.kind === 'normalAttack' || card.kind === 'statusAttack'));
     if (cost) {
-      const action = use('aries.ram', { targetId: enemy.id, cardIds: [cost.id] });
-      const paid = withDistanceCost(action, state, player, enemy, skillNeedsDistanceCost(state, player, enemy, 'aries.ram'), [cost.id]);
+      const action = use('aries.ram', { targetId: ramEnemy.id, cardIds: [cost.id] });
+      const paid = withDistanceCost(action, state, player, ramEnemy, skillNeedsDistanceCost(state, player, ramEnemy, 'aries.ram'), [cost.id]);
       if (paid) return paid;
     }
   }
-  if (player.characterId === 'libra' && !player.flags.usedLibraHarmony) {
+  if (ownsStar(player, 'libra') && !player.flags.usedLibraHarmony) {
     const air = costs.filter(card => card.element === 'air');
     for (const rich of enemies) {
       for (const poor of allies.filter(target => target.id !== player.id)) {
@@ -4262,21 +4396,18 @@ function chooseAiAdditionalSkill(state           , player             )         
       }
     }
   }
-  if (player.characterId === 'pisces' && !player.flags.usedPiscesBalance) {
-    const water = costs.filter(card => card.element === 'water');
-    for (const target of enemies) {
-      const ally = allies.find(ally => target.hp > ally.hp && target.hp - ally.hp <= water.length);
-      if (ally) return use('pisces.balance', { targetIds: [ally.id, target.id], cardIds: water.slice(0, target.hp - ally.hp).map(card => card.id) });
-    }
+  if (ownsStar(player, 'pisces') && !player.flags.usedPiscesBalance) {
+    const action=chooseAiPiscesBalance(state,player);
+    if(action)return action;
   }
-  if (player.characterId === 'sagittarius' && !player.flags.usedSagittariusSeek && (!player.equipment.weapon || !player.equipment.armor)) {
+  if (ownsStar(player, 'sagittarius') && !player.flags.usedSagittariusSeek && (!player.equipment.weapon || !player.equipment.armor)) {
     const fire = costs.find(card => card.element === 'fire');
     const other = costs.find(card => card.id !== fire?.id);
     if (fire && other && state.deck.some(card => card.kind === 'weapon' || card.kind === 'armor')) {
       return use('sagittarius.seekEquipment', { cardIds: [fire.id, other.id] });
     }
   }
-  if (player.characterId === 'leo' && !player.flags.usedLeoOrder && enemy && costs.length) {
+  if (ownsStar(player, 'leo') && !player.flags.usedLeoOrder && enemy && costs.length) {
     return use('leo.order', { targetId: enemy.id, cardIds: [costs[0].id] });
   }
   if (player.equipment.weapon?.element === 'water' && !player.flags.usedWeaponConvert && costs.length >= 2) {
@@ -4294,7 +4425,7 @@ function chooseAiAdditionalSkill(state           , player             )         
   return undefined;
 }
 
-export function chooseAiAction(state           )                     {
+function chooseCoreAiAction(state           )                     {
   const cancerRescue = chooseAiCancerRescueAction(state);
   if (cancerRescue) return cancerRescue;
 
@@ -4309,9 +4440,9 @@ export function chooseAiAction(state           )                     {
     if (player.control !== 'ai') return undefined;
     if (skillDecision.kind === 'sagittariusResupply') {
       const target = state.players.filter(candidate => isAlive(candidate) && sameFaction(state, player, candidate))
-        .sort((a, b) => Math.max(0, Math.min(4, b.maxHp) - b.hand.length) - Math.max(0, Math.min(4, a.maxHp) - a.hand.length) ||
+        .sort((a, b) => Math.max(0, b.maxHp - b.hand.length) - Math.max(0, a.maxHp - a.hand.length) ||
           Number(b.id === player.id) - Number(a.id === player.id) || a.hp / a.maxHp - b.hp / b.maxHp)[0];
-      const activate = isAlive(player) && Boolean(target && target.hand.length < Math.min(4, target.maxHp));
+      const activate = isAlive(player) && Boolean(target && target.hand.length < target.maxHp);
       return {type: 'resolveSkillDecision', playerId: player.id, activate, targetId: activate ? target .id : undefined};
     }
     if (skillDecision.kind === 'scorpioEndPeek') {
@@ -4493,10 +4624,10 @@ export function chooseAiAction(state           )                     {
   if (player.control !== 'ai') return undefined;
 
   if (state.phase === 'draw') {
-    if (player.characterId === 'taurus' && !player.flags.taurusGuardSetupDone && !isSilencedInOwnActionTurn(state, player)) {
+    if (ownsStar(player, 'taurus') && !player.flags.taurusGuardSetupDone && !isSilencedInOwnActionTurn(state, player)) {
       return {type:'useSkill',playerId:player.id,skillId:'taurus.guard'};
     }
-    if (player.characterId === 'scorpio' && !player.flags.usedScorpioPeek) {
+    if (ownsStar(player, 'scorpio') && !player.flags.usedScorpioPeek) {
       return { type: 'useSkill', playerId: player.id, skillId: 'scorpio.peek', ...scorpioWaterPeekOrder(state) };
     }
     return { type: 'drawPhase' };
@@ -4543,8 +4674,16 @@ export function chooseAiAction(state           )                     {
   if (!enemy) return { type: 'endMain', playerId: player.id };
   const outputEnemy = lowestHpEnemy(state, player, (candidate) => !isIceArmorBlocked(player, candidate));
   const canUseActiveSkill = !isSilencedInOwnActionTurn(state, player);
+  if (canUseActiveSkill && ownsStar(player, 'pisces')) {
+    const equipment=player.hand.find(card=>(card.kind==='weapon'&&!player.equipment.weapon)||(card.kind==='armor'&&!player.equipment.armor));
+    if(equipment)return {type:'playCard',playerId:player.id,cardId:equipment.id};
+    const balance=chooseAiPiscesBalance(state,player);
+    if(balance)return balance;
+    const observe=chooseAiPiscesObserve(state,player);
+    if(observe)return observe;
+  }
 
-  if (canUseActiveSkill && player.characterId === 'scorpio' && !player.flags.usedScorpioPoison && outputEnemy) {
+  if (canUseActiveSkill && ownsStar(player, 'scorpio') && !player.flags.usedScorpioPoison && outputEnemy) {
     const water = scorpioAiSkillCost(player, true);
     const extra = water && scorpioAiSkillCost(player, false, [water.id]);
     const target = aiHostilePlayers(state, player)
@@ -4573,36 +4712,37 @@ export function chooseAiAction(state           )                     {
     };
   }
 
-  if (canUseActiveSkill && player.characterId === 'cancer' && !player.flags.usedCancerHeal) {
+  if (canUseActiveSkill && ownsStar(player, 'cancer') && !player.flags.usedCancerHeal) {
     const ally = mostDamagedAlly(state, player);
     const cost = aiSupportCosts(player)[0];
     if (ally && cost) return { type: 'useSkill', playerId: player.id, skillId: 'cancer.heal', targetId: ally.id, cardIds: [cost.id] };
   }
 
-  if (canUseActiveSkill && player.characterId === 'aquarius' && !player.flags.usedAquariusMassHeal) {
+  if (canUseActiveSkill && ownsStar(player, 'aquarius') && !player.flags.usedAquariusMassHeal) {
     const cardIds = aquariusAiBrewCosts(state, player);
     if (cardIds) {
       return { type: 'useSkill', playerId: player.id, skillId: 'aquarius.massHeal', targetId: enemy.id, cardIds };
     }
   }
 
-  if (canUseActiveSkill && player.characterId === 'taurus' && !player.flags.usedTaurusArmor) {
+  if (canUseActiveSkill && ownsStar(player, 'taurus') && !player.flags.usedTaurusArmor) {
     const earth = firstCost(player, (card) => card.element === 'earth');
     if (earth && player.armor < player.maxArmor) {
       return { type: 'useSkill', playerId: player.id, skillId: 'taurus.armor', targetId: player.id, cardIds: [earth.id] };
     }
   }
 
-  if (canUseActiveSkill && player.characterId === 'aries' && !player.flags.usedAriesRam) {
+  if (canUseActiveSkill && ownsStar(player, 'aries') && !player.flags.usedAriesRam) {
     const fireAttack = firstCost(player, (card) => card.element === 'fire' && (card.kind === 'normalAttack' || card.kind === 'statusAttack'));
-    if (fireAttack && outputEnemy) {
-      const action         = { type: 'useSkill', playerId: player.id, skillId: 'aries.ram', targetId: outputEnemy.id, cardIds: [fireAttack.id] };
-      const withCost = withDistanceCost(action, state, player, outputEnemy, skillNeedsDistanceCost(state, player, outputEnemy, 'aries.ram'), [fireAttack.id]);
+    const ramEnemy = lowestHpEnemy(state, player);
+    if (fireAttack && ramEnemy) {
+      const action         = { type: 'useSkill', playerId: player.id, skillId: 'aries.ram', targetId: ramEnemy.id, cardIds: [fireAttack.id] };
+      const withCost = withDistanceCost(action, state, player, ramEnemy, skillNeedsDistanceCost(state, player, ramEnemy, 'aries.ram'), [fireAttack.id]);
       if (withCost) return withCost;
     }
   }
 
-  if (canUseActiveSkill && player.characterId === 'leo' && !player.flags.usedLeoRoar) {
+  if (canUseActiveSkill && ownsStar(player, 'leo') && !player.flags.usedLeoRoar) {
     const fire = firstCost(player, (card) => card.element === 'fire');
     const roarTargets = aiHostilePlayers(state, player)
       .filter((candidate) => !candidate.statuses.burn && !isIceArmorBlocked(player, candidate))
@@ -4619,7 +4759,7 @@ export function chooseAiAction(state           )                     {
     }
   }
 
-  if (canUseActiveSkill && player.characterId === 'capricorn') {
+  if (canUseActiveSkill && ownsStar(player, 'capricorn')) {
     const charge = chooseAiCapricornCharge(state, player, true);
     if (charge) return charge;
   }
@@ -4712,11 +4852,11 @@ export function chooseAiAction(state           )                     {
     }
   }
 
-  if (canUseActiveSkill && player.characterId === 'pisces' && !player.flags.usedPiscesObserveTide) {
-    const cards = player.hand.filter(card => card.kind !== 'sun' && card.kind !== 'moon');
-    if (cards.length) return { type: 'useSkill', playerId: player.id, skillId: 'pisces.observeTide', cardIds: cards.map(card => card.id) };
+  if (canUseActiveSkill && ownsStar(player, 'pisces') && !player.flags.usedPiscesObserveTide) {
+    const observe=chooseAiPiscesObserve(state,player);
+    if(observe)return observe;
   }
-  if (canUseActiveSkill && player.characterId === 'capricorn') {
+  if (canUseActiveSkill && ownsStar(player, 'capricorn')) {
     const charge = chooseAiCapricornCharge(state, player, false);
     if (charge) return charge;
   }
@@ -4752,4 +4892,207 @@ export function applyActionWithAi(state           , action        )             
   const result = applyAction(state, action);
   const settled = applyAiActions(result.state);
   return { state: settled.state, events: [...result.events, ...settled.events] };
+}
+
+// Local roguelike mode. Core card effects are shared with standard mode.
+function ownsSkill(player             , id        ) {
+  return player.rogue ? player.rogue.skills.includes(id) : player.characterId === id.split('.')[0];
+}
+function ownsStar(player             , star        ) {
+  return player.rogue ? player.rogue.skills.some((id        ) => id.startsWith(star + '.')) : player.characterId === star;
+}
+const rogueSkillIds = Object.keys(SKILL_DESCRIPTIONS).filter(id => id.split('.')[0] in CHARACTERS);
+function revealRogueSkill(player             , id        ) {
+  if (player.rogue?.skills.includes(id) && !player.rogue.revealed.includes(id)) {
+    player.rogue.revealed.push(id); player.rogue.elementRevealed = true;
+  }
+}
+
+function rogueOffer(state           , player             , count = 3) {
+  const eligible = rogueSkillIds.filter(id => player.rogue.pools.includes(id.split('.')[0]) && !ownsSkill(player,id));
+  const shuffled = shuffleWithSeed(eligible, state.seed); state.seed = shuffled.seed;
+  return shuffled.items.slice(0,count);
+}
+function checkRogueDefeat(state           ) {
+  if (state.phase === 'gameOver' || state.pendingRescue) return;
+  for (const player of state.players.filter(p => p.hp <= 0 && !p.eliminated)) {
+    const eligible = standardRescuers(state,player).map(p => p.id);
+    if (eligible.length) {
+      state.pendingRescue = {targetId:player.id, willTransform:false,resumePhase:state.phase,
+        eligibleResponderIds:eligible, passedResponderIds:[],currentResponderId:eligible[0]};
+      state.phase='rescue'; return;
+    }
+    player.eliminated=true;
+    const killer=state.players.find(p=>p.id===player.rogue.lastDamageSourceId);
+    if(killer && killer.id!==player.id) state.rogue.rewards.push({playerId:killer.id,skills:[...player.rogue.skills],deadId:player.id});
+    log(state,messageTemplate`${player.name} 已淘汰`,player.id,'defeat');
+  }
+  if (state.pendingAttack || state.pendingSkillDecisions?.length || state.pendingCapricornSpread) return;
+  const living=state.players.filter(isAlive);
+  if(living.length<=1) {
+    state.phase='gameOver'; state.winnerId=living[0]?.id; state.winnerTeamId=living[0]?.teamId;
+    log(state,messageTemplate`${living[0]?.name ?? '无人'} 获胜`,living[0]?.id,'gameOver');
+  }
+}
+function settleRogue(state           ) {
+  if(state.mode!=='rogue' || state.phase==='gameOver' || state.rogue.pending || state.rogue.opening.length) return;
+  if(state.pendingAttack || state.pendingRescue || state.pendingSkillDecisions?.length || state.pendingCapricornSpread || state.phase==='hammerBreak') return;
+  checkRogueDefeat(state);
+  if(state.phase==='gameOver' || state.pendingRescue) return;
+  for(const dead of state.players.filter(p=>p.eliminated&&!p.rogue.rewardQueued)) {
+    dead.rogue.rewardQueued=true;
+    const killer=state.players.find(p=>p.id===dead.rogue.lastDamageSourceId);
+    if(killer&&killer.id!==dead.id&&!state.rogue.rewards.some(r=>r.deadId===dead.id)) state.rogue.rewards.push({playerId:killer.id,skills:[...dead.rogue.skills],deadId:dead.id});
+  }
+  while(state.rogue.rewards.length) {
+    const reward=state.rogue.rewards.shift(); const p=findPlayer(state,reward.playerId);
+    if(!isAlive(p)) continue;
+    state.rogue.pending={kind:'loot',playerId:p.id,offer:reward.skills.filter((id        )=>!ownsSkill(p,id)),deadId:reward.deadId}; return;
+  }
+  if(state.rogue.growthDue) {
+    state.rogue.growthDue=false;
+    state.rogue.growthQueue=orderedPlayerIdsFrom(state,state.startingPlayerId).filter(id=>isAlive(findPlayer(state,id)));
+  }
+  while(state.rogue.growthQueue.length) {
+    const id=state.rogue.growthQueue.shift(),p=findPlayer(state,id),offer=rogueOffer(state,p);
+    if(isAlive(p)&&offer.length) {state.rogue.pending={kind:'growth',playerId:id,offer}; return;}
+  }
+}
+export function createRogueGame(options                                        ={}) {
+  const state=createGame({seed:options.seed,characters:['aries','taurus','gemini','cancer','leo','virgo'],controls:options.controls??['human','ai','ai','ai','ai','ai']});
+  state.mode='rogue';
+  // Remove standard mode's fifth opening fate card: every seat starts with four.
+  if(state.openingFate) {
+    const recipient=findPlayer(state,state.openingFate.recipientId);
+    const ix=recipient.hand.findIndex(c=>c.id===state.openingFate .card.id);
+    if(ix>=0) state.deck.push(...recipient.hand.splice(ix,1));
+    delete state.openingFate;
+  }
+  state.log=[];
+  const stars=Object.keys(CHARACTERS)                 ;
+  const allocated=shuffleWithSeed(stars,state.seed);state.seed=allocated.seed;
+  for(const [index,p] of state.players.entries()) {
+    p.rogue={pools:allocated.items.slice(index*2,index*2+2),skills:[],revealed:[],elementRevealed:false};
+    p.characterId=p.rogue.pools[0]; p.seatIndex=index; p.teamId=`solo-${index+1}`;
+    p.name=`${index+1}号玩家`; p.hp=3;p.maxHp=3;p.baseMaxHp=3;p.armor=0;p.maxArmor=2;
+  }
+  state.rogue={opening:state.players.map(p=>p.id),pending:undefined,rewards:[],growthQueue:[],growthDue:false};
+  const p=state.players[0];
+  state.rogue.pending={kind:'opening',playerId:p.id,offer:rogueOffer(state,p,6)};
+  log(state,messageTemplate`星盘指定 ${findPlayer(state,state.startingPlayerId).name} 先手，其两个初始技能公开`,state.startingPlayerId,'setup');
+  return state;
+}
+function chooseRogue(input           , action                                      ) {
+  const state=cloneState(input),pending=state.rogue.pending;
+  if(!pending || pending.playerId!==action.playerId) throw Error('不是当前技能选择玩家');
+  const p=findPlayer(state,action.playerId);
+  if(pending.offer.length && (!action.skillId || !pending.offer.includes(action.skillId))) throw Error('技能不在当前候选中');
+  if(!pending.offer.length && action.skillId) throw Error('没有可掠夺技能');
+  if(pending.kind==='loot' && !['draw2','heal1'].includes(action.option??'')) throw Error('请选择摸两牌或回复一点生命');
+  if(pending.kind==='loot' && action.option==='heal1' && (p.hp>=p.maxHp || isLeoHealingBlocked(state,p))) throw Error('当前无法回复，请选择摸牌');
+  if(action.skillId) {
+    if(ownsSkill(p,action.skillId)) throw Error('不能重复学习');
+    const first=p.rogue.skills.length===0;
+    p.rogue.skills.push(action.skillId);
+    if(first) p.characterId=action.skillId.split('.')[0]               ;
+    if(pending.kind==='loot' && !p.rogue.pools.includes(action.skillId.split('.')[0])) p.rogue.pools.push(action.skillId.split('.')[0]);
+    if(pending.kind==='opening' || pending.kind==='openingExtra') {
+      if(p.id===state.startingPlayerId) revealRogueSkill(p,action.skillId);
+    }
+  }
+  delete state.rogue.pending;
+  if(pending.kind==='opening' && p.id===state.startingPlayerId) {
+    state.rogue.pending={kind:'openingExtra',playerId:p.id,offer:rogueOffer(state,p)};
+  } else if(pending.kind==='opening' || pending.kind==='openingExtra') {
+    state.rogue.opening.shift();
+    const next=state.rogue.opening[0];
+    if(next) {const np=findPlayer(state,next);state.rogue.pending={kind:'opening',playerId:next,offer:rogueOffer(state,np,6)};}
+  } else if(pending.kind==='loot') {
+    if(action.option==='draw2') drawCards(state,p,2); else heal(state,p,1,p);
+  }
+  settleRogue(state);
+  return {state,events:[]};
+}
+function settleImmediateBurns(state           ) {
+  if (state.phase === 'gameOver') {delete state.pendingImmediateBurns;return;}
+  while (state.pendingImmediateBurns?.length && !resolutionIsPending(state) && !state.pendingSkillDecisions?.length) {
+    const hit = state.pendingImmediateBurns.shift() ;
+    const target = findPlayer(state, hit.targetId);
+    if (!isAlive(target) || !target.statuses.burn?.burnDamageSettled) continue;
+    const source = state.mode === 'rogue' ? findPlayer(state, hit.sourceId) : undefined;
+    applyDamage(state, target, source, 1, {burnTick: true});
+    if (state.phase === 'gameOver') break;
+  }
+  if (!state.pendingImmediateBurns?.length || state.phase === 'gameOver') delete state.pendingImmediateBurns;
+}
+
+export function applyAction(input           , action        )                                       {
+  if(input.mode!=='rogue') {
+    const result=applyCoreAction(input,action);
+    settleImmediateBurns(result.state);
+    settleDyingActivePlayer(result.state);
+    result.events=result.state.log.slice(0,result.state.log.length-input.log.length);
+    return result;
+  }
+  if(input.rogue.pending) {
+    if(action.type!=='rogueChoose') throw Error('请先完成技能选择');
+    return chooseRogue(input,action);
+  }
+  if(action.type==='rogueChoose') throw Error('当前无需选择技能');
+  if(action.type==='surrender') {
+    const state=cloneState(input),p=findPlayer(state,action.playerId);
+    p.hp=0;p.eliminated=true;settleRogue(state);settleDyingActivePlayer(state);return {state,events:[]};
+  }
+  const result=applyCoreAction(input,action),state=result.state;
+  settleImmediateBurns(state);
+  settleDyingActivePlayer(state);
+  if(!state.pendingRescue) state.pendingSkillDecisions=state.pendingSkillDecisions?.filter(d=>d.kind!=='rogueSteal'||isAlive(findPlayer(state,d.playerId)));
+  if(action.type==='useSkill') {
+    const p=findPlayer(state,action.playerId);revealRogueSkill(p,action.skillId);
+    if(action.skillId==='aries.ram' && p.flags.usedAriesBurnSoul) revealRogueSkill(p,'aries.burnSoul');
+  }
+  // Reveal passives only for the player whose effect changed, never all holders.
+  for(const p of state.players) {
+    const old=findPlayer(input,p.id);
+    const flags=[['aries.bloodRage','ariesBloodRageReady'],['gemini.extraTurn','grantedExtraTurn'],['virgo.domain','virgoDomainActive'],['libra.elementSense','libraRoundElements']];
+    for(const [id,key] of flags) if(JSON.stringify(p.flags[key])!==JSON.stringify(old.flags[key]) && p.flags[key] && (!Array.isArray(p.flags[key])||p.flags[key].length)) revealRogueSkill(p,id);
+    if(p.rage>old.rage) revealRogueSkill(p,'capricorn.unyielding');
+    const aliases={'taurus.thickSkin':['厚皮','神躯'],'scorpio.peek':['伏击','窥星'],'virgo.discipline':['戒律','星律'],'pisces.dream':['归潮'],'sagittarius.sharpshot':['神射','缪斯之弦']};
+    for(const event of state.log.slice(0,Math.max(0,state.log.length-input.log.length))) {
+      if(event.playerId!==p.id) continue;
+      for(const id of p.rogue.skills) if([SKILL_DESCRIPTIONS[id].name,...(aliases[id]??[])].some(name=>event.message.includes(name))) revealRogueSkill(p,id);
+    }
+  }
+  settleRogue(state);
+  return result;
+}
+export function chooseAiAction(state           )                     {
+  if(state.mode!=='rogue') return chooseCoreAiAction(state);
+  const pending=state.rogue.pending;
+  if(pending) {
+    const p=findPlayer(state,pending.playerId);if(p.control!=='ai') return;
+    const priority=['virgo.domain','aquarius.stormEye','libra.elementSense','sagittarius.sharpshot','taurus.thickSkin','scorpio.spoils','cancer.heal'];
+    const skillId=[...pending.offer].sort((a,b)=>(priority.indexOf(a)<0?99:priority.indexOf(a))-(priority.indexOf(b)<0?99:priority.indexOf(b)))[0];
+    return {type:'rogueChoose',playerId:p.id,skillId,option:p.hp<3&&!isLeoHealingBlocked(state,p)?'heal1':'draw2'};
+  }
+  const steal=state.pendingSkillDecisions?.[0];
+  if(!state.pendingRescue && steal?.kind==='rogueSteal') {
+    const p=findPlayer(state,steal.playerId);if(p.control!=='ai')return;
+    const target=findPlayer(state,steal.targetId );
+    const item=[...target.hand,...Object.values(target.equipment)].find(c=>!isIceArmorBlocked(p,target)||c.element==='air');
+    if(!item)return;
+    return {type:'resolveSkillDecision',playerId:p.id,activate:true,selectedCardId:item.id};
+  }
+  const probe=cloneState(state);
+  // Preserve seatIndex turn/distance rules; remove fixed array-order AI tie bias.
+  // Canonical input keeps the decision reproducible even if storage order differs.
+  probe.players=shuffleWithSeed([...probe.players].sort((a,b)=>a.id.localeCompare(b.id)),state.seed).items;
+  for(let n=0;n<40;n++) {
+    const action=chooseCoreAiAction(probe);if(!action)return;
+    try { applyAction(state,action);return action; } catch(error) {
+      if(action.type==='useSkill') {
+        const p=findPlayer(probe,action.playerId);p.rogue.skills=p.rogue.skills.filter(id=>!id.startsWith(action.skillId.split('.')[0]+'.'));
+      } else return;
+    }
+  }
 }

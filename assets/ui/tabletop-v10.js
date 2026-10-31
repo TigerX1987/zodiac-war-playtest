@@ -79,8 +79,11 @@ window.TabletopV10 = {
     const skillId = slot === 'weapon' && card?.element === 'water' ? 'weapon.waterCodex' :
       slot === 'weapon' && card?.element === 'air' ? 'weapon.airCompass' : '';
     const local = localHumanPlayer()?.id === player.id;
-    const ready = local && skillId && canActivateEquipmentSkill(player, skillId);
-    return '<button class="v10-equipment ' + (ready ? 'ready' : '') + (card ? '' : ' empty') + '" ' +
+    const selection=boardSkillSelection();
+    const cost=selection?.kind==='pisces.balance'&&selection.player.id===player.id&&piscesBalanceRequirement(player.id).required>0&&card?.element==='water';
+    const selected=cost&&(piscesBalanceDrafts[player.id]?.costCardIds||[]).includes(card.id);
+    const ready = cost || (local && skillId && canActivateEquipmentSkill(player, skillId));
+    return '<button class="v10-equipment ' + (ready ? 'ready' : '') + (selected ? ' selected' : '') + (card ? '' : ' empty') + '" '+(cost?'data-pisces-cost="true" aria-pressed="'+Boolean(selected)+'" ':'') +
       (card ? 'onclick="event.stopPropagation();TabletopV10.clickEquipment(\'' + player.id + '\',\'' + slot + '\')"' : 'disabled') +
       ' aria-label="' + safeText(label + '：' + (card?.name || '空') + (ready ? '，可以发动' : '')) + '" title="' +
       safeText(card?.name || label + '槽为空') + '">' +
@@ -89,6 +92,12 @@ window.TabletopV10 = {
   },
   clickEquipment(playerId, slot) {
     if (boardSkillBusy) return;
+    const selection=boardSkillSelection();
+    if(selection?.kind==='pisces.balance'&&selection.player.id===playerId){
+      const card=selection.player.equipment[slot];
+      if(card?.element==='water'&&piscesBalanceRequirement(playerId).required>0)togglePiscesBalanceCost(playerId,card.id);
+      return;
+    }
     if (boardSkillSelection()) {selectBoardSkillTarget(playerId);openBoardSkillOptionsIfNeeded();return;}
     if (sagittariusResupplySelection()) return selectSagittariusResupplyTarget(playerId);
     const player = state.players.find(candidate => candidate.id === playerId);

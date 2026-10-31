@@ -176,6 +176,8 @@ body.tabletopV10.matchOpen #board .v10-hand-dock .stackedHand .card:first-child 
 .tabletopV10 .sagittariusResupplyChoices button:first-child, .tabletopV10 .skillActivationChoices button:first-child { color: #f8e6b8; border-color: #bca064; background: #49391d; }
 .tabletopV10 .v10-skill-action-overlay.v10-board-skill-options { width: min(660px, calc(100vw - 32px)); }
 .tabletopV10 .v10-arena[data-skill-targeting="targets"] .v10-equipment { pointer-events: none; }
+.tabletopV10 .v10-arena[data-skill-targeting="targets"] .v10-equipment[data-pisces-cost="true"] { pointer-events: auto; outline: 1px solid #63c7ea; }
+.tabletopV10 .v10-equipment[data-pisces-cost="true"][aria-pressed="true"] { outline: 3px solid #ffe29a; box-shadow: 0 0 12px #ffe29a99; }
 @media (max-width: 520px) and (orientation: portrait) {
   .tabletopV10 .v10-board-skill-options .skillChoiceActions { flex-wrap: wrap; }
   .tabletopV10 .v10-board-skill-options .skillChoiceSummary { flex-basis: 100%; max-height: 4.8em; }
