@@ -1,5 +1,5 @@
-import {ART_SIZE, FULLBODY_SIZE, ANCHORS, SCALES_LAYER, EYELID_LAYERS, LEO_SIGIL_LAYER, LEO_PENDANT_LAYER, ZODIAC_SIGNS, DIAL_SLOT_CENTERS, DIAL_SYMBOL_RATIO, blinkFrames, scaleAngle, fitGuardians, mapHitArea} from './portal-motion-model.mjs?v=web-2ef96cd1fdaac619';
-import {DIAL_PERIOD_MS, dialSpeedStep} from './portal-motion-model.mjs?v=web-2ef96cd1fdaac619';
+import {ART_SIZE, FULLBODY_SIZE, ANCHORS, SCALES_LAYER, EYELID_LAYERS, LEO_SIGIL_LAYER, LEO_PENDANT_LAYER, ZODIAC_SIGNS, DIAL_SLOT_CENTERS, DIAL_SYMBOL_RATIO, blinkFrames, scaleAngle, fitGuardians, mapHitArea} from './portal-motion-model.mjs?v=web-f35f9b7d9d5e07f9';
+import {DIAL_PERIOD_MS, dialSpeedStep} from './portal-motion-model.mjs?v=web-f35f9b7d9d5e07f9';
 
 const root = document.getElementById('portalEntry');
 if (root) attach(root);
