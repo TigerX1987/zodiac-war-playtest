@@ -1,11 +1,11 @@
-import { SKILL_DESCRIPTIONS } from '../content/skillDescriptions.mjs?v=web-f35f9b7d9d5e07f9';
-import { createBaseDeck, createInfectionDeck, effectiveRitualCard, ELEMENT_LABELS, statusForElement } from '../content/cards.mjs?v=web-f35f9b7d9d5e07f9';
+import { SKILL_DESCRIPTIONS } from '../content/skillDescriptions.mjs?v=web-2f8ee550364ff823';
+import { createBaseDeck, createInfectionDeck, effectiveRitualCard, ELEMENT_LABELS, statusForElement } from '../content/cards.mjs?v=web-2f8ee550364ff823';
 import {
   CHARACTERS,
   DEFAULT_CHARACTER_PAIR,
   DEFAULT_DEMO_CHARACTERS,
   zodiacSeatIndices,
-} from '../content/characters.mjs?v=web-f35f9b7d9d5e07f9';
+} from '../content/characters.mjs?v=web-2f8ee550364ff823';
              
          
        
@@ -24,7 +24,7 @@ import {
               
             
                      
-import { randomFloat, shuffleWithSeed } from './random.mjs?v=web-f35f9b7d9d5e07f9';
+import { randomFloat, shuffleWithSeed } from './random.mjs?v=web-2f8ee550364ff823';
 
 const STATUS_LABELS                           = {
   burn: '灼烧',
@@ -95,7 +95,13 @@ function freshFlags()            {
 }
 
 function cloneState(state           )            {
-  if (state.mode === 'rogue') return structuredClone(state);
+  if (state.mode === 'rogue') {
+    const next = structuredClone(state);
+    // Player storage is not a game rule. Keep effect scans in physical seat
+    // order while retaining explicit attack, response and choice queue order.
+    next.players = playersInSeatOrder(next);
+    return next;
+  }
   return {
     ...state,
     players: state.players.map((player) => ({
@@ -312,10 +318,16 @@ function alliesOf(state           , playerId        ) {
 
 function enemiesOf(state           , playerId        ) {
   const player = findPlayer(state, playerId);
-  if (isInfectionMode(state)) {
+  if (isInfectionMode(state) || state.mode === 'rogue') {
     return state.players.filter((candidate) => candidate.id !== player.id && isAlive(candidate));
   }
   return state.players.filter((candidate) => candidate.teamId !== player.teamId && isAlive(candidate));
+}
+
+function aoeTargets(state           , player             ) {
+  return enemiesOf(state, player.id).filter(
+    target => !player.flags.iceArmorBlockedTargetIds.includes(target.id),
+  );
 }
 
 function playersInSeatOrder(state           ) {
@@ -378,7 +390,7 @@ function advanceTurnOrder(state           , previousPlayerId        ) {
 
 function isCrossDistanceTarget(state           , source             , target             ) {
   if (state.players.length <= 2) return false;
-  if (!isInfectionMode(state) && source.teamId === target.teamId) return false;
+  if (!isInfectionMode(state) && state.mode !== 'rogue' && source.teamId === target.teamId) return false;
   return circularSeatDistance(state, source, target) > 1;
 }
 
@@ -569,8 +581,10 @@ function addStatus(state           , player             , status          , turn
   const retainThroughTurn = status === 'silence' ? player.statuses.silence?.retainThroughTurn : undefined;
   const expiresAtTurnStart = status === 'silence' ? player.statuses.silence?.expiresAtTurnStart : undefined;
   player.statuses[status] = { id: status, turns, ...(retainThroughTurn !== undefined ? {retainThroughTurn} : {}), ...(expiresAtTurnStart ? {expiresAtTurnStart} : {}) };
-  if (status === 'burn' && source && state.players.some(ally =>
-    isAlive(ally) && ownsSkill(ally, 'aries.burnSoul') && sameFaction(state, ally, source))) {
+  const burnSoulOwners=status==='burn'&&source?state.players.filter(ally =>
+    isAlive(ally) && ownsSkill(ally,'aries.burnSoul') && sameFaction(state,ally,source)):[];
+  if (burnSoulOwners.length) {
+    if(state.mode==='rogue') for(const owner of burnSoulOwners) revealRogueSkill(state,owner,'aries.burnSoul');
     player.statuses.burn .burnDamageSettled = true;
     (state.pendingImmediateBurns ??= []).push({targetId: player.id, sourceId: source.id});
   }
@@ -616,7 +630,7 @@ function heal(
     return;
   }
   if (!options.bypassLeoAura && isLeoHealingBlocked(state, player)) {
-    if (state.mode === 'rogue') for (const holder of state.players.filter(p=>isAlive(p)&&ownsSkill(p,'leo.aura'))) revealRogueSkill(holder,'leo.aura');
+    if (state.mode === 'rogue') for (const holder of state.players.filter(p=>isAlive(p)&&ownsSkill(p,'leo.aura'))) revealRogueSkill(state,holder,'leo.aura');
     log(state, messageTemplate`${player.name} is burning and cannot recover because Leo aura is active`, player.id, 'heal');
     return;
   }
@@ -633,7 +647,7 @@ function heal(
       if (cancer.flags.cancerTideBondDraws >= 3) continue;
       cancer.flags.cancerTideBondDraws += 1;
       drawCards(state, cancer, 1);
-      triggerSkillMetric(state, 'cancer.tideBond');
+      triggerSkillMetric(state, 'cancer.tideBond', cancer);
       log(state, messageTemplate`${cancer.name} 因共潮摸 1 张牌`, cancer.id, 'skill');
     }
     log(state, messageTemplate`${player.name} 回复 ${healed} 点生命`, player.id, 'heal');
@@ -652,9 +666,13 @@ function rescueHeal(
   if (player.hp > before && player.hp <= 0) player.hp = Math.min(player.maxHp, 1);
 }
 
-function triggerSkillMetric(state           , key        ) {
-
+function triggerSkillMetric(state           , key        , owner              ) {
   state.metrics.skillTriggers[key] = (state.metrics.skillTriggers[key] ?? 0) + 1;
+  if (state.mode === 'rogue' && owner) {
+    const aliases = {'aries.bloodRageReady':'aries.bloodRage', 'leo.burnDraw':'leo.aura',
+      'sagittarius.extraAttack':'sagittarius.sharpshot', 'scorpio.endPeek':'scorpio.peek'};
+    revealRogueSkill(state, owner, aliases[key] ?? key);
+  }
 }
 
 function isSilencedInOwnActionTurn(state           , player             ) {
@@ -664,7 +682,7 @@ function isSilencedInOwnActionTurn(state           , player             ) {
 function gainCapricornRage(state           , player                         , amount        , reason        ) {
   if (!player || !ownsSkill(player, 'capricorn.unyielding') || amount <= 0) return;
   player.rage += amount;
-  triggerSkillMetric(state, 'capricorn.unyielding');
+  triggerSkillMetric(state, 'capricorn.unyielding', player);
   log(state, messageTemplate`${player.name} 因蓄怒${reason}获得 ${amount} 点怒气`, player.id, 'skill');
 }
 
@@ -1078,14 +1096,14 @@ function setTaurusGuardTarget(state           , player             , targetId   
   state.discard.push(cost);
   player.flags.taurusGuardTargetId = target.id;
   player.flags.taurusGuardSetupDone = true;
-  triggerSkillMetric(state, 'taurus.guard');
+  triggerSkillMetric(state, 'taurus.guard', player);
   log(state, messageTemplate`${player.name} 弃置 ${cost.name}，将牛守目标设为 ${target.name}`, player.id, 'skill');
 }
 
 function drawTaurusForCardAttack(state           , target             ) {
   if (!ownsSkill(target, 'taurus.thickSkin') || !isAlive(target)) return;
   drawCards(state, target, 1);
-  triggerSkillMetric(state, 'taurus.thickSkin');
+  triggerSkillMetric(state, 'taurus.thickSkin', target);
   log(state, messageTemplate`${target.name} 因厚皮受到卡牌攻击，摸 1 张牌`, target.id, 'skill');
 }
 
@@ -1141,6 +1159,12 @@ function resolveSkillDecision(
   state.pendingSkillDecisions .shift();
   const player = findPlayer(state, decision.playerId);
   const source = decision.sourceId ? findPlayer(state, decision.sourceId) : undefined;
+  if(state.mode==='rogue' && action.activate) {
+    const skills={taurusGuardSetup:'taurus.guard',taurusGuard:'taurus.guard',taurusThickSkin:'taurus.thickSkin',
+      virgoDiscipline:'virgo.discipline',aquariusWindCut:'aquarius.windCut',aquariusChalice:'aquarius.stormEye',
+      libraJudgment:'libra.judgment',libraPerfectJudgment:'libra.perfectJudgment',scorpioEndPeek:'scorpio.peek'};
+    if(skills[decision.kind]) revealRogueSkill(state,player,skills[decision.kind]);
+  }
 
   if (decision.kind === 'rogueSteal') {
     const target = findPlayer(state, decision.targetId );
@@ -1170,7 +1194,7 @@ function resolveSkillDecision(
     const before = target.hand.length;
     drawCards(state, target, count);
     triggerSkillMetric(state, 'sagittarius.resupply');
-    if (state.mode === 'rogue' && target.hand.length > before) revealRogueSkill(player, 'sagittarius.sharpshot');
+    if (state.mode === 'rogue' && target.hand.length > before) revealRogueSkill(state,player, 'sagittarius.sharpshot');
     for (let n = before; n < target.hand.length; n++) triggerSkillMetric(state, 'sagittarius.resupplyCards');
     log(state, messageTemplate`${player.name} 为 ${target.name} 补给 ${target.hand.length - before} 张牌`, player.id, 'skill');
   }
@@ -1181,7 +1205,7 @@ function resolveSkillDecision(
     }
     if (action.activate) {
       arrangeScorpioPeek(state, player, action.topCardIds, action.bottomCardIds);
-      triggerSkillMetric(state, 'scorpio.endPeek');
+      triggerSkillMetric(state, 'scorpio.endPeek', player);
     }
   }
 
@@ -1218,7 +1242,7 @@ function resolveSkillDecision(
       pending.remainingTargetIds[0] = player.id;
       pending.targetIds = pending.targetIds.map(id => id === target.id ? player.id : id);
       if (pending.moonAmplifiedTargetId === target.id) pending.moonAmplifiedTargetId = player.id;
-      triggerSkillMetric(state, 'taurus.guard');
+      triggerSkillMetric(state, 'taurus.guard', player);
       rememberCenterPlayedCard(state, source , pending.card, player.id, pending.targetIds, true);
       log(state, messageTemplate`${player.name} 发动牛守，替代 ${target.name} 成为攻击目标，可以正常防御`, player.id, 'skill');
     } else {
@@ -1234,7 +1258,7 @@ function resolveSkillDecision(
     if (!source || !isAlive(source) || source.id === player.id || !isAlive(player)) throw new Error('厚皮需要有效的其他伤害来源');
     const discarded = takeCard(player, cardIds[0]);
     state.discard.push(discarded);
-    triggerSkillMetric(state, 'taurus.thickSkin');
+    triggerSkillMetric(state, 'taurus.thickSkin', player);
     if (source.statuses.silence) {
       applyDamage(state, source, player, 1, {skillKey:'taurus.thickSkin'});
       log(state, messageTemplate`${player.name} 弃置 ${discarded.name} 发动厚皮，对已沉默的 ${source.name} 造成 1 点伤害`, player.id, 'skill');
@@ -1247,7 +1271,7 @@ function resolveSkillDecision(
 
   if (decision.kind === 'virgoDiscipline' && action.activate && source?.hp && source.hp > 0) {
     applyDamage(state, source, player, 1, { skillKey: 'virgo.discipline' });
-    triggerSkillMetric(state, 'virgo.discipline');
+    triggerSkillMetric(state, 'virgo.discipline', player);
     log(state, messageTemplate`${player.name} 发动戒律，对 ${source.name} 造成 1 点普通伤害`, player.id, 'skill');
   }
 
@@ -1267,7 +1291,7 @@ function resolveSkillDecision(
     state.discard.push(...discarded);
     player.flags.usedAquariusWindCutThisRound = true;
     applyDamage(state, target, player, 1);
-    triggerSkillMetric(state, 'aquarius.windCut');
+    triggerSkillMetric(state, 'aquarius.windCut', player);
     log(state, messageTemplate`${player.name} 发动断流，弃置 ${target.name} ${discarded.length} 张牌并造成 1 点伤害`, player.id, 'skill');
   }
 
@@ -1322,7 +1346,7 @@ function resolveSkillDecision(
       target.hand.push(giveCard);
       player.hand.push(takeCardObj);
     }
-    triggerSkillMetric(state, 'aquarius.stormEye');
+    triggerSkillMetric(state, 'aquarius.stormEye', player);
     log(state, messageTemplate`${player.name} 发动倾杯，与 ${new Set(targetIds).size} 名玩家交换 ${perTarget} 张手牌`, player.id, 'skill');
   }
 
@@ -1331,7 +1355,7 @@ function resolveSkillDecision(
     if (!target || target.hp <= 0) throw new Error('审判需要选择一名存活角色');
     assertNotIceArmorBlocked(player, target);
     addStatus(state, target, 'blind', 1);
-    triggerSkillMetric(state, 'libra.judgment');
+    triggerSkillMetric(state, 'libra.judgment', player);
     log(state, messageTemplate`${player.name} 发动审判，令 ${target.name} 获得致盲`, player.id, 'skill');
   }
 
@@ -1352,7 +1376,7 @@ function resolveSkillDecision(
     } else {
       throw new Error('完美审判需要选择伤害或获得手牌');
     }
-    triggerSkillMetric(state, 'libra.perfectJudgment');
+    triggerSkillMetric(state, 'libra.perfectJudgment', player);
   }
 
   resumeAfterSkillDecisions(state);
@@ -1364,11 +1388,11 @@ function triggerHpLossSkills(state           , target             , damage      
   if (source && source.id !== target.id) gainCapricornRage(state, target, 1, '承受实际伤害');
   if (ownsSkill(target, 'aries.bloodRage') && damage.outOfTurn) {
     target.flags.ariesBloodRageReady = true;
-    triggerSkillMetric(state, 'aries.bloodRageReady');
+    triggerSkillMetric(state, 'aries.bloodRageReady', target);
   }
   if (ownsSkill(target, 'gemini.windForm')) {
     drawCards(state, target, damage.hpLost, (card) => card.element === 'air');
-    triggerSkillMetric(state, 'gemini.windForm');
+    triggerSkillMetric(state, 'gemini.windForm', target);
     log(state, messageTemplate`${target.name} 因双生摸 ${damage.hpLost} 张风牌`, target.id, 'skill');
   }
   if (ownsSkill(target, 'sagittarius.sharpshot') && damage.hadArmor) {
@@ -1383,12 +1407,12 @@ function triggerWoundedChoices(state           , target             , damage    
   if ((damage.hpLost > 0 || damage.armorLost) && ownsSkill(target, 'virgo.domain') && !target.flags.usedVirgoDomainThisTurn) {
     target.flags.usedVirgoDomainThisTurn = true;
     target.flags.virgoDomainActive = true;
-    triggerSkillMetric(state, 'virgo.domain');
+    triggerSkillMetric(state, 'virgo.domain', target);
     log(state, messageTemplate`${target.name} 自动发动净域，本回合免疫后续非神圣伤害和新增负面状态`, target.id, 'skill');
   }
   if (damage.hpLost > 0 && ownsSkill(target, 'aquarius.stormEye')) {
     drawCards(state, target, 2);
-    triggerSkillMetric(state, 'aquarius.stormEye');
+    triggerSkillMetric(state, 'aquarius.stormEye', target);
     log(state, messageTemplate`${target.name} 的倾杯触发，摸 2 张牌`, target.id, 'skill');
     const others = state.players.filter((candidate) => candidate.id !== target.id && candidate.hp > 0);
     if (others.length > 0 && target.hand.length > 0) {
@@ -1489,7 +1513,7 @@ function applyDamage(
         if ((lion.leoBurnDrawCount ?? 0) < 3) {
           lion.leoBurnDrawCount = (lion.leoBurnDrawCount ?? 0) + 1;
           drawCards(state, lion, 1);
-          triggerSkillMetric(state, 'leo.burnDraw');
+          triggerSkillMetric(state, 'leo.burnDraw', lion);
         }
       }
     }
@@ -1692,7 +1716,7 @@ function recordAirUse(state           , player             , count = 1) {
   if (ownsSkill(player, 'gemini.extraTurn') && player.flags.airCardsUsed >= 3 && !player.flags.usedGeminiExtraTurnThisRound) {
     player.flags.usedGeminiExtraTurnThisRound = true;
     player.flags.grantedExtraTurn = true;
-    triggerSkillMetric(state, 'gemini.extraTurn');
+    triggerSkillMetric(state, 'gemini.extraTurn', player);
     log(state, messageTemplate`${player.name} 的连星准备额外回合`, player.id, 'skill');
   }
 }
@@ -1709,7 +1733,7 @@ function recordCardElement(state           , player             , card      , ch
   if (ownsSkill(player, 'libra.elementSense') && state.activePlayerId === player.id && !player.flags.libraRoundElements.includes(element)) {
     player.flags.libraRoundElements.push(element);
     drawCards(state, player, 1);
-    triggerSkillMetric(state, 'libra.elementSense');
+    triggerSkillMetric(state, 'libra.elementSense', player);
     log(state, messageTemplate`${player.name} 的衡感触发，首次正式使用${element}属性牌`, player.id, 'skill');
   }
 
@@ -1855,7 +1879,7 @@ function consumeAriesFirstAttackBonus(state           , source             , sin
   const bonus = source.flags.ariesBloodRageReady && singleTarget ? 1 : 0;
   source.flags.ariesBloodRageReady = false;
   source.flags.ariesBloodRageUsed = true;
-  if (bonus) triggerSkillMetric(state, 'aries.bloodRage');
+  if (bonus) triggerSkillMetric(state, 'aries.bloodRage', source);
   return bonus;
 }
 
@@ -2163,7 +2187,7 @@ function endTurn(state           , player             , skipEndEffects = false) 
 
   if (ownsSkill(player, 'pisces.dream')) {
     drawCards(state, player, 1 + (player.flags.piscesBalanceLoss > 0 ? 1 : 0));
-    if (state.mode === 'rogue') revealRogueSkill(player, 'pisces.dream');
+    if (state.mode === 'rogue') revealRogueSkill(state,player, 'pisces.dream');
     if (player.flags.piscesBalanceLoss > 0) triggerSkillMetric(state, 'pisces.dreamExtra');
   }
 
@@ -2210,7 +2234,7 @@ function triggerEquipmentLeftOwner(
   }
   if (!ownsSkill(owner, 'sagittarius.bowcraft') || !isAlive(owner)) return;
   drawCards(state, owner, 2);
-  triggerSkillMetric(state, 'sagittarius.bowcraft');
+  triggerSkillMetric(state, 'sagittarius.bowcraft', owner);
   log(state, messageTemplate`${owner.name} 的整弓触发：${card.name} 离开装备区，摸 2 张牌`, owner.id, 'skill');
 }
 
@@ -2774,9 +2798,7 @@ function handlePlayCard(state           , action                                
   if (card.kind === 'normalAttack' || card.kind === 'statusAttack' || card.kind === 'aoe') {
     let targets               ;
     if (card.kind === 'aoe') {
-      targets = enemiesOf(state, player.id).filter(
-        (enemy) => !player.flags.iceArmorBlockedTargetIds.includes(enemy.id),
-      );
+      targets = aoeTargets(state, player);
     } else {
       const requestedTargetIds = [...new Set(
         action.targetIds?.length
@@ -2799,7 +2821,7 @@ function handlePlayCard(state           , action                                
       targets = requestedTargetIds.map((targetId) => findPlayer(state, targetId));
       for (const target of targets) {
         if (target.id === player.id) throw new Error('不能攻击自己');
-        if (!isInfectionMode(state) && target.teamId === player.teamId) throw new Error('不能攻击队友');
+        if (!isInfectionMode(state) && state.mode !== 'rogue' && target.teamId === player.teamId) throw new Error('不能攻击队友');
         if (target.hp <= 0 || target.eliminated) throw new Error('不能攻击濒死角色');
         payDistanceCost(
           state,
@@ -2840,7 +2862,7 @@ function handlePlayCard(state           , action                                
         (player.flags.usedSagittariusExtraAttacks ?? 0) < Number(Boolean(player.equipment.weapon)) + Number(Boolean(player.equipment.armor))) {
       player.flags.usedSagittariusExtraAttacks = (player.flags.usedSagittariusExtraAttacks ?? 0) + 1;
       state.pendingAttack.unblockable = card.element === 'fire';
-      triggerSkillMetric(state, 'sagittarius.extraAttack');
+      triggerSkillMetric(state, 'sagittarius.extraAttack', player);
       log(state, messageTemplate`${player.name} 的神射发动额外攻击，${card.element === 'fire' ? '火牌不可防御但仍受致盲影响' : '非火牌可以防御'}`, player.id, 'skill');
     }
     if (usesStoredSureHit) state.pendingAttack.unavoidable = true;
@@ -2931,7 +2953,7 @@ function arrangeScorpioPeek(state           , player             , topIds       
   const bottomCards = bottomCardIds.map(id => byId.get(id) );
   state.deck = [...topCards, ...state.deck.slice(peeked.length), ...bottomCards];
   log(state, messageTemplate`${player.name} 查看牌堆顶 ${peeked.length} 张；牌顶：${topCards.map(card => card.name).join('、') || '无'}；牌底：${bottomCards.map(card => card.name).join('、') || '无'}`, player.id, 'skill');
-  triggerSkillMetric(state, 'scorpio.peek');
+  triggerSkillMetric(state, 'scorpio.peek', player);
   return peeked;
 }
 
@@ -2939,6 +2961,7 @@ function handleSkill(state           , action                                   
   const player = findPlayer(state, action.playerId);
   if (action.skillId.includes('.') && action.skillId.split('.')[0] in CHARACTERS &&
       !ownsSkill(player, action.skillId)) throw new Error('不能发动其他星座的技能');
+  if (state.mode === 'rogue') revealRogueSkill(state,player,action.skillId);
   if (action.skillId === 'cancer.rescue') {
     handleCancerRescue(state, action, player);
     return;
@@ -3023,10 +3046,11 @@ function handleSkill(state           , action                                   
       if (!isAttackCost) throw new Error('Burn Soul can only use non-fire normal or status attack cards');
       if (player.flags.usedAriesBurnSoul) throw new Error('燃魂每回合限一次');
       player.flags.usedAriesBurnSoul = true;
+      if(state.mode==='rogue') revealRogueSkill(state,player,'aries.burnSoul');
     } else if (!isAttackCost) {
       throw new Error('Aries Ram requires a fire normal or status attack cost');
     }
-    if (!isInfectionMode(state) && target.teamId === player.teamId) throw new Error('羊角冲不能指定队友');
+    if (target.id === player.id || (!isInfectionMode(state) && state.mode !== 'rogue' && target.teamId === player.teamId)) throw new Error('羊角冲不能指定自己或标准模式队友');
     payDistanceCost(
       state,
       player,
@@ -3140,7 +3164,7 @@ function handleSkill(state           , action                                   
     for (const cardId of costIds) {
       if (!player.hand.some((card) => card.id === cardId)) throw new Error('换影选择的弃牌不存在');
     }
-    if ((!isInfectionMode(state) && target.teamId === player.teamId) || target.id === player.id || target.hp <= 0) {
+    if ((!isInfectionMode(state) && state.mode !== 'rogue' && target.teamId === player.teamId) || target.id === player.id || target.hp <= 0) {
       throw new Error('换影必须指定另一名存活角色');
     }
     const equippedTargets = [target.equipment.weapon, target.equipment.armor].filter((card)               => Boolean(card));
@@ -3955,7 +3979,7 @@ export function autoDiscardToHp(state           , playerId        )           {
 }
 
 function aiHostilePlayers(state           , player             ) {
-  if (isInfectionMode(state)) {
+  if (isInfectionMode(state) || state.mode === 'rogue') {
     return state.players.filter(
       (candidate) =>
         candidate.id !== player.id &&
@@ -4787,7 +4811,7 @@ function chooseCoreAiAction(state           )                     {
     livingFriendlyTargets.length === 0 &&
     aiHostilePlayers(state, player).some((candidate) => !isIceArmorBlocked(player, candidate))
   ) {
-    const targets = aiHostilePlayers(state, player).filter((candidate) => !isIceArmorBlocked(player, candidate));
+    const targets = aoeTargets(state, player);
     const action         = { type: 'playCard', playerId: player.id, cardId: aoe.id, targetId: outputEnemy.id };
     const withOrder = withLeoOrderPayment(action, state, player, targets, [aoe.id]);
     if (withOrder) return withOrder;
@@ -4902,10 +4926,42 @@ function ownsStar(player             , star        ) {
   return player.rogue ? player.rogue.skills.some((id        ) => id.startsWith(star + '.')) : player.characterId === star;
 }
 const rogueSkillIds = Object.keys(SKILL_DESCRIPTIONS).filter(id => id.split('.')[0] in CHARACTERS);
-function revealRogueSkill(player             , id        ) {
+function revealRogueSkill(state           , player             , id        ) {
   if (player.rogue?.skills.includes(id) && !player.rogue.revealed.includes(id)) {
     player.rogue.revealed.push(id); player.rogue.elementRevealed = true;
+    if (!player.rogue.faction && !(state.rogue.factionQueue ??= []).includes(player.id)) state.rogue.factionQueue.push(player.id);
   }
+}
+
+function offerRogueFaction(state           ) {
+  while (state.rogue.factionQueue?.length) {
+    const p=findPlayer(state,state.rogue.factionQueue.shift() );
+    if(p.rogue.faction || p.eliminated) continue;
+    state.rogue.pending={kind:'faction',playerId:p.id,offer:[]};
+    return true;
+  }
+  return false;
+}
+
+function chooseRogueFaction(input           , action                                       ) {
+  const pending=input.rogue.pending;
+  if(pending?.kind!=='faction' || pending.playerId!==action.playerId) throw Error('不是当前势力选择玩家');
+  const state=cloneState(input),p=findPlayer(state,action.playerId);
+  if(p.rogue.faction) throw Error('势力已选定，整局不可更换');
+  if(!['element','outcast'].includes(action.faction)) throw Error('请选择四象势力或离誓者');
+  const element=CHARACTERS[p.characterId].element;
+  // A dying member still occupies a slot until rescue fails and elimination settles.
+  const full=state.players.filter(other=>other.id!==p.id && !other.eliminated && other.rogue.faction===element).length>=2;
+  const outcast=action.faction==='outcast'||full;
+  p.rogue.faction=outcast?'outcast':element;
+  p.teamId=outcast?`solo-${p.seatIndex+1}`:`element-${element}`;
+  if(outcast && !p.rogue.outcastBonusClaimed) {
+    p.rogue.outcastBonusClaimed=true;p.rogue.outcastBonusPending=true;
+  }
+  delete state.rogue.pending;
+  log(state,messageTemplate`${p.name} ${full&&action.faction==='element'?'因势力名额已满，成为':'选择'}${outcast?'离誓者':ELEMENT_LABELS[element]+'之势力'}，本局不可更换`,p.id,'faction');
+  settleRogue(state);
+  return {state,events:state.log.slice(0,state.log.length-input.log.length)};
 }
 
 function rogueOffer(state           , player             , count = 3) {
@@ -4913,7 +4969,7 @@ function rogueOffer(state           , player             , count = 3) {
   const shuffled = shuffleWithSeed(eligible, state.seed); state.seed = shuffled.seed;
   return shuffled.items.slice(0,count);
 }
-function checkRogueDefeat(state           ) {
+function checkRogueDefeat(state           , allowVictory = false) {
   if (state.phase === 'gameOver' || state.pendingRescue) return;
   for (const player of state.players.filter(p => p.hp <= 0 && !p.eliminated)) {
     const eligible = standardRescuers(state,player).map(p => p.id);
@@ -4927,17 +4983,35 @@ function checkRogueDefeat(state           ) {
     if(killer && killer.id!==player.id) state.rogue.rewards.push({playerId:killer.id,skills:[...player.rogue.skills],deadId:player.id});
     log(state,messageTemplate`${player.name} 已淘汰`,player.id,'defeat');
   }
-  if (state.pendingAttack || state.pendingSkillDecisions?.length || state.pendingCapricornSpread) return;
+  if (!allowVictory || state.rogue.pending || state.rogue.factionQueue?.length || state.rogue.opening.length ||
+      state.pendingAttack || state.pendingSkillDecisions?.length || state.pendingCapricornSpread || state.pendingImmediateBurns?.length) return;
   const living=state.players.filter(isAlive);
-  if(living.length<=1) {
+  const faction=living[0]?.rogue.faction;
+  const factionWin=living.length>1 && faction && faction!=='outcast' && living.every(p=>p.rogue.faction===faction);
+  if(living.length<=1 || factionWin) {
     state.phase='gameOver'; state.winnerId=living[0]?.id; state.winnerTeamId=living[0]?.teamId;
-    log(state,messageTemplate`${living[0]?.name ?? '无人'} 获胜`,living[0]?.id,'gameOver');
+    state.rogue.winnerFaction=faction;
+    state.rogue.winnerIds=faction&&faction!=='outcast'
+      ? state.players.filter(p=>p.rogue.faction===faction).map(p=>p.id)
+      : living.map(p=>p.id);
+    log(state,messageTemplate`${state.rogue.winnerIds.map(id=>findPlayer(state,id).name).join('、') || '无人'} 获胜`,living[0]?.id,'gameOver');
   }
 }
 function settleRogue(state           ) {
-  if(state.mode!=='rogue' || state.phase==='gameOver' || state.rogue.pending || state.rogue.opening.length) return;
-  if(state.pendingAttack || state.pendingRescue || state.pendingSkillDecisions?.length || state.pendingCapricornSpread || state.phase==='hammerBreak') return;
-  checkRogueDefeat(state);
+  if(state.mode!=='rogue' || state.phase==='gameOver' || state.rogue.pending) return;
+  if(offerRogueFaction(state)) return;
+  if(state.pendingAttack || state.pendingRescue || state.pendingSkillDecisions?.length || state.pendingCapricornSpread || state.pendingImmediateBurns?.length || state.phase==='hammerBreak') return;
+  for(const p of state.players.filter(p=>p.rogue.outcastBonusPending)) {
+    delete p.rogue.outcastBonusPending;
+    if(!isAlive(p)) continue;
+    drawCards(state,p,2);
+    log(state,messageTemplate`${p.name} 首次亮明为离誓者，额外摸 2 张牌`,p.id,'faction');
+  }
+  if(state.rogue.opening.length) {
+    const p=findPlayer(state,state.rogue.opening[0]);
+    state.rogue.pending={kind:'opening',playerId:p.id,offer:rogueOffer(state,p,6)};return;
+  }
+  checkRogueDefeat(state,true);
   if(state.phase==='gameOver' || state.pendingRescue) return;
   for(const dead of state.players.filter(p=>p.eliminated&&!p.rogue.rewardQueued)) {
     dead.rogue.rewardQueued=true;
@@ -4976,7 +5050,7 @@ export function createRogueGame(options                                        =
     p.characterId=p.rogue.pools[0]; p.seatIndex=index; p.teamId=`solo-${index+1}`;
     p.name=`${index+1}号玩家`; p.hp=3;p.maxHp=3;p.baseMaxHp=3;p.armor=0;p.maxArmor=2;
   }
-  state.rogue={opening:state.players.map(p=>p.id),pending:undefined,rewards:[],growthQueue:[],growthDue:false};
+  state.rogue={opening:state.players.map(p=>p.id),pending:undefined,rewards:[],growthQueue:[],growthDue:false,factionQueue:[]};
   const p=state.players[0];
   state.rogue.pending={kind:'opening',playerId:p.id,offer:rogueOffer(state,p,6)};
   log(state,messageTemplate`星盘指定 ${findPlayer(state,state.startingPlayerId).name} 先手，其两个初始技能公开`,state.startingPlayerId,'setup');
@@ -4985,6 +5059,7 @@ export function createRogueGame(options                                        =
 function chooseRogue(input           , action                                      ) {
   const state=cloneState(input),pending=state.rogue.pending;
   if(!pending || pending.playerId!==action.playerId) throw Error('不是当前技能选择玩家');
+  if(pending.kind==='faction') throw Error('请先选择势力');
   const p=findPlayer(state,action.playerId);
   if(pending.offer.length && (!action.skillId || !pending.offer.includes(action.skillId))) throw Error('技能不在当前候选中');
   if(!pending.offer.length && action.skillId) throw Error('没有可掠夺技能');
@@ -4997,7 +5072,7 @@ function chooseRogue(input           , action                                   
     if(first) p.characterId=action.skillId.split('.')[0]               ;
     if(pending.kind==='loot' && !p.rogue.pools.includes(action.skillId.split('.')[0])) p.rogue.pools.push(action.skillId.split('.')[0]);
     if(pending.kind==='opening' || pending.kind==='openingExtra') {
-      if(p.id===state.startingPlayerId) revealRogueSkill(p,action.skillId);
+      if(p.id===state.startingPlayerId) revealRogueSkill(state,p,action.skillId);
     }
   }
   delete state.rogue.pending;
@@ -5005,8 +5080,6 @@ function chooseRogue(input           , action                                   
     state.rogue.pending={kind:'openingExtra',playerId:p.id,offer:rogueOffer(state,p)};
   } else if(pending.kind==='opening' || pending.kind==='openingExtra') {
     state.rogue.opening.shift();
-    const next=state.rogue.opening[0];
-    if(next) {const np=findPlayer(state,next);state.rogue.pending={kind:'opening',playerId:next,offer:rogueOffer(state,np,6)};}
   } else if(pending.kind==='loot') {
     if(action.option==='draw2') drawCards(state,p,2); else heal(state,p,1,p);
   }
@@ -5028,12 +5101,14 @@ function settleImmediateBurns(state           ) {
 
 export function applyAction(input           , action        )                                       {
   if(input.mode!=='rogue') {
+    if(action.type==='rogueFaction') throw Error('只有肉鸽模式可以选择势力');
     const result=applyCoreAction(input,action);
     settleImmediateBurns(result.state);
     settleDyingActivePlayer(result.state);
     result.events=result.state.log.slice(0,result.state.log.length-input.log.length);
     return result;
   }
+  if(action.type==='rogueFaction') return chooseRogueFaction(input,action);
   if(input.rogue.pending) {
     if(action.type!=='rogueChoose') throw Error('请先完成技能选择');
     return chooseRogue(input,action);
@@ -5047,23 +5122,8 @@ export function applyAction(input           , action        )                   
   settleImmediateBurns(state);
   settleDyingActivePlayer(state);
   if(!state.pendingRescue) state.pendingSkillDecisions=state.pendingSkillDecisions?.filter(d=>d.kind!=='rogueSteal'||isAlive(findPlayer(state,d.playerId)));
-  if(action.type==='useSkill') {
-    const p=findPlayer(state,action.playerId);revealRogueSkill(p,action.skillId);
-    if(action.skillId==='aries.ram' && p.flags.usedAriesBurnSoul) revealRogueSkill(p,'aries.burnSoul');
-  }
-  // Reveal passives only for the player whose effect changed, never all holders.
-  for(const p of state.players) {
-    const old=findPlayer(input,p.id);
-    const flags=[['aries.bloodRage','ariesBloodRageReady'],['gemini.extraTurn','grantedExtraTurn'],['virgo.domain','virgoDomainActive'],['libra.elementSense','libraRoundElements']];
-    for(const [id,key] of flags) if(JSON.stringify(p.flags[key])!==JSON.stringify(old.flags[key]) && p.flags[key] && (!Array.isArray(p.flags[key])||p.flags[key].length)) revealRogueSkill(p,id);
-    if(p.rage>old.rage) revealRogueSkill(p,'capricorn.unyielding');
-    const aliases={'taurus.thickSkin':['厚皮','神躯'],'scorpio.peek':['伏击','窥星'],'virgo.discipline':['戒律','星律'],'pisces.dream':['归潮'],'sagittarius.sharpshot':['神射','缪斯之弦']};
-    for(const event of state.log.slice(0,Math.max(0,state.log.length-input.log.length))) {
-      if(event.playerId!==p.id) continue;
-      for(const id of p.rogue.skills) if([SKILL_DESCRIPTIONS[id].name,...(aliases[id]??[])].some(name=>event.message.includes(name))) revealRogueSkill(p,id);
-    }
-  }
   settleRogue(state);
+  result.events=state.log.slice(0,state.log.length-input.log.length);
   return result;
 }
 export function chooseAiAction(state           )                     {
@@ -5071,6 +5131,7 @@ export function chooseAiAction(state           )                     {
   const pending=state.rogue.pending;
   if(pending) {
     const p=findPlayer(state,pending.playerId);if(p.control!=='ai') return;
+    if(pending.kind==='faction') return {type:'rogueFaction',playerId:p.id,faction:'element'};
     const priority=['virgo.domain','aquarius.stormEye','libra.elementSense','sagittarius.sharpshot','taurus.thickSkin','scorpio.spoils','cancer.heal'];
     const skillId=[...pending.offer].sort((a,b)=>(priority.indexOf(a)<0?99:priority.indexOf(a))-(priority.indexOf(b)<0?99:priority.indexOf(b)))[0];
     return {type:'rogueChoose',playerId:p.id,skillId,option:p.hp<3&&!isLeoHealingBlocked(state,p)?'heal1':'draw2'};

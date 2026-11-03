@@ -1,14 +1,16 @@
-import { SKILL_DESCRIPTIONS } from '../src/content/skillDescriptions.mjs?v=web-f35f9b7d9d5e07f9';
-import { applyTutorialAction, createTutorialCheckpoint, nextTutorialCheckpoint } from '../src/game/tutorial.mjs?v=web-f35f9b7d9d5e07f9';
+import { rogueTableView, resolveRogueHiddenCards } from '../src/game/rogue-view.mjs?v=web-2f8ee550364ff823';
+import { SKILL_DESCRIPTIONS } from '../src/content/skillDescriptions.mjs?v=web-2f8ee550364ff823';
+import { applyTutorialAction, createTutorialCheckpoint, nextTutorialCheckpoint } from '../src/game/tutorial.mjs?v=web-2f8ee550364ff823';
 import {
   applyAction,
   applySingleAiAction,
   autoDiscardToHp,
   createGame,
   createInfectionGame,
-} from '../src/game/engine.mjs?v=web-f35f9b7d9d5e07f9';
+  createRogueGame,
+} from '../src/game/engine.mjs?v=web-2f8ee550364ff823';
 
-const SERVER_VERSION = "web-f35f9b7d9d5e07f9";
+const SERVER_VERSION = "web-2f8ee550364ff823";
 const MULLIGAN_SECONDS = 8;
 const MAIN_TOTAL_SECONDS = 65;
 const MAIN_IDLE_SECONDS = 20;
@@ -55,6 +57,12 @@ const GAME_MODES = {
     controls: ['human', 'ai', 'ai', 'ai', 'ai', 'ai'],
     playerNames: STANDARD_PLAYER_NAMES[4],
   },
+  rogue: {
+    seatCount: 6, playerCounts: [6], randomCharacters: true,
+    characters: ['aries','taurus','gemini','cancer','leo','virgo'],
+    controls: ['human','ai','ai','ai','ai','ai'],
+    playerNames: ['1号玩家','2号玩家','3号玩家','4号玩家','5号玩家','6号玩家'],
+  },
   infection: {
     seatCount: 4,
     playerCounts: [4, 5, 6, 7, 8],
@@ -66,6 +74,7 @@ const GAME_MODES = {
 };
 
 function normalizeMode(value) {
+  if (value === 'rogue') return 'rogue';
   if (value === 'infection') return 'infection';
   if (value === 'standard' || value === '3v3') return 'standard';
   return 'test';
@@ -119,6 +128,7 @@ function playerNamesForMode(value, playerCount) {
 function createModeGame(nextMode, nextSeed, nextCharacters, nextControls, requestedSeatCount) {
   const normalizedMode = normalizeMode(nextMode);
   const playerCount = normalizePlayerCount(normalizedMode, requestedSeatCount);
+  if (normalizedMode === 'rogue') return createRogueGame({seed:nextSeed,controls:nextControls.slice(0,6)});
   if (normalizedMode === 'infection') {
     return createInfectionGame({
       seed: nextSeed,
@@ -150,7 +160,7 @@ let seed = freshSeed();
 let mode = 'test';
 let characters = [...GAME_MODES[mode].characters];
 let controls = [...GAME_MODES[mode].controls];
-let playerCount = 4;
+let playerCount = mode === 'rogue' ? 6 : 4;
 let game = createModeGame(mode, seed, characters, controls, playerCount);
 let lobbyOpen = true;
 let localPlayerId = game.players.find((player) => player.control === 'human')?.id || game.players[0]?.id || '';
@@ -262,6 +272,7 @@ function sendJson(res, body, httpStatus = 200) {
 }
 
 function finishMulliganDefaults() {
+  if (game.mode === 'rogue' && game.rogue?.pending) return;
   if (setupPaused || game.phase !== 'mulligan') {
     if (game.phase !== 'mulligan') mulliganDeadline = null;
     return;
@@ -279,7 +290,7 @@ function finishExpiredMulligan() {
 
 function actionTimeoutTargetIdFor(state) {
   if (tutorial) return '';
-  if (setupPaused || state.pendingSkillDecisions?.length) return '';
+  if (setupPaused || state.pendingSkillDecisions?.length || state.rogue?.pending) return '';
   if (state.phase === 'main') return state.activePlayerId;
   if (state.phase === 'response' && state.pendingAttack) return state.pendingAttack.currentTargetId;
   if (state.phase === 'infectionResponse') return state.infection?.pendingInfectionCard?.targetId || '';
@@ -347,10 +358,11 @@ function hasLegalDefenseResponse(gameState, player) {
 }
 
 function finishDefenselessResponses() {
+  if (game.mode === 'rogue' && game.rogue?.pending) return;
   if (tutorial) return;
   if (game.pendingSkillDecisions?.length) return;
   let guard = 0;
-  while (game.phase === 'response' && game.pendingAttack && !game.pendingSkillDecisions?.length && guard < 12) {
+  while (game.phase === 'response' && game.pendingAttack && !game.pendingSkillDecisions?.length && !game.rogue?.pending && guard < 12) {
     const playerId = game.pendingAttack.currentTargetId;
     const player = game.players.find((candidate) => candidate.id === playerId);
     if (!player || hasLegalDefenseResponse(game, player)) return;
@@ -444,12 +456,13 @@ function isMatchInProgress() {
 }
 
 function sendState(res, httpStatus = 200) {
+  if (game.mode === 'rogue' && !setupPaused && !game.rogue?.pending && game.phase === 'mulligan' && !mulliganDeadline) mulliganDeadline = Date.now() + MULLIGAN_SECONDS * 1000;
   finishExpiredMulligan();
   finishExpiredActionTimeout();
   finishDefenselessResponses();
   syncActionDeadline();
   sendJson(res, {
-    state: game,
+    state: game.mode === 'rogue' ? rogueTableView(game, localPlayerId) : game,
     error: lastError,
     lobbyOpen,
     localPlayerId,
@@ -512,6 +525,10 @@ export async function handleRequest(req, res) {
           return;
         }
         if (setupPaused) throw new Error('请先确认星盘，再开始换牌或行动');
+        if (game.mode === 'rogue') {
+          if (body.playerId && body.playerId !== localPlayerId) throw new Error('只能操作自己的席位');
+          Object.assign(body, resolveRogueHiddenCards(game, body));
+        }
         finishExpiredMulligan();
         finishExpiredActionTimeout();
         if (body.type === 'mulligan' && game.players.some(player => player.id === body.playerId) &&
@@ -667,7 +684,7 @@ export async function handleRequest(req, res) {
         return;
       }
       setupPaused = false;
-      mulliganDeadline = game.phase === 'mulligan' ? Date.now() + MULLIGAN_SECONDS * 1000 : null;
+      mulliganDeadline = game.phase === 'mulligan' && !game.rogue?.pending ? Date.now() + MULLIGAN_SECONDS * 1000 : null;
       actionDeadline = null;
       actionDeadlineKey = null;
       actionStartedAt = null;
