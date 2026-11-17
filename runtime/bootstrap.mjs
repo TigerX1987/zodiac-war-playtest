@@ -1,4 +1,4 @@
-import {request, snapshot, restoreSnapshot} from './game.mjs?v=web-2f8ee550364ff823';
+import {request, snapshot, restoreSnapshot} from './game.mjs?v=web-707d5b82f1a73e9b';
 const storageKey = 'zodiac-playtest-session-v1';
 try {restoreSnapshot(JSON.parse(sessionStorage.getItem(storageKey)));} catch (_) {}
 const networkFetch = window.fetch.bind(window);
@@ -10,11 +10,11 @@ window.fetch = async (input, options = {}) => {
   return response;
 };
 const script = document.createElement('script');
-script.src = '/zodiac-war-playtest/runtime/client.js?v=web-2f8ee550364ff823';
+script.src = '/zodiac-war-playtest/runtime/client.js?v=web-707d5b82f1a73e9b';
 script.onerror = () => {document.getElementById('web-load-status').textContent = '载入失败，请刷新重试。';};
 script.onload = () => {
   const extension = document.createElement('script');
-  extension.src = '/zodiac-war-playtest/assets/ui/rogue-mode.js?v=web-2f8ee550364ff823';
+  extension.src = '/zodiac-war-playtest/assets/ui/rogue-mode.js?v=web-707d5b82f1a73e9b';
   extension.onerror = script.onerror;
   extension.onload = () => {
     syncStartControls();

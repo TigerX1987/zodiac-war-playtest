@@ -1299,5 +1299,22 @@
   "被动。有武器：每回合额外攻击次数＋装备数，仅额外火攻击不可防御。有防具：非神圣掉血存活后，可令一人补牌至生命上限。 额外次数仅用于普通、状态攻击，各属性共用；AOE不享受。更换装备不重置已用次数；额外次数之外的火牌照常防御。 不可防御不等于必中，仍受致盲、圣盾、护甲、净域影响。非火额外攻击可正常防御。 补牌只由非神圣的实际生命损失触发，可选择自己或其他存活角色，不限次数、可放弃；先急救，存活后再选。已有手牌超过上限不弃牌。": "Passif. Avec une arme, gagnez chaque tour autant d’attaques supplémentaires que d’équipements ; seules celles de Feu sont indéfendables. Avec une armure, après avoir survécu à une perte de PV non sacrée, complétez au choix une main jusqu’aux PV maximum de son propriétaire. Le quota supplémentaire concerne les attaques normales et de statut de tous éléments, pas les AOE. Changer l’équipement ne remet pas les usages à zéro. Les attaques Feu hors quota supplémentaire restent défendables. Impossible à défendre ne veut pas dire coup assuré. Aveuglement, Bouclier sacré, Armure et Domaine pur restent applicables. Les attaques supplémentaires non Feu se défendent normalement. Le réapprovisionnement exige une réelle perte de PV par des dégâts non sacrés. Choisissez vous-même ou un autre vivant, sans limite de déclenchements ; vous pouvez refuser. Sauvetage d’abord. Une main déjà supérieure au plafond ne défausse rien.",
   "弃2牌，或弃1牌并失去1血；夺取一人1张手牌或装备，造成1点普通伤害；取牌后其空手则致盲。": "Défaussez 2 cartes, ou 1 carte et 1 PV. Prenez 1 carte en main ou équipement et infligez 1 dégât ordinaire. Si la main devient vide, ajoutez l’aveuglement.",
   "可查看目标手牌和装备；若两者均无，仅致盲、不造成伤害。": "Vous pouvez inspecter la main et les équipements. Si les deux sont vides, appliquez seulement l’aveuglement, sans dégâts.",
-  "主动·每回合1次。弃2牌，或弃1牌并失去1血；夺取一人1张手牌或装备，造成1点普通伤害；取牌后其空手则致盲。 只能指定另一名存活角色，无距离限制。取牌后是否致盲只看剩余手牌，与剩余装备无关；取到风牌也造成伤害。 可查看目标手牌和装备；若两者均无，仅致盲、不造成伤害。": "Actif · 1 fois par tour. Défaussez 2 cartes, ou 1 carte et 1 PV. Prenez 1 carte en main ou équipement et infligez 1 dégât ordinaire. Si la main devient vide, ajoutez l’aveuglement. Ciblez un autre personnage vivant sans limite de distance. L’aveuglement dépend seulement de la main restante, pas des équipements. Une carte Air volée inflige aussi des dégâts. Vous pouvez inspecter la main et les équipements. Si les deux sont vides, appliquez seulement l’aveuglement, sans dégâts."
+  "主动·每回合1次。弃2牌，或弃1牌并失去1血；夺取一人1张手牌或装备，造成1点普通伤害；取牌后其空手则致盲。 只能指定另一名存活角色，无距离限制。取牌后是否致盲只看剩余手牌，与剩余装备无关；取到风牌也造成伤害。 可查看目标手牌和装备；若两者均无，仅致盲、不造成伤害。": "Actif · 1 fois par tour. Défaussez 2 cartes, ou 1 carte et 1 PV. Prenez 1 carte en main ou équipement et infligez 1 dégât ordinaire. Si la main devient vide, ajoutez l’aveuglement. Ciblez un autre personnage vivant sans limite de distance. L’aveuglement dépend seulement de la main restante, pas des équipements. Une carte Air volée inflige aussi des dégâts. Vous pouvez inspecter la main et les équipements. Si les deux sont vides, appliquez seulement l’aveuglement, sans dégâts.",
+  "主动查看目标手牌，借用其中一张并按原规则出牌。月亮也可在攻击结算时增伤，或在防御时反击。": "Regardez la main de la cible, empruntez une carte et jouez-la selon ses règles normales. La Lune peut aussi renforcer une attaque ou défendre et riposter.",
+  "借牌 · 防御 · 增伤": "Emprunter · Défendre · Renforcer",
+  "月亮 · 选择借用的手牌": "Lune · Choisissez une carte à emprunter",
+  "确认借牌": "Emprunter cette carte",
+  "放弃借牌": "Renoncer à emprunter",
+  "重选借用牌": "Choisir une autre carte",
+  "月亮已用。选一张可用手牌，或放弃借牌。": "La Lune est dépensée. Choisissez une carte utilisable ou renoncez.",
+  "借用 · ": "Emprunt · ",
+  "跳过月亮增伤": "Passer le bonus de Lune",
+  "${p0} 使用月亮查看 ${p1} 的手牌": "${p0} utilise la Lune pour regarder la main de ${p1}.",
+  "请选择一名持有手牌的合法目标。": "Choisissez une cible valide ayant des cartes en main.",
+  "当前无法使用这张牌，请重新选择。": "Cette carte est inutilisable pour le moment. Choisissez-en une autre.",
+  "选中的牌已经不在目标手中。": "La carte choisie n’est plus dans la main de la cible.",
+  "请先完成月亮借牌或放弃借牌。": "Jouez la carte empruntée ou renoncez.",
+  "当前没有待确认的月亮增伤。": "Aucun bonus de Lune n’est en attente.",
+  "码头管事仍未交出木签。": "Le contremaître a encore l’étiquette du chariot.",
+  "指定敌人，对其造成 1 点伤害。": "Infligez 1 dégât à un ennemi."
 }

@@ -1,16 +1,16 @@
-import { rogueTableView, resolveRogueHiddenCards } from '../src/game/rogue-view.mjs?v=web-2f8ee550364ff823';
-import { SKILL_DESCRIPTIONS } from '../src/content/skillDescriptions.mjs?v=web-2f8ee550364ff823';
-import { applyTutorialAction, createTutorialCheckpoint, nextTutorialCheckpoint } from '../src/game/tutorial.mjs?v=web-2f8ee550364ff823';
+import { rogueTableView, resolveRogueHiddenCards } from '../src/game/rogue-view.mjs?v=web-707d5b82f1a73e9b';
+import { SKILL_DESCRIPTIONS } from '../src/content/skillDescriptions.mjs?v=web-707d5b82f1a73e9b';
+import { CHARACTERS } from '../src/content/characters.mjs?v=web-707d5b82f1a73e9b';
+import { applyTutorialAction, createTutorialCheckpoint, nextTutorialCheckpoint } from '../src/game/tutorial.mjs?v=web-707d5b82f1a73e9b';
+import {applyActionWithGuide as applyAction,applySingleAiActionWithGuide as applySingleAiAction,combatGuideFor} from '../src/server/combat-guide.mjs?v=web-707d5b82f1a73e9b';
 import {
-  applyAction,
-  applySingleAiAction,
   autoDiscardToHp,
   createGame,
   createInfectionGame,
   createRogueGame,
-} from '../src/game/engine.mjs?v=web-2f8ee550364ff823';
+} from '../src/game/engine.mjs?v=web-707d5b82f1a73e9b';
 
-const SERVER_VERSION = "web-2f8ee550364ff823";
+const SERVER_VERSION = "web-707d5b82f1a73e9b";
 const MULLIGAN_SECONDS = 8;
 const MAIN_TOTAL_SECONDS = 65;
 const MAIN_IDLE_SECONDS = 20;
@@ -174,11 +174,16 @@ let lastError = '';
 let matchSerial = 0;
 let matchId = SERVER_VERSION + ':0';
 let tutorial = null;
+const storyTutorial = false;
 
-function runTutorialCommand(command, lobbyConfig) {
+function runTutorialCommand(command, lobbyConfig, chapter, objective) {
   if (command === 'start') {
     if (!lobbyOpen || tutorial) throw new Error('请先返回大厅再开始教学');
+    if (chapter != null && chapter !== 'aries') throw new Error('未知的新手章节');
+    if (objective != null && (chapter !== 'aries' || objective !== 'defeat-capricorn')) throw new Error('未知的序章目标');
     tutorial = { step: 'welcome', returnState: { seed, mode, characters, controls, playerCount, game, setupPaused, setupFateDrawn } };
+    if (chapter === 'aries' || storyTutorial) tutorial.chapter = 'aries';
+    if (objective) tutorial.objective = objective;
     if (lobbyConfig) {
       const returnMode = normalizeMode(lobbyConfig.mode);
       const returnCount = normalizePlayerCount(returnMode, lobbyConfig.playerCount);
@@ -197,7 +202,7 @@ function runTutorialCommand(command, lobbyConfig) {
     setupFateDrawn = true;
     matchId = SERVER_VERSION + ':tutorial:' + (++matchSerial);
   } else if (command === 'next' && tutorial) {
-    const next = nextTutorialCheckpoint(tutorial);
+    const next = nextTutorialCheckpoint(tutorial, tutorial.chapter === 'aries' ? game : undefined);
     tutorial.step = next.progress.step;
     game = next.state;
     matchId = SERVER_VERSION + ':tutorial:' + (++matchSerial);
@@ -349,7 +354,7 @@ function hasLegalDefenseResponse(gameState, player) {
   return player.hand.some((card) => {
     if (card.kind === 'sun' || card.kind === 'moon') return true;
     if (card.kind !== 'normalAttack') return false;
-    if (pending.card.kind === 'aoe') return card.element === pending.card.element;
+    if (pending.card.kind === 'aoe') return true;
     if (pending.card.fusion && pending.card.kind === 'statusAttack') {
       return card.element === pending.card.element;
     }
@@ -463,6 +468,8 @@ function sendState(res, httpStatus = 200) {
   syncActionDeadline();
   sendJson(res, {
     state: game.mode === 'rogue' ? rogueTableView(game, localPlayerId) : game,
+    combatGuide: combatGuideFor(game),
+    serverTime: Date.now(),
     error: lastError,
     lobbyOpen,
     localPlayerId,
@@ -472,7 +479,7 @@ function sendState(res, httpStatus = 200) {
     actionDeadline,
     actionStartedAt,
     matchId,
-    tutorial: tutorial ? { step: tutorial.step } : null,
+    tutorial: tutorial ? { step: tutorial.step, ...(tutorial.chapter ? {chapter: tutorial.chapter} : {}), ...(tutorial.objective ? {objective: tutorial.objective} : {}) } : null,
     config: { mode, characters, controls, playerCount },
   }, httpStatus);
   lastError = '';
@@ -555,7 +562,7 @@ export async function handleRequest(req, res) {
 
     if (req.method === 'POST' && req.url === '/api/tutorial') {
       const body = await readBody(req);
-      try { runTutorialCommand(body.command, body.lobbyConfig); }
+      try { runTutorialCommand(body.command, body.lobbyConfig, body.chapter, body.objective); }
       catch (error) { lastError = error instanceof Error ? error.message : String(error); }
       sendState(res);
       return;

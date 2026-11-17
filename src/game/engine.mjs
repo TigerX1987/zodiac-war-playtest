@@ -1,11 +1,11 @@
-import { SKILL_DESCRIPTIONS } from '../content/skillDescriptions.mjs?v=web-2f8ee550364ff823';
-import { createBaseDeck, createInfectionDeck, effectiveRitualCard, ELEMENT_LABELS, statusForElement } from '../content/cards.mjs?v=web-2f8ee550364ff823';
+import { SKILL_DESCRIPTIONS } from '../content/skillDescriptions.mjs?v=web-707d5b82f1a73e9b';
+import { createBaseDeck, createInfectionDeck, effectiveRitualCard, ELEMENT_LABELS, statusForElement } from '../content/cards.mjs?v=web-707d5b82f1a73e9b';
 import {
   CHARACTERS,
   DEFAULT_CHARACTER_PAIR,
   DEFAULT_DEMO_CHARACTERS,
   zodiacSeatIndices,
-} from '../content/characters.mjs?v=web-2f8ee550364ff823';
+} from '../content/characters.mjs?v=web-707d5b82f1a73e9b';
              
          
        
@@ -24,7 +24,7 @@ import {
               
             
                      
-import { randomFloat, shuffleWithSeed } from './random.mjs?v=web-2f8ee550364ff823';
+import { randomFloat, shuffleWithSeed } from './random.mjs?v=web-707d5b82f1a73e9b';
 
 const STATUS_LABELS                           = {
   burn: '灼烧',
@@ -140,6 +140,13 @@ function cloneState(state           )            {
           scorpioPoisonPaidTargetIds: state.pendingAttack.scorpioPoisonPaidTargetIds
             ? [...state.pendingAttack.scorpioPoisonPaidTargetIds]
             : undefined,
+        }
+      : undefined,
+    pendingRescue: state.pendingRescue
+      ? {
+          ...state.pendingRescue,
+          eligibleResponderIds: [...state.pendingRescue.eligibleResponderIds],
+          passedResponderIds: [...state.pendingRescue.passedResponderIds],
         }
       : undefined,
     pendingImmediateBurns: state.pendingImmediateBurns?.map(hit => ({...hit})),
@@ -1865,9 +1872,11 @@ function applySuccessfulDefenseOutcome(state           ) {
   if (!pending) throw new Error('No pending attack');
   const defender = findPlayer(state, pending.currentTargetId);
 
-  if (pending.card.kind === 'statusAttack' && pending.statusToApply && !pending.statusDefensePerfect) {
+  if ((pending.card.kind === 'statusAttack' || pending.card.kind === 'aoe') && pending.statusToApply && !pending.statusDefensePerfect) {
     addStatus(state, defender, pending.statusToApply, 1);
     log(state, messageTemplate`${defender.name} 异属性防御：抵消伤害，但未抵消异常`, defender.id, 'defense');
+  } else if (pending.card.kind === 'aoe' && !pending.statusDefensePerfect) {
+    log(state, messageTemplate`${defender.name} 普通防御成功`, defender.id, 'defense');
   } else {
     log(state, messageTemplate`${defender.name} 完美防御成功`, defender.id, 'defense');
   }
@@ -1916,7 +1925,7 @@ function isValidDefense(pending               , defender             , defenseCa
   if (defenseCard.kind === 'sun' || defenseCard.kind === 'moon') return true;
   if (defenseCard.kind !== 'normalAttack') return false;
   if (pending.card.kind === 'aoe') {
-    return defenseCard.element === pending.card.element;
+    return true;
   }
   if (
     pending.card.fusion &&
@@ -4919,7 +4928,7 @@ export function applyActionWithAi(state           , action        )             
 }
 
 // Local roguelike mode. Core card effects are shared with standard mode.
-function ownsSkill(player             , id        ) {
+export function ownsSkill(player             , id        ) {
   return player.rogue ? player.rogue.skills.includes(id) : player.characterId === id.split('.')[0];
 }
 function ownsStar(player             , star        ) {
@@ -5032,7 +5041,7 @@ function settleRogue(state           ) {
     if(isAlive(p)&&offer.length) {state.rogue.pending={kind:'growth',playerId:id,offer}; return;}
   }
 }
-export function createRogueGame(options                                        ={}) {
+export function createRogueGame(options                                                              ={}) {
   const state=createGame({seed:options.seed,characters:['aries','taurus','gemini','cancer','leo','virgo'],controls:options.controls??['human','ai','ai','ai','ai','ai']});
   state.mode='rogue';
   // Remove standard mode's fifth opening fate card: every seat starts with four.
@@ -5048,7 +5057,7 @@ export function createRogueGame(options                                        =
   for(const [index,p] of state.players.entries()) {
     p.rogue={pools:allocated.items.slice(index*2,index*2+2),skills:[],revealed:[],elementRevealed:false};
     p.characterId=p.rogue.pools[0]; p.seatIndex=index; p.teamId=`solo-${index+1}`;
-    p.name=`${index+1}号玩家`; p.hp=3;p.maxHp=3;p.baseMaxHp=3;p.armor=0;p.maxArmor=2;
+    p.name=options.playerNames?.[index]??`${index+1}号玩家`; p.hp=3;p.maxHp=3;p.baseMaxHp=3;p.armor=0;p.maxArmor=2;
   }
   state.rogue={opening:state.players.map(p=>p.id),pending:undefined,rewards:[],growthQueue:[],growthDue:false,factionQueue:[]};
   const p=state.players[0];

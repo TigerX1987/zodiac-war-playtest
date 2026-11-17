@@ -1299,5 +1299,22 @@
   "被动。有武器：每回合额外攻击次数＋装备数，仅额外火攻击不可防御。有防具：非神圣掉血存活后，可令一人补牌至生命上限。 额外次数仅用于普通、状态攻击，各属性共用；AOE不享受。更换装备不重置已用次数；额外次数之外的火牌照常防御。 不可防御不等于必中，仍受致盲、圣盾、护甲、净域影响。非火额外攻击可正常防御。 补牌只由非神圣的实际生命损失触发，可选择自己或其他存活角色，不限次数、可放弃；先急救，存活后再选。已有手牌超过上限不弃牌。": "Passive. With a weapon, gain extra attacks equal to equipment count each turn; only extra Fire attacks are undefendable. With armor, after surviving non-holy HP loss, you may refill one character’s hand to their maximum HP. Extra allowances cover normal and status attacks of all elements, not AOE. Changing equipment does not reset usage. Fire attacks outside the extra allowance are defendable. Undefendable is not Sure Hit. Blind, Holy Shield, Armor and Pure Domain still apply. Non-Fire extra attacks can be defended normally. Refill only after actual HP loss to non-holy damage. Choose yourself or another living character, with no trigger limit; you may decline. Resolve rescue first. Existing cards above the cap are not discarded.",
   "弃2牌，或弃1牌并失去1血；夺取一人1张手牌或装备，造成1点普通伤害；取牌后其空手则致盲。": "Discard 2 cards, or 1 card and 1 HP. Take 1 hand card or equipment from a character and deal 1 ordinary damage. If their hand is then empty, also inflict Blind.",
   "可查看目标手牌和装备；若两者均无，仅致盲、不造成伤害。": "You may inspect the target’s hand and equipment. If both are empty, only inflict Blind without damage.",
-  "主动·每回合1次。弃2牌，或弃1牌并失去1血；夺取一人1张手牌或装备，造成1点普通伤害；取牌后其空手则致盲。 只能指定另一名存活角色，无距离限制。取牌后是否致盲只看剩余手牌，与剩余装备无关；取到风牌也造成伤害。 可查看目标手牌和装备；若两者均无，仅致盲、不造成伤害。": "Active · once per turn. Discard 2 cards, or 1 card and 1 HP. Take 1 hand card or equipment from a character and deal 1 ordinary damage. If their hand is then empty, also inflict Blind. Target another living character at any distance. Blind depends only on their remaining hand cards, not equipment. Taking an Air card also deals damage. You may inspect the target’s hand and equipment. If both are empty, only inflict Blind without damage."
+  "主动·每回合1次。弃2牌，或弃1牌并失去1血；夺取一人1张手牌或装备，造成1点普通伤害；取牌后其空手则致盲。 只能指定另一名存活角色，无距离限制。取牌后是否致盲只看剩余手牌，与剩余装备无关；取到风牌也造成伤害。 可查看目标手牌和装备；若两者均无，仅致盲、不造成伤害。": "Active · once per turn. Discard 2 cards, or 1 card and 1 HP. Take 1 hand card or equipment from a character and deal 1 ordinary damage. If their hand is then empty, also inflict Blind. Target another living character at any distance. Blind depends only on their remaining hand cards, not equipment. Taking an Air card also deals damage. You may inspect the target’s hand and equipment. If both are empty, only inflict Blind without damage.",
+  "主动查看目标手牌，借用其中一张并按原规则出牌。月亮也可在攻击结算时增伤，或在防御时反击。": "View the target’s hand, borrow one card and play it under its normal rules. Moon can also boost an attack or defend and counter.",
+  "借牌 · 防御 · 增伤": "Borrow · Defend · Boost",
+  "月亮 · 选择借用的手牌": "Moon · Choose a card to borrow",
+  "确认借牌": "Borrow this card",
+  "放弃借牌": "Stop borrowing",
+  "重选借用牌": "Choose another card",
+  "月亮已用。选一张可用手牌，或放弃借牌。": "Moon is spent. Choose a usable card, or stop borrowing.",
+  "借用 · ": "Borrowed · ",
+  "跳过月亮增伤": "Skip Moon boost",
+  "${p0} 使用月亮查看 ${p1} 的手牌": "${p0} uses Moon to view ${p1}’s hand.",
+  "请选择一名持有手牌的合法目标。": "Choose a legal target with cards in hand.",
+  "当前无法使用这张牌，请重新选择。": "This card cannot be used now. Choose another.",
+  "选中的牌已经不在目标手中。": "The chosen card is no longer in the target’s hand.",
+  "请先完成月亮借牌或放弃借牌。": "Finish playing the borrowed card or stop borrowing.",
+  "当前没有待确认的月亮增伤。": "There is no Moon boost to resolve.",
+  "码头管事仍未交出木签。": "The foreman still has the cart tag.",
+  "指定敌人，对其造成 1 点伤害。": "Choose an enemy to deal 1 damage."
 }

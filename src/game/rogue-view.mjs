@@ -1,5 +1,5 @@
                                            
-import {CHARACTERS} from '../content/characters.mjs?v=web-2f8ee550364ff823';
+import {CHARACTERS} from '../content/characters.mjs?v=web-707d5b82f1a73e9b';
 
 /** Private projection for the existing local card-table client. */
 export function rogueTableView(input           , viewerId        )            {
